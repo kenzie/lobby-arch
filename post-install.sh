@@ -51,8 +51,8 @@ cat > $HOME_DIR/.config/hypr/hyprland.conf <<EOF
 # Basic Hyprland configuration
 monitor=,preferred,auto,1
 
-# Wallpaper configuration
-exec-once = hyprpaper
+# Wallpaper configuration with centered Route 19 logo
+exec-once = swaybg -i $HOME/.config/hypr/route19-centered.png -m center -c "#1a1a1a"
 
 # Input configuration
 input {
@@ -120,13 +120,7 @@ Environment=DISPLAY=:0
 WantedBy=default.target
 EOF
 
-# Create hyprpaper configuration for Route 19 background
-mkdir -p $HOME_DIR/.config/hypr
-cat > $HOME_DIR/.config/hypr/hyprpaper.conf <<EOF
-preload = $HOME_DIR/.config/hypr/route19-logo.png
-wallpaper = ,$HOME_DIR/.config/hypr/route19-logo.png
-splash = false
-EOF
+# hyprpaper config no longer needed since we're using swaybg
 
 chown -R $USER:$USER $HOME_DIR/.config
 loginctl enable-linger $USER
@@ -162,8 +156,8 @@ mkdir -p $THEME_DIR
 
 # Copy logo to user's Hyprland config directory for wallpaper
 if [ -f /root/assets/route19-logo.png ]; then
-    cp /root/assets/route19-logo.png $HOME_DIR/.config/hypr/route19-logo.png
-    chown $USER:$USER $HOME_DIR/.config/hypr/route19-logo.png
+    cp /root/assets/route19-logo.png $HOME_DIR/.config/hypr/route19-centered.png
+    chown $USER:$USER $HOME_DIR/.config/hypr/route19-centered.png
     log "Route 19 logo copied for Hyprland wallpaper"
 else
     log "WARNING: Logo asset not found"

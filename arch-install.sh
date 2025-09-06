@@ -92,7 +92,7 @@ mount -t vfat "$EFI" /mnt/boot
 echo "==> Installing base packages..."
 pacstrap /mnt base linux linux-firmware vim networkmanager sudo git \
     base-devel openssh rng-tools curl \
-    hyprland hyprpaper xorg-server \
+    hyprland swaybg xorg-server \
     xdg-desktop-portal xdg-desktop-portal-wlr \
     alacritty \
     chromium nginx python python-pip rclone \
