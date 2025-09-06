@@ -110,7 +110,7 @@ After=graphical.target
 
 [Service]
 ExecStart=/usr/bin/Hyprland
-Restart=always
+Restart=no
 Environment=DISPLAY=:0
 
 [Install]
@@ -123,9 +123,10 @@ loginctl enable-linger $USER
 # Create first-login script to enable user services after login
 cat > $HOME_DIR/.config/first-login.sh <<'FIRSTLOGIN'
 #!/bin/bash
-# Enable Hyprland user service on first login
+# Enable and start Hyprland user service on first login only
 if [ ! -f ~/.hyprland-enabled ]; then
     systemctl --user enable hyprland.service 2>/dev/null || true
+    systemctl --user start hyprland.service 2>/dev/null || true
     touch ~/.hyprland-enabled
 fi
 FIRSTLOGIN
