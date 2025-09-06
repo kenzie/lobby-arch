@@ -88,14 +88,15 @@ mount "$ROOT" /mnt
 mkdir -p /mnt/boot
 mount -t vfat "$EFI" /mnt/boot
 
-# --- Install base system ---
+# --- Install base system + Plymouth + Hyprland ---
 echo "==> Installing base packages..."
 pacstrap /mnt base linux linux-firmware vim networkmanager sudo git \
     base-devel openssh rng-tools curl \
     hyprland hyprpaper xorg-server \
     xdg-desktop-portal xdg-desktop-portal-wlr \
     chromium nginx python python-pip rclone \
-    nodejs npm
+    nodejs npm \
+    plymouth plymouth-theme-spinner cdrtools
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
@@ -135,7 +136,6 @@ echo "%wheel ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/999_lobby
 # Enable NetworkManager and SSH
 systemctl enable NetworkManager
 systemctl enable sshd
-
 EOF
 
 # --- Copy post-install script ---
@@ -161,4 +161,4 @@ arch-chroot /mnt systemctl enable post-install.service
 
 # --- Unmount and finish ---
 umount -R /mnt
-echo "==> Installation complete. Reboot now. The system will auto-login and launch Hyprland."
+echo "==> Installation complete. Reboot now. The system will auto-login and launch Hyprland with Plymouth splash."
