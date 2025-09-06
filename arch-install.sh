@@ -12,8 +12,19 @@ lsblk -d -o NAME,SIZE,MODEL
 echo
 
 # --- Prompt for target disk ---
-echo -n "Enter target disk (example /dev/sda): "
+echo -n "Enter target disk: "
 read DISK
+
+# Ensure full /dev path
+if [[ ! "$DISK" =~ ^/dev/ ]]; then
+    DISK="/dev/$DISK"
+fi
+
+# Validate disk exists
+if [[ ! -b "$DISK" ]]; then
+    echo "Error: $DISK is not a valid block device."
+    exit 1
+fi
 
 # --- Confirm disk wipe ---
 echo "You selected $DISK. All data on this disk will be erased!"
