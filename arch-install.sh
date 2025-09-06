@@ -88,7 +88,7 @@ mount "$ROOT" /mnt
 mkdir -p /mnt/boot
 mount -t vfat "$EFI" /mnt/boot
 
-# --- Install base system + Plymouth + Hyprland ---
+# --- Install base system + Hyprland + Plymouth (no spinner theme) ---
 echo "==> Installing base packages..."
 pacstrap /mnt base linux linux-firmware vim networkmanager sudo git \
     base-devel openssh rng-tools curl \
@@ -96,7 +96,7 @@ pacstrap /mnt base linux linux-firmware vim networkmanager sudo git \
     xdg-desktop-portal xdg-desktop-portal-wlr \
     chromium nginx python python-pip rclone \
     nodejs npm \
-    plymouth plymouth-theme-spinner cdrtools
+    plymouth cdrtools
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
