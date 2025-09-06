@@ -48,7 +48,59 @@ mkdir -p $HOME_DIR/.config/hypr
 mkdir -p $HOME_DIR/.config/systemd/user
 
 cat > $HOME_DIR/.config/hypr/hyprland.conf <<EOF
-monitor=HDMI-A-1,1920x1080@60
+# Basic Hyprland configuration
+monitor=,preferred,auto,1
+
+# Input configuration
+input {
+    kb_layout = us
+    follow_mouse = 1
+}
+
+# General configuration
+general {
+    gaps_in = 5
+    gaps_out = 20
+    border_size = 2
+    col.active_border = rgba(33ccffee) rgba(00ff99ee) 45deg
+    col.inactive_border = rgba(595959aa)
+    layout = dwindle
+}
+
+# Window rules for fullscreen applications
+windowrule = fullscreen,chromium
+
+# Key bindings
+bind = SUPER, Q, killactive
+bind = SUPER, M, exit
+bind = SUPER, V, togglefloating
+bind = SUPER, P, pseudo
+bind = SUPER, J, togglesplit
+bind = SUPER, Return, exec, foot
+bind = SUPER, T, exec, foot
+bind = SUPER, E, exec, thunar
+
+# Move focus with mainMod + arrow keys
+bind = SUPER, left, movefocus, l
+bind = SUPER, right, movefocus, r
+bind = SUPER, up, movefocus, u
+bind = SUPER, down, movefocus, d
+
+# Switch workspaces with mainMod + [0-9]
+bind = SUPER, 1, workspace, 1
+bind = SUPER, 2, workspace, 2
+bind = SUPER, 3, workspace, 3
+bind = SUPER, 4, workspace, 4
+bind = SUPER, 5, workspace, 5
+
+# Move active window to a workspace with mainMod + SHIFT + [0-9]
+bind = SUPER SHIFT, 1, movetoworkspace, 1
+bind = SUPER SHIFT, 2, movetoworkspace, 2
+bind = SUPER SHIFT, 3, movetoworkspace, 3
+
+# Mouse bindings
+bindm = SUPER, mouse:272, movewindow
+bindm = SUPER, mouse:273, resizewindow
 EOF
 
 cat > $HOME_DIR/.config/systemd/user/hyprland.service <<EOF
