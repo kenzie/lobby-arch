@@ -51,6 +51,9 @@ cat > $HOME_DIR/.config/hypr/hyprland.conf <<EOF
 # Basic Hyprland configuration
 monitor=,preferred,auto,1
 
+# Wallpaper configuration
+exec-once = hyprpaper
+
 # Input configuration
 input {
     kb_layout = us
@@ -117,6 +120,14 @@ Environment=DISPLAY=:0
 WantedBy=default.target
 EOF
 
+# Create hyprpaper configuration for Route 19 background
+mkdir -p $HOME_DIR/.config/hypr
+cat > $HOME_DIR/.config/hypr/hyprpaper.conf <<EOF
+preload = $HOME_DIR/.config/hypr/route19-logo.png
+wallpaper = ,$HOME_DIR/.config/hypr/route19-logo.png
+splash = false
+EOF
+
 chown -R $USER:$USER $HOME_DIR/.config
 loginctl enable-linger $USER
 
@@ -149,13 +160,21 @@ log "Setting up Plymouth splash theme"
 THEME_DIR=/usr/share/plymouth/themes/route19
 mkdir -p $THEME_DIR
 
-# Copy logo from local assets
+# Copy logo to user's Hyprland config directory for wallpaper
+if [ -f /root/assets/route19-logo.png ]; then
+    cp /root/assets/route19-logo.png $HOME_DIR/.config/hypr/route19-logo.png
+    chown $USER:$USER $HOME_DIR/.config/hypr/route19-logo.png
+    log "Route 19 logo copied for Hyprland wallpaper"
+else
+    log "WARNING: Logo asset not found"
+fi
+
+# Still set up Plymouth but it likely won't be visible
 if [ -f /root/assets/route19-logo.png ]; then
     cp /root/assets/route19-logo.png $THEME_DIR/logo.png
     log "Plymouth logo copied from assets"
 else
     log "WARNING: Logo asset not found, creating fallback"
-    # Create a simple text fallback
     echo "Route 19" > $THEME_DIR/logo.png
 fi
 
