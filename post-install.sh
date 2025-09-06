@@ -1,40 +1,54 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "==> Running post-install setup..."
+USER="lobby"
+HOME_DIR="/home/$USER"
 
-# Install AUR helper yay
-pacman -S --needed --noconfirm git base-devel
-cd /tmp
-git clone https://aur.archlinux.org/yay.git
-cd yay
-makepkg -si --noconfirm
+echo "==> Running post-install tasks..."
 
-# Install Plymouth from AUR
-yay -S --noconfirm plymouth
-
-# Setup Route 19 theme
-mkdir -p /usr/share/plymouth/themes/route19
-cp /tmp/route19-logo.png /usr/share/plymouth/themes/route19/
-
-cat > /usr/share/plymouth/themes/route19/route19.plymouth <<EOF
-[Plymouth Theme]
-Name=Route19
-Description=Route19 boot splash
-ModuleName=script
-[script]
-ScriptFile=/usr/share/plymouth/themes/route19/route19.script
+# --- Create auto-login on TTY1 ---
+mkdir -p /etc/systemd/system/getty@tty1.service.d
+cat > /etc/systemd/system/getty@tty1.service.d/override.conf <<EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin $USER --noclear %I \$TERM
 EOF
 
-cat > /usr/share/plymouth/themes/route19/route19.script <<EOF
-plymouth.image_display("/usr/share/plymouth/themes/route19/route19-logo.png")
+systemctl daemon-reexec
+
+# --- Configure Hyprland autostart ---
+mkdir -p $HOME_DIR/.config/hypr
+mkdir -p $HOME_DIR/.config/systemd/user
+
+# Minimal config for first boot
+cat > $HOME_DIR/.config/hypr/hyprland.conf <<EOF
+monitor=HDMI-A-1,1920x1080@60
+exec=chromium
 EOF
 
-# Activate theme and rebuild initramfs
-plymouth-set-default-theme -R route19
+# Create systemd user service to start Hyprland
+cat > $HOME_DIR/.config/systemd/user/hyprland.service <<EOF
+[Unit]
+Description=Hyprland Session
+After=graphical.target
 
-# Disable service and remove script
+[Service]
+ExecStart=/usr/bin/Hyprland
+Restart=always
+Environment=DISPLAY=:0
+
+[Install]
+WantedBy=default.target
+EOF
+
+chown -R $USER:$USER $HOME_DIR/.config
+
+# Enable linger so user service runs on boot
+loginctl enable-linger $USER
+sudo -u $USER systemctl --user enable hyprland.service
+
+echo "==> Post-install tasks complete. The system will auto-login $USER and launch Hyprland on next boot."
+
+# Optionally disable this service after first run
 systemctl disable post-install.service
 rm -f /tmp/post-install.sh
-
-echo "==> Post-install complete. Reboot to see Route 19 splash."
