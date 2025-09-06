@@ -79,6 +79,7 @@ bind = SUPER, J, togglesplit
 bind = SUPER, Return, exec, alacritty
 bind = SUPER, T, exec, alacritty
 bind = SUPER, E, exec, thunar
+bind = SUPER, B, exec, chromium
 
 # Move focus with mainMod + arrow keys
 bind = SUPER, left, movefocus, l
