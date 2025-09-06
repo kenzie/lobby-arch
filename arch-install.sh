@@ -7,16 +7,30 @@ echo "This will wipe the selected disk!"
 echo "======================================="
 
 # --- Interactive prompts ---
-read -rp "Target disk (example /dev/sda): " DISK
-read -rp "New hostname: " HOSTNAME
-read -rp "New username: " USERNAME
-read -rsp "Password for new user: " PASSWORD
+echo -n "Target disk (example /dev/sda): "
+read DISK
+
+echo -n "New hostname: "
+read HOSTNAME
+
+echo -n "New username: "
+read USERNAME
+
+echo -n "Password for new user: "
+stty -echo
+read PASSWORD
+stty echo
 echo
-read -rp "Timezone (default America/Halifax): " TIMEZONE
+
+echo -n "Timezone (default America/Halifax): "
+read TIMEZONE
 TIMEZONE=${TIMEZONE:-America/Halifax}
-read -rp "Locale (default en_US.UTF-8): " LOCALE
+
+echo -n "Locale (default en_US.UTF-8): "
+read LOCALE
 LOCALE=${LOCALE:-en_US.UTF-8}
 
+# --- Paths and partition sizes ---
 EFI_SIZE="512MiB"
 ROOT_PART="100%"
 ROUTE19_LOGO="/tmp/route19-logo.png"
@@ -24,6 +38,7 @@ ROUTE19_LOGO="/tmp/route19-logo.png"
 echo "==> Downloading Route 19 logo..."
 curl -L -o "$ROUTE19_LOGO" "https://www.route19.com/assets/images/image01.png?v=fa76ddff"
 
+# --- Partitioning ---
 echo "==> Partitioning $DISK..."
 parted --script "$DISK" \
   mklabel gpt \
@@ -43,13 +58,15 @@ mount "$ROOT" /mnt
 mkdir -p /mnt/boot
 mount "$EFI" /mnt/boot
 
-echo "==> Installing base system..."
+# --- Install base system ---
+echo "==> Installing base packages..."
 pacstrap /mnt base linux linux-firmware vim networkmanager sudo git \
     base-devel openssh rng-tools curl
 
 echo "==> Generating fstab..."
 genfstab -U /mnt >> /mnt/etc/fstab
 
+# --- Chroot and configuration ---
 echo "==> Entering chroot for configuration..."
 arch-chroot /mnt /bin/bash <<EOF
 set -e
@@ -99,7 +116,7 @@ pacman -Syu --noconfirm hyprland hyprpaper xorg-server \
     plymouth plymouth-theme-spinner libcec cec-utils \
     nodejs npm curl
 
-# Enable SSH (optional)
+# Enable SSH
 systemctl enable sshd
 
 # Plymouth bootsplash with Route 19 logo
@@ -110,6 +127,7 @@ mkinitcpio -P
 
 EOF
 
+# --- Finish up ---
 echo "==> Unmounting partitions..."
 umount -R /mnt
 
