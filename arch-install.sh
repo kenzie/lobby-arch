@@ -71,11 +71,13 @@ curl -L -o "$ROUTE19_LOGO" "https://www.route19.com/assets/images/image01.png?v=
 
 # --- Partitioning ---
 echo "==> Partitioning $DISK..."
-parted --script "$DISK" \
-  mklabel gpt \
-  mkpart primary fat32 1MiB $EFI_SIZE \
-  set 1 esp on \
-  mkpart primary ext4 $EFI_SIZE $ROOT_PART
+parted --script "$DISK" mklabel gpt \
+    mkpart primary fat32 1MiB $EFI_SIZE set 1 esp on \
+    mkpart primary ext4 $EFI_SIZE $ROOT_PART
+
+# --- Refresh kernel partition table ---
+partprobe "$DISK"
+sleep 1
 
 # --- Determine partition names ---
 if [[ "$DISK" =~ nvme ]]; then
@@ -91,14 +93,14 @@ echo "ROOT partition: $ROOT"
 
 # --- Formatting ---
 echo "==> Formatting partitions..."
-mkfs.fat -F32 "$EFI"
 mkfs.ext4 -F "$ROOT"
+mkfs.fat -F32 "$EFI"
 
 # --- Mounting ---
 echo "==> Mounting partitions..."
 mount "$ROOT" /mnt
 mkdir -p /mnt/boot
-mount "$EFI" /mnt/boot
+mount -t vfat "$EFI" /mnt/boot
 
 # --- Install base system ---
 echo "==> Installing base packages..."
