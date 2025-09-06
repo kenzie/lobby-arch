@@ -5,7 +5,7 @@ set -euo pipefail
 
 # Module info
 MODULE_NAME="Hyprland Setup"
-MODULE_VERSION="1.0"
+MODULE_VERSION="1.1"
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
