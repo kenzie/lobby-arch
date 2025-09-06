@@ -94,6 +94,7 @@ pacstrap /mnt base linux linux-firmware vim networkmanager sudo git \
     base-devel openssh rng-tools curl \
     hyprland hyprpaper xorg-server \
     xdg-desktop-portal xdg-desktop-portal-wlr \
+    alacritty \
     chromium nginx python python-pip rclone \
     nodejs npm \
     plymouth cdrtools

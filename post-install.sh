@@ -76,8 +76,8 @@ bind = SUPER, M, exit
 bind = SUPER, V, togglefloating
 bind = SUPER, P, pseudo
 bind = SUPER, J, togglesplit
-bind = SUPER, Return, exec, foot
-bind = SUPER, T, exec, foot
+bind = SUPER, Return, exec, alacritty
+bind = SUPER, T, exec, alacritty
 bind = SUPER, E, exec, thunar
 
 # Move focus with mainMod + arrow keys
