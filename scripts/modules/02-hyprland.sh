@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Hyprland Configuration Module
+# Test change for sync functionality
 
 set -euo pipefail
 
 # Module info
 MODULE_NAME="Hyprland Setup"
-MODULE_VERSION="1.1"
+MODULE_VERSION="1.0"
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
