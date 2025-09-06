@@ -52,7 +52,7 @@ cat > $HOME_DIR/.config/hypr/hyprland.conf <<EOF
 monitor=,preferred,auto,1
 
 # Wallpaper configuration with centered Route 19 logo
-exec-once = swaybg -i $HOME/.config/hypr/route19-centered.png -m center -c "#1a1a1a"
+exec-once = swaybg -i /home/$USER/.config/hypr/route19-centered.png -m center -c "#1a1a1a"
 
 # Input configuration
 input {
