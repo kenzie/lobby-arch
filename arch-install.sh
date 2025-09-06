@@ -77,13 +77,24 @@ parted --script "$DISK" \
   set 1 esp on \
   mkpart primary ext4 $EFI_SIZE $ROOT_PART
 
-EFI="${DISK}1"
-ROOT="${DISK}2"
+# --- Determine partition names ---
+if [[ "$DISK" =~ nvme ]]; then
+    EFI="${DISK}p1"
+    ROOT="${DISK}p2"
+else
+    EFI="${DISK}1"
+    ROOT="${DISK}2"
+fi
 
+echo "EFI partition: $EFI"
+echo "ROOT partition: $ROOT"
+
+# --- Formatting ---
 echo "==> Formatting partitions..."
 mkfs.fat -F32 "$EFI"
 mkfs.ext4 -F "$ROOT"
 
+# --- Mounting ---
 echo "==> Mounting partitions..."
 mount "$ROOT" /mnt
 mkdir -p /mnt/boot
