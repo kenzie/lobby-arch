@@ -68,7 +68,7 @@ general {
 }
 
 # Window rules for fullscreen applications
-windowrule = fullscreen,chromium
+windowrulev2 = fullscreen,class:^(chromium)$
 
 # Key bindings
 bind = SUPER, Q, killactive
