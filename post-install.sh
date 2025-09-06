@@ -71,14 +71,13 @@ general {
 windowrulev2 = fullscreen,class:^(chromium)$
 
 # Key bindings
-bind = SUPER, Q, killactive
+bind = SUPER, W, killactive
 bind = SUPER, M, exit
 bind = SUPER, V, togglefloating
 bind = SUPER, P, pseudo
 bind = SUPER, J, togglesplit
 bind = SUPER, Return, exec, alacritty
 bind = SUPER, T, exec, alacritty
-bind = SUPER, E, exec, thunar
 bind = SUPER, B, exec, chromium
 
 # Move focus with mainMod + arrow keys
