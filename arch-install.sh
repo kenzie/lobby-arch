@@ -1,3 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "======================================="
+echo "ARCH LOBBY INSTALLER (Interactive)"
+echo "All data on the target disk will be erased!"
+echo "======================================="
+
+# --- List available disks ---
+echo "Available disks:"
+lsblk -d -o NAME,SIZE,MODEL
+echo
+
+# --- Prompt for target disk ---
+echo -n "Enter target disk (e.g., nvme0n1, sda): "
+read DISK
+[[ ! "$DISK" =~ ^/dev/ ]] && DISK="/dev/$DISK"
+[[ ! -b "$DISK" ]] && echo "Error: $DISK not valid" && exit 1
+
+echo "You selected $DISK. All data will be erased!"
+echo -n "Are you sure? (y/N): "
+read CONFIRM
+[[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]] && echo "Aborting." && exit 1
+
+# --- Prompt hostname/user ---
+DEFAULT_HOSTNAME="lobby-screen"
+DEFAULT_USER="lobby"
+
+echo -n "New hostname (default $DEFAULT_HOSTNAME): "
+read HOSTNAME
+HOSTNAME=${HOSTNAME:-$DEFAULT_HOSTNAME}
+
+echo -n "New username (default $DEFAULT_USER): "
+read USERNAME
+USERNAME=${USERNAME:-$DEFAULT_USER}
+
+echo -n "Password for new user: "
+stty -echo
+read PASSWORD
+stty echo
+echo
+
+echo -n "Timezone (default America/Halifax): "
+read TIMEZONE
+TIMEZONE=${TIMEZONE:-America/Halifax}
+
+echo -n "Locale (default en_US.UTF-8): "
+read LOCALE
+LOCALE=${LOCALE:-en_US.UTF-8}
+
+# --- Clean disk ---
+echo "==> Cleaning $DISK..."
+swapoff -a
+umount -R "$DISK"* || true
+sgdisk --zap-all "$DISK"
+sgdisk -g "$DISK"
+partprobe "$DISK"
+sleep 2
+
 # --- Partitioning ---
 EFI_SIZE="512MiB"
 ROOT_PART="100%"
@@ -19,11 +78,93 @@ echo "EFI: $EFI, ROOT: $ROOT"
 
 # --- Format & label partitions ---
 echo "==> Formatting partitions..."
-mkfs.ext4 -F "$ROOT" -L ROOT       # Automatically sets root label
-mkfs.fat -F32 "$EFI"               # FAT32 doesn't support e2label
-fatlabel "$EFI" EFI                 # Set EFI label
+mkfs.fat -F32 "$EFI"
+fatlabel "$EFI" EFI
+
+mkfs.ext4 -F "$ROOT" -L ROOT
 
 # --- Mount ---
 mount "$ROOT" /mnt
 mkdir -p /mnt/boot
 mount -t vfat "$EFI" /mnt/boot
+
+# --- Install base system ---
+echo "==> Installing base packages..."
+pacstrap /mnt base linux linux-firmware vim networkmanager sudo git \
+    base-devel openssh rng-tools curl \
+    hyprland hyprpaper xorg-server \
+    xdg-desktop-portal xdg-desktop-portal-wlr \
+    chromium nginx python python-pip rclone \
+    nodejs npm
+
+genfstab -U /mnt >> /mnt/etc/fstab
+
+# --- Chroot configuration ---
+arch-chroot /mnt /bin/bash <<EOF
+set -e
+
+# Timezone & locale
+ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime
+hwclock --systohc
+echo "$LOCALE UTF-8" > /etc/locale.gen
+locale-gen
+echo "LANG=$LOCALE" > /etc/locale.conf
+
+# Hostname
+echo "$HOSTNAME" > /etc/hostname
+echo "127.0.0.1 localhost" >> /etc/hosts
+
+# Bootloader (systemd-boot)
+bootctl --path=/boot install
+cat > /boot/loader/loader.conf <<LOADER
+default  arch
+timeout  3
+console-mode max
+editor  no
+LOADER
+
+ROOT_UUID=\$(blkid -s UUID -o value "$ROOT")
+cat > /boot/loader/entries/arch.conf <<ENTRY
+title   Arch Linux
+linux   /vmlinuz-linux
+initrd  /initramfs-linux.img
+options root=UUID=\$ROOT_UUID rw quiet loglevel=3
+ENTRY
+
+# Root password
+echo "root:${PASSWORD}" | chpasswd
+
+# User creation
+useradd -m -G wheel -s /bin/bash $USERNAME
+echo "${USERNAME}:${PASSWORD}" | chpasswd
+echo "%wheel ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/999_lobby
+
+# Enable NetworkManager and SSH
+systemctl enable NetworkManager
+systemctl enable sshd
+EOF
+
+# --- Copy post-install script ---
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/post-install.sh -o /mnt/tmp/post-install.sh
+chmod +x /mnt/tmp/post-install.sh
+
+# --- Create systemd service to run post-install automatically on first boot ---
+cat > /mnt/etc/systemd/system/post-install.service <<EOF
+[Unit]
+Description=Post Install Setup
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/tmp/post-install.sh
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+arch-chroot /mnt systemctl enable post-install.service
+
+# --- Unmount and finish ---
+umount -R /mnt
+echo "==> Installation complete. Reboot now. The post-install script will run automatically on first boot."
