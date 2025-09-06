@@ -51,8 +51,15 @@ cat > $HOME_DIR/.config/hypr/hyprland.conf <<EOF
 # Basic Hyprland configuration
 monitor=,preferred,auto,1
 
+# Set black background to prevent default wallpapers
+misc {
+    disable_hyprland_logo = true
+    disable_splash_rendering = true
+    col.splash = rgba(000000ff)
+}
+
 # Wallpaper configuration with centered Route 19 logo
-exec-once = /home/$USER/.config/hypr/start-wallpaper.sh
+exec = /home/$USER/.config/hypr/start-wallpaper.sh
 
 # Input configuration
 input {
