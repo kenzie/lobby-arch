@@ -65,8 +65,8 @@ COMMANDS:
     reset [module]          Reset configuration (full or specific module)
     update [module]         Update configuration (full or specific module)  
     validate [module]       Validate installation (full or specific module)
-    sync                    Update scripts from GitHub repository
-    check-updates           Check for available updates from GitHub
+    sync [--force]          Update scripts from GitHub repository
+    check-updates [--force] Check for available updates from GitHub
     list                    List available modules
     status                  Show system status
     logs                    Show recent logs
@@ -85,13 +85,20 @@ EXAMPLES:
     $0 update auto-updates  # Update automatic updates config
     $0 validate             # Validate full installation
     $0 sync                 # Update scripts from GitHub
+    $0 sync --force         # Force update (bypass cache)
     $0 check-updates        # Check for script updates
+    $0 check-updates --force # Force check (bypass cache)
     $0 status               # Show system status
 
 ENVIRONMENT VARIABLES:
     LOBBY_USER             Username (default: lobby)
     LOBBY_HOME             User home directory (default: /home/lobby)
     LOBBY_LOG              Log file location (default: /var/log/lobby-setup.log)
+
+NOTES:
+    GitHub's CDN may cache files for several minutes after updates.
+    Use --force flag to bypass cache and ensure you get the latest files.
+    The sync command creates backups before updating any files.
 
 EOF
 }
@@ -254,9 +261,50 @@ get_file_hash() {
     fi
 }
 
+# Download file with cache handling
+download_file() {
+    local url="$1"
+    local output="$2"
+    local force_cache_bypass="${3:-false}"
+    local max_retries=3
+    local retry_delay=5
+    
+    for attempt in $(seq 1 $max_retries); do
+        local curl_opts="-sSL"
+        
+        if [[ "$force_cache_bypass" == "true" ]]; then
+            # Add timestamp to URL as query parameter for cache busting
+            local cache_buster="?cb=$(date +%s)&t=$(date +%N)"
+            url="${url}${cache_buster}"
+        fi
+        
+        if curl -sSL \
+            ${force_cache_bypass:+-H "Cache-Control: no-cache, no-store, must-revalidate"} \
+            ${force_cache_bypass:+-H "Pragma: no-cache"} \
+            ${force_cache_bypass:+-H "Expires: 0"} \
+            "$url" -o "$output" 2>/dev/null; then
+            return 0
+        else
+            if [[ $attempt -lt $max_retries ]]; then
+                warning "Download attempt $attempt failed, retrying in ${retry_delay}s..."
+                sleep $retry_delay
+                retry_delay=$((retry_delay * 2))  # Exponential backoff
+            fi
+        fi
+    done
+    
+    return 1
+}
+
 # Check for updates from GitHub
 check_for_updates() {
-    info "Checking for updates from GitHub repository: $GITHUB_REPO"
+    local force_cache_bypass="${1:-false}"
+    
+    if [[ "$force_cache_bypass" == "true" ]]; then
+        info "Checking for updates from GitHub repository: $GITHUB_REPO (bypassing cache)"
+    else
+        info "Checking for updates from GitHub repository: $GITHUB_REPO"
+    fi
     
     local updates_available=0
     local temp_dir
@@ -268,7 +316,7 @@ check_for_updates() {
         local temp_file="$temp_dir/$(basename "$github_path")"
         
         # Download file from GitHub
-        if curl -sSL "$GITHUB_BASE_URL/$github_path" -o "$temp_file" 2>/dev/null; then
+        if download_file "$GITHUB_BASE_URL/$github_path" "$temp_file" "$force_cache_bypass"; then
             local local_hash
             local remote_hash
             local_hash=$(get_file_hash "$local_file")
@@ -297,7 +345,13 @@ check_for_updates() {
 
 # Sync files from GitHub
 sync_from_github() {
-    info "Syncing files from GitHub repository: $GITHUB_REPO"
+    local force_cache_bypass="${1:-false}"
+    
+    if [[ "$force_cache_bypass" == "true" ]]; then
+        info "Syncing files from GitHub repository: $GITHUB_REPO (bypassing cache)"
+    else
+        info "Syncing files from GitHub repository: $GITHUB_REPO"
+    fi
     
     local synced_count=0
     local failed_count=0
@@ -316,7 +370,7 @@ sync_from_github() {
         info "Syncing: $local_path"
         
         # Download file from GitHub
-        if curl -sSL "$GITHUB_BASE_URL/$github_path" -o "$temp_file"; then
+        if download_file "$GITHUB_BASE_URL/$github_path" "$temp_file" "$force_cache_bypass"; then
             # Check if file content changed
             local local_hash
             local remote_hash
@@ -369,7 +423,19 @@ sync_from_github() {
 # Main command dispatcher
 main() {
     local command="${1:-}"
-    local module="${2:-}"
+    local arg2="${2:-}"
+    local force_cache_bypass="false"
+    
+    # Check for --force flag in any position
+    if [[ "$arg2" == "--force" ]] || [[ "${3:-}" == "--force" ]]; then
+        force_cache_bypass="true"
+        # Remove --force from arguments, keep module name if present
+        if [[ "$arg2" == "--force" ]]; then
+            arg2=""
+        fi
+    fi
+    
+    local module="$arg2"
     
     case "$command" in
         "setup"|"reset"|"update"|"validate")
@@ -382,10 +448,10 @@ main() {
             ;;
         "sync")
             check_root
-            sync_from_github
+            sync_from_github "$force_cache_bypass"
             ;;
         "check-updates")
-            check_for_updates
+            check_for_updates "$force_cache_bypass"
             ;;
         "list")
             list_modules
