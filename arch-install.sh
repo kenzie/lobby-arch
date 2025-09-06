@@ -14,28 +14,15 @@ echo
 # --- Prompt for target disk ---
 echo -n "Enter target disk: "
 read DISK
+[[ ! "$DISK" =~ ^/dev/ ]] && DISK="/dev/$DISK"
+[[ ! -b "$DISK" ]] && echo "Error: $DISK not valid" && exit 1
 
-# Ensure full /dev path
-if [[ ! "$DISK" =~ ^/dev/ ]]; then
-    DISK="/dev/$DISK"
-fi
-
-# Validate disk exists
-if [[ ! -b "$DISK" ]]; then
-    echo "Error: $DISK is not a valid block device."
-    exit 1
-fi
-
-# --- Confirm disk wipe ---
-echo "You selected $DISK. All data on this disk will be erased!"
+echo "You selected $DISK. All data will be erased!"
 echo -n "Are you sure? (y/N): "
 read CONFIRM
-if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
-    echo "Aborting."
-    exit 1
-fi
+[[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]] && echo "Aborting." && exit 1
 
-# --- Prompt for hostname, user, password, timezone, locale ---
+# --- Prompt hostname/user ---
 DEFAULT_HOSTNAME="lobby-screen"
 DEFAULT_USER="lobby"
 
@@ -61,25 +48,25 @@ echo -n "Locale (default en_US.UTF-8): "
 read LOCALE
 LOCALE=${LOCALE:-en_US.UTF-8}
 
-# --- Paths and partition sizes ---
-EFI_SIZE="512MiB"
-ROOT_PART="100%"
-ROUTE19_LOGO="/tmp/route19-logo.png"
-
-echo "==> Downloading Route 19 logo..."
-curl -L -o "$ROUTE19_LOGO" "https://www.route19.com/assets/images/image01.png?v=fa76ddff"
+# --- Clean disk (NVMe-safe) ---
+echo "==> Cleaning $DISK..."
+swapoff -a
+umount -R "$DISK"* || true
+sgdisk --zap-all "$DISK"
+sgdisk -g "$DISK"
+partprobe "$DISK"
+sleep 2
 
 # --- Partitioning ---
-echo "==> Partitioning $DISK..."
+EFI_SIZE="512MiB"
+ROOT_PART="100%"
+
+echo "==> Creating partitions..."
 parted --script "$DISK" mklabel gpt \
     mkpart primary fat32 1MiB $EFI_SIZE set 1 esp on \
     mkpart primary ext4 $EFI_SIZE $ROOT_PART
 
-# --- Refresh kernel partition table ---
-partprobe "$DISK"
-sleep 1
-
-# --- Determine partition names ---
+# --- Determine partitions ---
 if [[ "$DISK" =~ nvme ]]; then
     EFI="${DISK}p1"
     ROOT="${DISK}p2"
@@ -87,17 +74,12 @@ else
     EFI="${DISK}1"
     ROOT="${DISK}2"
 fi
+echo "EFI: $EFI, ROOT: $ROOT"
 
-echo "EFI partition: $EFI"
-echo "ROOT partition: $ROOT"
-
-# --- Formatting ---
-echo "==> Formatting partitions..."
+# --- Format & mount ---
 mkfs.ext4 -F "$ROOT"
 mkfs.fat -F32 "$EFI"
 
-# --- Mounting ---
-echo "==> Mounting partitions..."
 mount "$ROOT" /mnt
 mkdir -p /mnt/boot
 mount -t vfat "$EFI" /mnt/boot
@@ -105,16 +87,17 @@ mount -t vfat "$EFI" /mnt/boot
 # --- Install base system ---
 echo "==> Installing base packages..."
 pacstrap /mnt base linux linux-firmware vim networkmanager sudo git \
-    base-devel openssh rng-tools curl
+    base-devel openssh rng-tools curl \
+    hyprland hyprpaper xorg-server \
+    xdg-desktop-portal xdg-desktop-portal-wlr \
+    chromium nginx git python python-pip rclone \
+    nodejs npm
 
-echo "==> Generating fstab..."
 genfstab -U /mnt >> /mnt/etc/fstab
 
-# --- Chroot and configuration ---
-echo "==> Entering chroot for configuration..."
+# --- Chroot configuration ---
 arch-chroot /mnt /bin/bash <<EOF
 set -e
-
 # Timezone & locale
 ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime
 hwclock --systohc
@@ -139,7 +122,7 @@ cat > /boot/loader/entries/arch.conf <<ENTRY
 title   Arch Linux
 linux   /vmlinuz-linux
 initrd  /initramfs-linux.img
-options root=PARTLABEL=ROOT quiet splash loglevel=3
+options root=PARTLABEL=ROOT quiet loglevel=3
 ENTRY
 
 # Root password
@@ -150,29 +133,16 @@ useradd -m -G wheel -s /bin/bash $USERNAME
 echo "${USERNAME}:${PASSWORD}" | chpasswd
 echo "%wheel ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/999_lobby
 
-# Enable NetworkManager
+# Enable NetworkManager and SSH
 systemctl enable NetworkManager
-
-# Install essential packages
-pacman -Syu --noconfirm hyprland hyprpaper xorg-server \
-    xdg-desktop-portal xdg-desktop-portal-wlr \
-    chromium nginx git python python-pip rclone \
-    plymouth plymouth-theme-spinner libcec cec-utils \
-    nodejs npm curl
-
-# Enable SSH
 systemctl enable sshd
-
-# Plymouth bootsplash with Route 19 logo
-mkdir -p /usr/share/plymouth/themes/route19
-cp "$ROUTE19_LOGO" /usr/share/plymouth/themes/route19/
-plymouth-set-default-theme -R route19
-mkinitcpio -P
-
 EOF
 
-# --- Finish up ---
-echo "==> Unmounting partitions..."
-umount -R /mnt
+# --- Copy post-install script ---
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/post-install-plymouth.sh -o /mnt/tmp/post-install-plymouth.sh
+chmod +x /mnt/tmp/post-install-plymouth.sh
 
-echo "==> Installation complete. Reboot and remove USB."
+# --- Unmount and finish ---
+umount -R /mnt
+echo "==> Installation complete. Reboot and then log in to run post-install script:"
+echo "sudo /tmp/post-install-plymouth.sh"
