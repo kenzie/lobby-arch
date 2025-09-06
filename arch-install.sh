@@ -90,7 +90,7 @@ pacstrap /mnt base linux linux-firmware vim networkmanager sudo git \
     base-devel openssh rng-tools curl \
     hyprland hyprpaper xorg-server \
     xdg-desktop-portal xdg-desktop-portal-wlr \
-    chromium nginx git python python-pip rclone \
+    chromium nginx python python-pip rclone \
     nodejs npm
 
 genfstab -U /mnt >> /mnt/etc/fstab
@@ -139,10 +139,26 @@ systemctl enable sshd
 EOF
 
 # --- Copy post-install script ---
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/post-install-plymouth.sh -o /mnt/tmp/post-install-plymouth.sh
-chmod +x /mnt/tmp/post-install-plymouth.sh
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/post-install.sh -o /mnt/tmp/post-install.sh
+chmod +x /mnt/tmp/post-install.sh
+
+# --- Create systemd service to run post-install automatically on first boot ---
+cat > /mnt/etc/systemd/system/post-install.service <<EOF
+[Unit]
+Description=Post Install Setup
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/tmp/post-install.sh
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+arch-chroot /mnt systemctl enable post-install.service
 
 # --- Unmount and finish ---
 umount -R /mnt
-echo "==> Installation complete. Reboot and then log in to run post-install script:"
-echo "sudo /tmp/post-install-plymouth.sh"
+echo "==> Installation complete. Reboot now. The post-install script will run automatically on first boot."
