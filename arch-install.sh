@@ -116,13 +116,6 @@ echo "127.0.0.1 localhost" >> /etc/hosts
 
 # Bootloader (systemd-boot)
 bootctl --path=/boot install
-cat > /boot/loader/loader.conf <<LOADER
-default  arch
-timeout  3
-console-mode max
-editor  no
-LOADER
-
 ROOT_UUID=\$(blkid -s UUID -o value "$ROOT")
 cat > /boot/loader/entries/arch.conf <<ENTRY
 title   Arch Linux
@@ -142,6 +135,7 @@ echo "%wheel ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/999_lobby
 # Enable NetworkManager and SSH
 systemctl enable NetworkManager
 systemctl enable sshd
+
 EOF
 
 # --- Copy post-install script ---
@@ -167,4 +161,4 @@ arch-chroot /mnt systemctl enable post-install.service
 
 # --- Unmount and finish ---
 umount -R /mnt
-echo "==> Installation complete. Reboot now. The post-install script will run automatically on first boot."
+echo "==> Installation complete. Reboot now. The system will auto-login and launch Hyprland."
