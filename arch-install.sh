@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# === Interactive prompts ===
-read -rp "Target disk (example /dev/sda) : " DISK
+echo "======================================="
+echo "ARCH LOBBY INSTALLER (Interactive)"
+echo "This will wipe the selected disk!"
+echo "======================================="
+
+# --- Interactive prompts ---
+read -rp "Target disk (example /dev/sda): " DISK
 read -rp "New hostname: " HOSTNAME
 read -rp "New username: " USERNAME
 read -rsp "Password for new user: " PASSWORD
@@ -12,17 +17,14 @@ TIMEZONE=${TIMEZONE:-America/Halifax}
 read -rp "Locale (default en_US.UTF-8): " LOCALE
 LOCALE=${LOCALE:-en_US.UTF-8}
 
-# === Paths ===
 EFI_SIZE="512MiB"
 ROOT_PART="100%"
 ROUTE19_LOGO="/tmp/route19-logo.png"
 
-# === Download Route 19 logo ===
 echo "==> Downloading Route 19 logo..."
 curl -L -o "$ROUTE19_LOGO" "https://www.route19.com/assets/images/image01.png?v=fa76ddff"
 
-# === Partitioning ===
-echo "==> Partitioning $DISK"
+echo "==> Partitioning $DISK..."
 parted --script "$DISK" \
   mklabel gpt \
   mkpart primary fat32 1MiB $EFI_SIZE \
@@ -32,24 +34,23 @@ parted --script "$DISK" \
 EFI="${DISK}1"
 ROOT="${DISK}2"
 
-echo "==> Formatting partitions"
+echo "==> Formatting partitions..."
 mkfs.fat -F32 "$EFI"
 mkfs.ext4 -F "$ROOT"
 
-echo "==> Mounting partitions"
+echo "==> Mounting partitions..."
 mount "$ROOT" /mnt
 mkdir -p /mnt/boot
 mount "$EFI" /mnt/boot
 
-# === Install base system ===
-echo "==> Installing base packages"
+echo "==> Installing base system..."
 pacstrap /mnt base linux linux-firmware vim networkmanager sudo git \
-    base-devel openssh rng-tools
+    base-devel openssh rng-tools curl
 
+echo "==> Generating fstab..."
 genfstab -U /mnt >> /mnt/etc/fstab
 
-# === Chroot and configuration ===
-echo "==> Entering chroot"
+echo "==> Entering chroot for configuration..."
 arch-chroot /mnt /bin/bash <<EOF
 set -e
 
@@ -91,17 +92,17 @@ echo "%wheel ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/999_lobby
 # Enable NetworkManager
 systemctl enable NetworkManager
 
-# Essential packages
+# Install essential packages
 pacman -Syu --noconfirm hyprland hyprpaper xorg-server \
     xdg-desktop-portal xdg-desktop-portal-wlr \
     chromium nginx git python python-pip rclone \
     plymouth plymouth-theme-spinner libcec cec-utils \
     nodejs npm curl
 
-# SSH optional
+# Enable SSH (optional)
 systemctl enable sshd
 
-# === Plymouth splash with Route 19 logo ===
+# Plymouth bootsplash with Route 19 logo
 mkdir -p /usr/share/plymouth/themes/route19
 cp "$ROUTE19_LOGO" /usr/share/plymouth/themes/route19/
 plymouth-set-default-theme -R route19
@@ -109,6 +110,7 @@ mkinitcpio -P
 
 EOF
 
-# === Finish up ===
+echo "==> Unmounting partitions..."
 umount -R /mnt
-echo "==> Arch install complete. Reboot now and remove USB."
+
+echo "==> Installation complete. Reboot and remove USB."
