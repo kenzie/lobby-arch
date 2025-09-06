@@ -65,6 +65,6 @@ plymouth-set-default-theme -R route19
 
 # --- Cleanup ---
 systemctl disable post-install.service
-rm -f /tmp/post-install.sh
+rm -f /root/post-install.sh
 
 echo "==> Post-install tasks complete. The system will auto-login $USER and launch Hyprland with Plymouth splash."
