@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Route19
+Description=Route 19 splash theme
+ModuleName=script
+
+[script]
+ImageDir={{THEME_DIR}}
+ScriptFile={{THEME_DIR}}/route19.script

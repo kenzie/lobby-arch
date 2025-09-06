@@ -139,9 +139,28 @@ systemctl enable NetworkManager
 systemctl enable sshd
 EOF
 
-# --- Copy post-install script and assets to persistent location ---
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/post-install.sh -o /mnt/root/post-install.sh
-chmod +x /mnt/root/post-install.sh
+# --- Download modular installation scripts and assets ---
+mkdir -p /mnt/root/scripts/{modules,configs/plymouth}
+
+# Download main scripts
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/post-install.sh -o /mnt/root/scripts/post-install.sh
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/lobby.sh -o /mnt/root/scripts/lobby.sh
+
+# Download modules
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/01-autologin.sh -o /mnt/root/scripts/modules/01-autologin.sh
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/02-hyprland.sh -o /mnt/root/scripts/modules/02-hyprland.sh
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/03-plymouth.sh -o /mnt/root/scripts/modules/03-plymouth.sh
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/04-auto-updates.sh -o /mnt/root/scripts/modules/04-auto-updates.sh
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/99-cleanup.sh -o /mnt/root/scripts/modules/99-cleanup.sh
+
+# Download configuration files
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/configs/hyprland.conf -o /mnt/root/scripts/configs/hyprland.conf
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/configs/start-wallpaper.sh -o /mnt/root/scripts/configs/start-wallpaper.sh
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/configs/plymouth/route19.plymouth -o /mnt/root/scripts/configs/plymouth/route19.plymouth
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/configs/plymouth/route19.script -o /mnt/root/scripts/configs/plymouth/route19.script
+
+# Make scripts executable
+chmod +x /mnt/root/scripts/*.sh /mnt/root/scripts/modules/*.sh
 
 # Download logo asset
 mkdir -p /mnt/root/assets
@@ -156,7 +175,7 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/root/post-install.sh
+ExecStart=/root/scripts/post-install.sh
 RemainAfterExit=no
 StandardOutput=journal
 StandardError=journal
