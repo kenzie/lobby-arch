@@ -122,7 +122,7 @@ cat > /boot/loader/entries/arch.conf <<ENTRY
 title   Arch Linux
 linux   /vmlinuz-linux
 initrd  /initramfs-linux.img
-options root=UUID=\$ROOT_UUID rw quiet loglevel=3
+options root=UUID=\$ROOT_UUID rw quiet splash loglevel=3
 ENTRY
 
 # Root password
@@ -138,9 +138,9 @@ systemctl enable NetworkManager
 systemctl enable sshd
 EOF
 
-# --- Copy post-install script ---
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/post-install.sh -o /mnt/tmp/post-install.sh
-chmod +x /mnt/tmp/post-install.sh
+# --- Copy post-install script to persistent location ---
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/post-install.sh -o /mnt/root/post-install.sh
+chmod +x /mnt/root/post-install.sh
 
 # --- Create systemd service to run post-install automatically on first boot ---
 cat > /mnt/etc/systemd/system/post-install.service <<EOF
@@ -150,7 +150,7 @@ After=network.target
 
 [Service]
 Type=oneshot
-ExecStart=/tmp/post-install.sh
+ExecStart=/root/post-install.sh
 RemainAfterExit=no
 
 [Install]
