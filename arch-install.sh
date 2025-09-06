@@ -138,20 +138,27 @@ systemctl enable NetworkManager
 systemctl enable sshd
 EOF
 
-# --- Copy post-install script to persistent location ---
+# --- Copy post-install script and assets to persistent location ---
 curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/post-install.sh -o /mnt/root/post-install.sh
 chmod +x /mnt/root/post-install.sh
+
+# Download logo asset
+mkdir -p /mnt/root/assets
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/assets/route19-logo.png -o /mnt/root/assets/route19-logo.png
 
 # --- Create systemd service to run post-install automatically on first boot ---
 cat > /mnt/etc/systemd/system/post-install.service <<EOF
 [Unit]
 Description=Post Install Setup
-After=network.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=oneshot
 ExecStart=/root/post-install.sh
 RemainAfterExit=no
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
