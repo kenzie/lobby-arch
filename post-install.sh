@@ -52,7 +52,7 @@ cat > $HOME_DIR/.config/hypr/hyprland.conf <<EOF
 monitor=,preferred,auto,1
 
 # Wallpaper configuration with centered Route 19 logo
-exec-once = swaybg -i /home/$USER/.config/hypr/route19-centered.png -m center -c "#1a1a1a"
+exec-once = /home/$USER/.config/hypr/start-wallpaper.sh
 
 # Input configuration
 input {
@@ -105,6 +105,17 @@ bind = SUPER SHIFT, 3, movetoworkspace, 3
 bindm = SUPER, mouse:272, movewindow
 bindm = SUPER, mouse:273, resizewindow
 EOF
+
+# Create wallpaper startup script
+cat > $HOME_DIR/.config/hypr/start-wallpaper.sh <<WALLPAPER
+#!/bin/bash
+# Route 19 wallpaper startup script
+sleep 2
+pkill swaybg 2>/dev/null
+swaybg -i /home/$USER/.config/hypr/route19-centered.png -m center -c "#1a1a1a" &
+WALLPAPER
+
+chmod +x $HOME_DIR/.config/hypr/start-wallpaper.sh
 
 cat > $HOME_DIR/.config/systemd/user/hyprland.service <<EOF
 [Unit]
