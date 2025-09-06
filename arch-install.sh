@@ -1,17 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# === USER CONFIGURATION ===
-DISK="/dev/sda"             # TARGET DISK, change if needed
-HOSTNAME="lobby-m75q"
-USERNAME="lobby"
-PASSWORD="changeMe!"        # change later
-TIMEZONE="America/Halifax"
-LOCALE="en_US.UTF-8"
+# === Interactive prompts ===
+read -rp "Target disk (example /dev/sda) : " DISK
+read -rp "New hostname: " HOSTNAME
+read -rp "New username: " USERNAME
+read -rsp "Password for new user: " PASSWORD
+echo
+read -rp "Timezone (default America/Halifax): " TIMEZONE
+TIMEZONE=${TIMEZONE:-America/Halifax}
+read -rp "Locale (default en_US.UTF-8): " LOCALE
+LOCALE=${LOCALE:-en_US.UTF-8}
+
+# === Paths ===
 EFI_SIZE="512MiB"
-ROOT_PART="100%"             # rest of disk
-GITHUB_SSH_KEY=""            # optional, deploy key
-ROUTE19_LOGO_PATH="/path/to/route19-logo.png" # for plymouth
+ROOT_PART="100%"
+ROUTE19_LOGO="/tmp/route19-logo.png"
+
+# === Download Route 19 logo ===
+echo "==> Downloading Route 19 logo..."
+curl -L -o "$ROUTE19_LOGO" "https://www.route19.com/assets/images/image01.png?v=fa76ddff"
 
 # === Partitioning ===
 echo "==> Partitioning $DISK"
@@ -38,7 +46,6 @@ echo "==> Installing base packages"
 pacstrap /mnt base linux linux-firmware vim networkmanager sudo git \
     base-devel openssh rng-tools
 
-# Generate fstab
 genfstab -U /mnt >> /mnt/etc/fstab
 
 # === Chroot and configuration ===
@@ -84,19 +91,24 @@ echo "%wheel ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/999_lobby
 # Enable NetworkManager
 systemctl enable NetworkManager
 
-# Essential packages for lobby system
+# Essential packages
 pacman -Syu --noconfirm hyprland hyprpaper xorg-server \
     xdg-desktop-portal xdg-desktop-portal-wlr \
     chromium nginx git python python-pip rclone \
     plymouth plymouth-theme-spinner libcec cec-utils \
-    nodejs npm
+    nodejs npm curl
 
 # SSH optional
 systemctl enable sshd
 
+# === Plymouth splash with Route 19 logo ===
+mkdir -p /usr/share/plymouth/themes/route19
+cp "$ROUTE19_LOGO" /usr/share/plymouth/themes/route19/
+plymouth-set-default-theme -R route19
+mkinitcpio -P
+
 EOF
 
 # === Finish up ===
-echo "==> Unmounting and rebooting"
 umount -R /mnt
-echo "Arch install complete. Reboot now and remove USB."
+echo "==> Arch install complete. Reboot now and remove USB."
