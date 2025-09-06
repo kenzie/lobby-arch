@@ -6,15 +6,35 @@ echo "ARCH LOBBY INSTALLER (Interactive)"
 echo "This will wipe the selected disk!"
 echo "======================================="
 
-# --- Interactive prompts ---
-echo -n "Target disk (example /dev/sda): "
+# --- List available disks ---
+echo "Available disks:"
+lsblk -d -o NAME,SIZE,MODEL
+echo
+
+# --- Prompt for target disk ---
+echo -n "Enter target disk (example /dev/sda): "
 read DISK
 
-echo -n "New hostname: "
-read HOSTNAME
+# --- Confirm disk wipe ---
+echo "You selected $DISK. All data on this disk will be erased!"
+echo -n "Are you sure? (y/N): "
+read CONFIRM
+if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
+    echo "Aborting."
+    exit 1
+fi
 
-echo -n "New username: "
+# --- Prompt for hostname, user, password, timezone, locale ---
+DEFAULT_HOSTNAME="lobby-screen"
+DEFAULT_USER="lobby"
+
+echo -n "New hostname (default $DEFAULT_HOSTNAME): "
+read HOSTNAME
+HOSTNAME=${HOSTNAME:-$DEFAULT_HOSTNAME}
+
+echo -n "New username (default $DEFAULT_USER): "
 read USERNAME
+USERNAME=${USERNAME:-$DEFAULT_USER}
 
 echo -n "Password for new user: "
 stty -echo
