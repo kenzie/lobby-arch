@@ -36,23 +36,26 @@ setup_hyprland() {
     sed "s|{{HOME_DIR}}|$HOME_DIR|g" "$CONFIG_DIR/start-wallpaper.sh" > "$HOME_DIR/.config/hypr/start-wallpaper.sh"
     chmod +x "$HOME_DIR/.config/hypr/start-wallpaper.sh"
     
-    # Create systemd service for Hyprland
-    cat > "$HOME_DIR/.config/systemd/user/hyprland.service" <<EOF
-[Unit]
-Description=Hyprland Session
-After=graphical.target
-
-[Service]
-ExecStart=/usr/bin/Hyprland
-Restart=no
-Environment=DISPLAY=:0
-
-[Install]
-WantedBy=default.target
-EOF
-    
     # Set ownership
     chown -R "$USER:$USER" "$HOME_DIR/.config"
+    
+    # Add auto-start logic to bash profile for tty1 kiosk mode
+    cat >> "$HOME_DIR/.bash_profile" <<'EOF'
+
+# Auto-start Hyprland on tty1 for kiosk mode
+if [[ "$(tty)" == "/dev/tty1" ]]; then
+    exec Hyprland
+fi
+EOF
+    
+    # Enable seatd service for Wayland session management
+    log "Enabling seatd service"
+    systemctl enable seatd 2>/dev/null || true
+    systemctl start seatd 2>/dev/null || true
+    
+    # Add user to seat group for seatd access
+    log "Adding user to seat group"
+    usermod -a -G seat "$USER" 2>/dev/null || true
     
     # Enable linger for user services
     loginctl enable-linger "$USER" 2>/dev/null || true
@@ -64,13 +67,13 @@ EOF
 reset_hyprland() {
     log "Resetting Hyprland configuration"
     
-    # Stop user services
-    systemctl --user --machine="$USER@" stop hyprland.service 2>/dev/null || true
-    systemctl --user --machine="$USER@" disable hyprland.service 2>/dev/null || true
-    
     # Remove configs
     rm -rf "$HOME_DIR/.config/hypr"
-    rm -f "$HOME_DIR/.config/systemd/user/hyprland.service"
+    
+    # Reset bash profile (remove Hyprland auto-start section)
+    if [[ -f "$HOME_DIR/.bash_profile" ]]; then
+        sed -i '/# Auto-start Hyprland on tty1 for kiosk mode/,/^fi$/d' "$HOME_DIR/.bash_profile"
+    fi
     
     # Recreate and setup
     setup_hyprland
@@ -95,6 +98,12 @@ validate_hyprland() {
     
     if [[ ! -x "$HOME_DIR/.config/hypr/start-wallpaper.sh" ]]; then
         log "ERROR: Wallpaper script not executable"
+        ((errors++))
+    fi
+    
+    # Check if bash profile has auto-start logic
+    if ! grep -q "Auto-start Hyprland on tty1 for kiosk mode" "$HOME_DIR/.bash_profile" 2>/dev/null; then
+        log "ERROR: Hyprland auto-start not configured in bash profile"
         ((errors++))
     fi
     
