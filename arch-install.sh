@@ -22,17 +22,9 @@ echo -n "Are you sure? (y/N): "
 read CONFIRM
 [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]] && echo "Aborting." && exit 1
 
-# --- Prompt hostname/user ---
-DEFAULT_HOSTNAME="lobby-screen"
-DEFAULT_USER="lobby"
-
-echo -n "New hostname (default $DEFAULT_HOSTNAME): "
-read HOSTNAME
-HOSTNAME=${HOSTNAME:-$DEFAULT_HOSTNAME}
-
-echo -n "New username (default $DEFAULT_USER): "
-read USERNAME
-USERNAME=${USERNAME:-$DEFAULT_USER}
+# --- Set fixed hostname/user ---
+HOSTNAME="lobby-screen"
+USERNAME="lobby"
 
 echo -n "Password for new user: "
 stty -echo

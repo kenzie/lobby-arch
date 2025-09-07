@@ -29,11 +29,9 @@ setup_hyprland() {
     mkdir -p "$HOME_DIR/.config/hypr"
     mkdir -p "$HOME_DIR/.config/systemd/user"
     
-    # Process and install Hyprland config
-    sed "s/{{USER}}/$USER/g" "$CONFIG_DIR/hyprland.conf" > "$HOME_DIR/.config/hypr/hyprland.conf"
-    
-    # Process and install wallpaper script
-    sed "s|{{HOME_DIR}}|$HOME_DIR|g" "$CONFIG_DIR/start-wallpaper.sh" > "$HOME_DIR/.config/hypr/start-wallpaper.sh"
+    # Copy configuration files (no template substitution needed)
+    cp "$CONFIG_DIR/hyprland.conf" "$HOME_DIR/.config/hypr/hyprland.conf"
+    cp "$CONFIG_DIR/start-wallpaper.sh" "$HOME_DIR/.config/hypr/start-wallpaper.sh"
     chmod +x "$HOME_DIR/.config/hypr/start-wallpaper.sh"
     
     # Set ownership
