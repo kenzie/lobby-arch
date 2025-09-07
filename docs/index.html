@@ -132,7 +132,7 @@
         
         <div class="command-box" id="install-command">
             <button class="copy-button" onclick="copyCommand()">Copy</button>
-curl -sSL lobby.route19.com/install | bash
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/install | bash
         </div>
         
         <div class="warning">
@@ -192,7 +192,7 @@ curl -sSL lobby.route19.com/install | bash
 
     <script>
         function copyCommand() {
-            const command = 'curl -sSL lobby.route19.com/install | bash';
+            const command = 'curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/install | bash';
             navigator.clipboard.writeText(command).then(() => {
                 const button = document.querySelector('.copy-button');
                 const originalText = button.textContent;
