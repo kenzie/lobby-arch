@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route 19 Lobby Installer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            line-height: 1.6;
+            background: #1a1a1a;
+            color: #f5f5f5;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #a0a0a0;
+            margin-bottom: 0.5rem;
+        }
+        .subtitle {
+            color: #888;
+            font-size: 1.1rem;
+        }
+        .install-section {
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border-left: 4px solid #a0a0a0;
+        }
+        .command-box {
+            background: #1a1a1a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 1rem;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+            font-size: 0.9rem;
+            color: #f5f5f5;
+            margin: 1rem 0;
+            position: relative;
+            overflow-x: auto;
+        }
+        .copy-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: #444;
+            border: none;
+            color: #f5f5f5;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .copy-button:hover {
+            background: #555;
+        }
+        .copy-button.copied {
+            background: #4CAF50;
+        }
+        .step {
+            margin: 2rem 0;
+        }
+        .step-number {
+            display: inline-block;
+            background: #a0a0a0;
+            color: #1a1a1a;
+            width: 2rem;
+            height: 2rem;
+            text-align: center;
+            line-height: 2rem;
+            border-radius: 50%;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+        .requirements {
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        .warning {
+            background: rgba(255, 193, 7, 0.1);
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #444;
+            color: #888;
+            font-size: 0.9rem;
+        }
+        a {
+            color: #a0a0a0;
+        }
+        a:hover {
+            color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">Route 19</div>
+        <div class="subtitle">Lobby Screen Installer</div>
+    </div>
+
+    <div class="requirements">
+        <h3>Requirements</h3>
+        <ul>
+            <li>Lenovo M75q-1 Tiny (or compatible hardware)</li>
+            <li>Boot from Arch Linux ISO</li>
+            <li>Internet connection (Ethernet recommended)</li>
+            <li><strong>⚠️ All data on target disk will be erased</strong></li>
+        </ul>
+    </div>
+
+    <div class="install-section">
+        <h2>One-Command Installation</h2>
+        <p>Boot into the Arch Linux ISO and run:</p>
+        
+        <div class="command-box" id="install-command">
+            <button class="copy-button" onclick="copyCommand()">Copy</button>
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/arch-install.sh | bash
+        </div>
+        
+        <div class="warning">
+            <strong>Warning:</strong> This will completely wipe the selected disk and install a fresh Arch Linux system configured for lobby display use.
+        </div>
+    </div>
+
+    <div class="step">
+        <h2>Installation Steps</h2>
+        
+        <div style="margin: 1.5rem 0;">
+            <span class="step-number">1</span>
+            <strong>Boot Arch ISO:</strong> Insert USB and boot target machine
+        </div>
+        
+        <div style="margin: 1.5rem 0;">
+            <span class="step-number">2</span>
+            <strong>Connect Internet:</strong> Ensure ethernet is connected
+        </div>
+        
+        <div style="margin: 1.5rem 0;">
+            <span class="step-number">3</span>
+            <strong>Run Installer:</strong> Copy and paste the command above
+        </div>
+        
+        <div style="margin: 1.5rem 0;">
+            <span class="step-number">4</span>
+            <strong>Follow Prompts:</strong> Select disk and set password
+        </div>
+        
+        <div style="margin: 1.5rem 0;">
+            <span class="step-number">5</span>
+            <strong>Reboot:</strong> System will auto-configure on first boot
+        </div>
+    </div>
+
+    <div class="install-section">
+        <h3>What Gets Installed</h3>
+        <ul>
+            <li>Base Arch Linux system</li>
+            <li>Hyprland desktop environment</li>
+            <li>Plymouth boot splash with Route 19 branding</li>
+            <li>Auto-login as user: <code>lobby</code></li>
+            <li>Hostname: <code>lobby-screen</code></li>
+            <li>Automatic weekly system updates</li>
+            <li>SSH access enabled</li>
+        </ul>
+    </div>
+
+    <div class="footer">
+        <p>
+            <a href="https://github.com/kenzie/lobby-arch">View Source on GitHub</a> | 
+            Always pulls latest version from repository
+        </p>
+        <p>Route 19 Lobby Screen Installer</p>
+    </div>
+
+    <script>
+        function copyCommand() {
+            const command = 'curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/arch-install.sh | bash';
+            navigator.clipboard.writeText(command).then(() => {
+                const button = document.querySelector('.copy-button');
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                // Fallback: select the text
+                const commandBox = document.getElementById('install-command');
+                const range = document.createRange();
+                range.selectNodeContents(commandBox);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+            });
+        }
+    </script>
+</body>
+</html>
