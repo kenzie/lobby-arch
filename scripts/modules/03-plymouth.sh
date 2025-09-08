@@ -47,6 +47,25 @@ setup_plymouth() {
         echo "Route 19" > "$THEME_DIR/logo.png"
     fi
     
+    # Configure mkinitcpio hooks for Plymouth
+    log "Configuring mkinitcpio hooks for Plymouth"
+    if ! grep -q "plymouth" /etc/mkinitcpio.conf; then
+        # Backup original configuration
+        cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.backup
+        
+        # Add plymouth hook before filesystems
+        sed -i 's/HOOKS=(\([^)]*\) filesystems/HOOKS=(\1 plymouth filesystems/' /etc/mkinitcpio.conf
+        log "Added Plymouth hook to mkinitcpio configuration"
+        
+        # Regenerate initramfs
+        log "Regenerating initramfs with Plymouth support"
+        mkinitcpio -p linux || {
+            log "WARNING: Failed to regenerate initramfs (may not be in chroot environment)"
+        }
+    else
+        log "Plymouth hook already present in mkinitcpio configuration"
+    fi
+    
     # Set Plymouth theme
     plymouth-set-default-theme -R route19 2>/dev/null || {
         log "WARNING: Failed to set Plymouth theme (may not be in chroot environment)"
@@ -62,8 +81,7 @@ reset_plymouth() {
     # Remove theme directory
     rm -rf "$THEME_DIR"
     
-    # Remove wallpaper from user directory
-    rm -f "$HOME_DIR/.config/hypr/route19-centered.png"
+    # Note: Hyprland wallpaper removal not needed - system now uses X11 + Cage kiosk
     
     # Reset to default theme
     plymouth-set-default-theme -R text 2>/dev/null || true
@@ -100,16 +118,19 @@ validate_plymouth() {
         ((errors++))
     fi
     
-    # Check if wallpaper exists
-    if [[ ! -f "$HOME_DIR/.config/hypr/route19-centered.png" ]]; then
-        log "WARNING: Hyprland wallpaper not found"
-    fi
+    # Note: Hyprland wallpaper check removed - system now uses X11 + Cage kiosk
     
     # Check current Plymouth theme
     local current_theme
     current_theme=$(plymouth-set-default-theme 2>/dev/null || echo "unknown")
     if [[ "$current_theme" != "route19" ]]; then
         log "WARNING: Plymouth theme not set to route19 (current: $current_theme)"
+    fi
+    
+    # Check if Plymouth hook is in mkinitcpio configuration
+    if ! grep -q "plymouth" /etc/mkinitcpio.conf; then
+        log "ERROR: Plymouth hook not found in mkinitcpio configuration"
+        ((errors++))
     fi
     
     if [[ $errors -eq 0 ]]; then
