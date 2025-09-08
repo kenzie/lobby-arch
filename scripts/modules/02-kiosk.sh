@@ -27,8 +27,90 @@ setup_kiosk() {
     log "Setting up lobby kiosk system"
     
     # Install required packages
-    log "Installing Wayland and Chromium packages"
-    pacman -S --noconfirm cage seatd chromium nodejs npm git
+    log "Installing Wayland, Chromium, and font packages"
+    pacman -S --noconfirm cage seatd chromium nodejs npm git \
+        noto-fonts noto-fonts-extra noto-fonts-cjk ttf-dejavu ttf-opensans ttf-roboto \
+        ttf-cascadia-code-nerd cairo freetype2
+    
+    # Configure fonts for better rendering
+    log "Configuring font rendering"
+    cat > /etc/fonts/local.conf <<'EOF'
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+  <!-- Enable antialiasing -->
+  <match target="font">
+    <edit mode="assign" name="antialias">
+      <bool>true</bool>
+    </edit>
+  </match>
+
+  <!-- Enable hinting -->
+  <match target="font">
+    <edit mode="assign" name="hinting">
+      <bool>true</bool>
+    </edit>
+  </match>
+
+  <!-- Use hintslight for better rendering -->
+  <match target="font">
+    <edit mode="assign" name="hintstyle">
+      <const>hintslight</const>
+    </edit>
+  </match>
+
+  <!-- Enable subpixel rendering for LCD screens -->
+  <match target="font">
+    <edit mode="assign" name="rgba">
+      <const>rgb</const>
+    </edit>
+  </match>
+
+  <!-- Use lcdfilter for subpixel rendering -->
+  <match target="font">
+    <edit mode="assign" name="lcdfilter">
+      <const>lcddefault</const>
+    </edit>
+  </match>
+
+  <!-- Unified font configuration - Use CaskaydiaCove Nerd Font Mono for everything -->
+  <alias>
+    <family>sans-serif</family>
+    <prefer>
+      <family>CaskaydiaCove Nerd Font Mono</family>
+      <family>Noto Sans</family>
+      <family>Roboto</family>
+      <family>Open Sans</family>
+      <family>DejaVu Sans</family>
+      <family>Liberation Sans</family>
+    </prefer>
+  </alias>
+
+  <alias>
+    <family>serif</family>
+    <prefer>
+      <family>CaskaydiaCove Nerd Font Mono</family>
+      <family>Noto Serif</family>
+      <family>DejaVu Serif</family>
+      <family>Liberation Serif</family>
+    </prefer>
+  </alias>
+
+  <alias>
+    <family>monospace</family>
+    <prefer>
+      <family>CaskaydiaCove Nerd Font Mono</family>
+      <family>Noto Sans Mono</family>
+      <family>DejaVu Sans Mono</family>
+      <family>Liberation Mono</family>
+    </prefer>
+  </alias>
+</fontconfig>
+EOF
+    
+    # Rebuild font cache
+    log "Rebuilding font cache"
+    fc-cache -fv
     
     # Clone lobby-display repository
     log "Cloning lobby-display repository"

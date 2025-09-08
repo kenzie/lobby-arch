@@ -75,4 +75,4 @@ This will configure all lobby components automatically.
 ## Development Notes
 
 This project is developed on a test system with local changes being made alongside git project updates.
-
+- Make sure the git repo is kept up to date with the local system files and vice versa when making changes to the live machine
