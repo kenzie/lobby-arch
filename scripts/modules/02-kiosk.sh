@@ -27,8 +27,8 @@ setup_kiosk() {
     log "Setting up lobby kiosk system"
     
     # Install required packages
-    log "Installing X11 and Chromium packages"
-    pacman -S --noconfirm xorg-server xorg-xinit chromium nodejs npm git
+    log "Installing Wayland and Chromium packages"
+    pacman -S --noconfirm cage seatd chromium nodejs npm git
     
     # Clone lobby-display repository
     log "Cloning lobby-display repository"
@@ -59,7 +59,7 @@ Requires=network.target
 Type=simple
 User=$USER
 WorkingDirectory=$LOBBY_DISPLAY_DIR
-ExecStart=/usr/bin/npm run dev -- --port 8080 --host
+ExecStart=/usr/bin/npm run preview -- --port 8080 --host
 Restart=on-failure
 RestartSec=10
 Environment=NODE_ENV=production
@@ -68,43 +68,32 @@ Environment=NODE_ENV=production
 WantedBy=multi-user.target
 EOF
     
-    # Create systemd service for Chromium kiosk
-    log "Creating Chromium kiosk systemd service"
-    cat > /etc/systemd/system/lobby-kiosk.service <<EOF
+    # Enable seatd for Wayland session management
+    log "Setting up seatd for Wayland"
+    systemctl enable --now seatd.service
+    usermod -a -G seat "$USER"
+    
+    # Create Wayland kiosk service
+    log "Creating Wayland kiosk systemd service"
+    cat > /etc/systemd/system/lobby-wayland.service <<EOF
 [Unit]
-Description=Lobby Chromium Kiosk
-After=lobby-display.service network.target
-Requires=lobby-display.service
+Description=Lobby Wayland Kiosk Compositor
+After=graphical.target seatd.service lobby-display.service
+Requires=seatd.service lobby-display.service
 BindsTo=lobby-display.service
 
 [Service]
 Type=simple
 User=$USER
-Environment=DISPLAY=:0
-ExecStartPre=/usr/bin/sleep 5
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=WLR_TTY=/dev/tty1
+ExecStartPre=/usr/bin/mkdir -p /run/user/1000
+ExecStartPre=/usr/bin/chown $USER:$USER /run/user/1000
+ExecStartPre=/usr/bin/sleep 3
 ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 2; done'
-ExecStart=/usr/bin/chromium --no-sandbox --disable-dev-shm-usage --kiosk --disable-infobars --disable-session-crashed-bubble --disable-features=TranslateUI --no-first-run --disable-notifications --disable-extensions http://localhost:8080
+ExecStart=/usr/bin/cage -d -- /usr/bin/chromium --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --disable-dev-shm-usage --kiosk --disable-infobars --disable-session-crashed-bubble --disable-features=TranslateUI --no-first-run --disable-notifications --disable-extensions --enable-gpu-rasterization --enable-oop-rasterization --enable-hardware-overlays --force-device-scale-factor=1.0 --start-fullscreen http://localhost:8080
 Restart=on-failure
 RestartSec=10
-
-[Install]
-WantedBy=graphical.target
-EOF
-    
-    # Create X server service
-    log "Creating X server systemd service"
-    cat > /etc/systemd/system/xserver.service <<EOF
-[Unit]
-Description=X Server for Lobby Kiosk
-After=multi-user.target
-Before=lobby-kiosk.service
-
-[Service]
-Type=simple
-User=$USER
-ExecStart=/usr/bin/X :0 vt1 -nolisten tcp
-Restart=on-failure
-RestartSec=5
 
 [Install]
 WantedBy=graphical.target
@@ -113,9 +102,8 @@ EOF
     # Enable services
     log "Enabling kiosk services"
     systemctl daemon-reload
-    systemctl enable xserver.service
     systemctl enable lobby-display.service
-    systemctl enable lobby-kiosk.service
+    systemctl enable lobby-wayland.service
     
     log "Lobby kiosk setup completed"
 }
@@ -125,17 +113,14 @@ reset_kiosk() {
     log "Resetting kiosk configuration"
     
     # Stop and disable services
-    systemctl stop lobby-kiosk.service || true
+    systemctl stop lobby-wayland.service || true
     systemctl stop lobby-display.service || true
-    systemctl stop xserver.service || true
-    systemctl disable lobby-kiosk.service || true
+    systemctl disable lobby-wayland.service || true
     systemctl disable lobby-display.service || true
-    systemctl disable xserver.service || true
     
     # Remove service files
-    rm -f /etc/systemd/system/lobby-kiosk.service
+    rm -f /etc/systemd/system/lobby-wayland.service
     rm -f /etc/systemd/system/lobby-display.service
-    rm -f /etc/systemd/system/xserver.service
     
     # Clean up lobby-display directory
     rm -rf "$LOBBY_DISPLAY_DIR"
