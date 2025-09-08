@@ -55,7 +55,6 @@ check_url() {
 }
 
 # Monitor services
-check_service "xserver.service"
 check_service "lobby-display.service" 
 check_service "lobby-kiosk.service"
 
@@ -67,11 +66,9 @@ if ! check_url "http://localhost:8080"; then
     systemctl restart lobby-kiosk.service
 fi
 
-# Check X server display
-if ! DISPLAY=:0 xwininfo -root >/dev/null 2>&1; then
-    log "WARNING: X server display not responding, restarting xserver"
-    systemctl restart xserver.service
-    sleep 5
+# Check if Cage compositor is running (basic process check)
+if ! pgrep -f "cage.*chromium" >/dev/null; then
+    log "WARNING: Cage compositor not running, restarting kiosk service"
     systemctl restart lobby-kiosk.service
 fi
 
