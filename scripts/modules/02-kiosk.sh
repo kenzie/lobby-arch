@@ -29,7 +29,7 @@ setup_kiosk() {
     # Install required packages
     log "Installing Wayland, Chromium, and font packages"
     pacman -S --noconfirm cage seatd chromium nodejs npm git xorg-xwayland \
-        ttf-cascadia-code-nerd cairo freetype2
+        ttf-cascadia-code-nerd inter-font cairo freetype2
     
     # Configure fonts for better rendering
     log "Configuring font rendering"
@@ -72,18 +72,20 @@ setup_kiosk() {
     </edit>
   </match>
 
-  <!-- Unified font configuration - Use CaskaydiaCove Nerd Font Mono for everything -->
+  <!-- Font preferences -->
   <alias>
     <family>sans-serif</family>
     <prefer>
-      <family>CaskaydiaCove Nerd Font Mono</family>
+      <family>Inter</family>
+      <family>system-ui</family>
     </prefer>
   </alias>
 
   <alias>
     <family>serif</family>
     <prefer>
-      <family>CaskaydiaCove Nerd Font Mono</family>
+      <family>Inter</family>
+      <family>system-ui</family>
     </prefer>
   </alias>
 
