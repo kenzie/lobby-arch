@@ -1,6 +1,6 @@
 # Lobby Screen Arch Installer
 
-This repository provides a **repeatable Arch Linux installer** for lobby screens, designed to display information for a sports team. It installs a base Arch system with **Hyprland**, sets up users, networking, and automatically runs a post-install script to install Plymouth with a Route 19 branded boot splash.
+This repository provides a **repeatable Arch Linux installer** for lobby screens, designed to display information for a sports team. It installs a base Arch system with **Wayland/Cage kiosk compositor**, sets up users, networking, and automatically runs a modular post-install script to configure the complete lobby display system.
 
 ---
 
@@ -9,12 +9,15 @@ This repository provides a **repeatable Arch Linux installer** for lobby screens
 - Automated Arch Linux base install
 - User creation with default `lobby` user and hostname `lobby-screen`
 - EFI + root partition setup (supports NVMe and SATA)
-- Hyprland installed with basic desktop environment
+- Wayland/Cage kiosk compositor setup (replaced Hyprland for better reliability)
 - NetworkManager + SSH enabled
-- **Automatic first-boot post-install**:
-  - Installs AUR helper `yay`
-  - Installs Plymouth and sets up Route 19 splash theme
-  - Cleans itself after running
+- **Modular post-install system**:
+  - Route 19 Plymouth boot splash screen
+  - Automated lobby-display Vue.js app management
+  - Service monitoring and automatic restart
+  - Daily schedule (11:59 PM shutdown, 8:00 AM startup)
+  - Automated system and project updates (2:00 AM daily)
+  - Complete systemd service integration
 - Fully idempotent and repeatable on new hardware
 
 ---
@@ -49,3 +52,62 @@ chmod +x /tmp/arch-install.sh
 
 # Run installer
 /tmp/arch-install.sh
+```
+
+### 3. Automatic post-install setup
+
+The installer automatically runs the post-install script on first boot, setting up all lobby components.
+
+---
+
+## System Management
+
+After installation, use the lobby management script for system operations:
+
+### Available Commands
+
+```bash
+# Full system setup (run automatically on first boot)
+sudo ./scripts/lobby.sh setup
+
+# Check system status
+./scripts/lobby.sh status
+
+# View recent logs
+./scripts/lobby.sh logs
+
+# List available modules
+./scripts/lobby.sh list
+
+# Update from GitHub repository
+sudo ./scripts/lobby.sh sync
+
+# Check for available updates
+./scripts/lobby.sh check-updates
+
+# Force update (bypass cache)
+sudo ./scripts/lobby.sh sync --force
+
+# Module-specific operations
+sudo ./scripts/lobby.sh setup kiosk      # Setup specific module
+sudo ./scripts/lobby.sh reset plymouth   # Reset specific module
+sudo ./scripts/lobby.sh validate         # Validate all modules
+```
+
+### Module Structure
+
+The system uses a modular architecture with the following components:
+
+- **02-kiosk.sh** - Wayland/Cage compositor + Chromium kiosk setup
+- **03-plymouth.sh** - Route 19 boot splash screen configuration  
+- **04-auto-updates.sh** - Automated system and project updates
+- **05-monitoring.sh** - Service health monitoring and restart
+- **06-scheduler.sh** - Daily operation schedule (8 AM start, 11:59 PM stop)
+- **99-cleanup.sh** - Final system cleanup and optimization
+
+### Daily Schedule
+
+The system operates on an automated schedule:
+- **8:00 AM**: Start lobby-display and kiosk services
+- **11:59 PM**: Stop all lobby services
+- **2:00 AM**: Run system updates (during downtime)
