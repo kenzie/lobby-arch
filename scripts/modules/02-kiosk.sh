@@ -170,6 +170,11 @@ RestartSec=10
 WantedBy=graphical.target
 EOF
     
+    # Disable getty on tty1 to prevent login prompt (kiosk doesn't need login)
+    log "Disabling getty@tty1 service for seamless boot"
+    systemctl disable getty@tty1.service || true
+    systemctl mask getty@tty1.service || true
+    
     # Enable services
     log "Enabling kiosk services"
     systemctl daemon-reload
