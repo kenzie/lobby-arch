@@ -1,1 +1,21 @@
-plymouth_set_background_image("logo.png");
+# Load the logo image
+logo_image = Image("logo.png");
+
+# Get screen dimensions
+screen_width = Window.GetWidth();
+screen_height = Window.GetHeight();
+
+# Calculate center position
+logo_width = logo_image.GetWidth();
+logo_height = logo_image.GetHeight();
+
+x = (screen_width - logo_width) / 2;
+y = (screen_height - logo_height) / 2;
+
+# Create sprite and position it
+logo_sprite = Sprite(logo_image);
+logo_sprite.SetPosition(x, y, 0);
+
+# Set background to black
+Window.SetBackgroundTopColor(0, 0, 0);
+Window.SetBackgroundBottomColor(0, 0, 0);
