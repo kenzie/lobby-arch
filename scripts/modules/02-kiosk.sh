@@ -28,8 +28,7 @@ setup_kiosk() {
     
     # Install required packages
     log "Installing Wayland, Chromium, and font packages"
-    pacman -S --noconfirm cage seatd chromium nodejs npm git \
-        noto-fonts noto-fonts-extra noto-fonts-cjk ttf-dejavu ttf-opensans ttf-roboto \
+    pacman -S --noconfirm cage seatd chromium nodejs npm git xorg-xwayland \
         ttf-cascadia-code-nerd cairo freetype2
     
     # Configure fonts for better rendering
@@ -78,11 +77,6 @@ setup_kiosk() {
     <family>sans-serif</family>
     <prefer>
       <family>CaskaydiaCove Nerd Font Mono</family>
-      <family>Noto Sans</family>
-      <family>Roboto</family>
-      <family>Open Sans</family>
-      <family>DejaVu Sans</family>
-      <family>Liberation Sans</family>
     </prefer>
   </alias>
 
@@ -90,9 +84,6 @@ setup_kiosk() {
     <family>serif</family>
     <prefer>
       <family>CaskaydiaCove Nerd Font Mono</family>
-      <family>Noto Serif</family>
-      <family>DejaVu Serif</family>
-      <family>Liberation Serif</family>
     </prefer>
   </alias>
 
@@ -100,9 +91,6 @@ setup_kiosk() {
     <family>monospace</family>
     <prefer>
       <family>CaskaydiaCove Nerd Font Mono</family>
-      <family>Noto Sans Mono</family>
-      <family>DejaVu Sans Mono</family>
-      <family>Liberation Mono</family>
     </prefer>
   </alias>
 </fontconfig>
