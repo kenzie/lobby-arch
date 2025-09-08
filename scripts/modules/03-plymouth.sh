@@ -71,6 +71,33 @@ setup_plymouth() {
         log "WARNING: Failed to set Plymouth theme (may not be in chroot environment)"
     }
     
+    # Mask default plymouth-quit to prevent early termination
+    log "Configuring Plymouth to stay active until kiosk launches"
+    systemctl mask plymouth-quit.service || true
+    
+    # Override plymouth-quit-wait with kiosk-aware logic
+    log "Creating kiosk-aware plymouth-quit-wait service"
+    cat > /etc/systemd/system/plymouth-quit-wait.service <<EOF
+[Unit]
+Description=Hold until boot process finishes up (Kiosk Version)
+After=rc-local.service plymouth-start.service systemd-user-sessions.service lobby-kiosk.service
+Requires=lobby-kiosk.service
+
+[Service]
+Type=oneshot
+# Wait for cage process to be running (kiosk is up)
+ExecStartPre=/bin/bash -c 'while ! pgrep -f cage >/dev/null; do sleep 1; done'
+# Give it a moment to fully initialize
+ExecStartPre=/bin/bash -c 'sleep 2'
+# Quit plymouth boot screen
+ExecStart=/usr/bin/plymouth quit
+RemainAfterExit=yes
+TimeoutSec=60
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    
     log "Plymouth theme configuration completed"
 }
 
@@ -81,7 +108,9 @@ reset_plymouth() {
     # Remove theme directory
     rm -rf "$THEME_DIR"
     
-    # Note: Hyprland wallpaper removal not needed - system now uses X11 + Cage kiosk
+    # Reset Plymouth services
+    systemctl unmask plymouth-quit.service || true
+    rm -f /etc/systemd/system/plymouth-quit-wait.service
     
     # Reset to default theme
     plymouth-set-default-theme -R text 2>/dev/null || true
@@ -131,6 +160,17 @@ validate_plymouth() {
     if ! grep -q "plymouth" /etc/mkinitcpio.conf; then
         log "ERROR: Plymouth hook not found in mkinitcpio configuration"
         ((errors++))
+    fi
+    
+    # Check if custom Plymouth quit wait service exists
+    if [[ ! -f "/etc/systemd/system/plymouth-quit-wait.service" ]]; then
+        log "ERROR: Plymouth quit wait service not found"
+        ((errors++))
+    fi
+    
+    # Check if default Plymouth quit service is masked
+    if ! systemctl is-masked plymouth-quit.service >/dev/null 2>&1; then
+        log "WARNING: Default Plymouth quit service is not masked"
     fi
     
     if [[ $errors -eq 0 ]]; then
