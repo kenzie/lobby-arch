@@ -28,7 +28,7 @@ setup_kiosk() {
     
     # Install required packages
     log "Installing Wayland and Chromium packages"
-    pacman -S --noconfirm sway seatd chromium nodejs npm git
+    pacman -S --noconfirm cage seatd chromium nodejs npm git
     
     # Clone lobby-display repository
     log "Cloning lobby-display repository"
@@ -73,41 +73,11 @@ EOF
     systemctl enable --now seatd.service
     usermod -a -G seat "$USER"
     
-    # Create Sway kiosk configuration
-    log "Creating Sway kiosk configuration"
-    mkdir -p "$HOME_DIR/.config/sway"
-    cat > "$HOME_DIR/.config/sway/config" <<'SWAYEOF'
-# Sway Kiosk Configuration for Lobby Display
-# This config runs Chromium in fullscreen kiosk mode
-
-# Output configuration
-output * bg #000000 solid_color
-
-# Disable window titlebars and borders
-default_border none
-default_floating_border none
-
-# Disable gaps
-gaps inner 0
-gaps outer 0
-
-# Hide cursor after inactivity
-seat seat0 hide_cursor 5000
-
-# Auto-start Chromium in kiosk mode
-exec chromium --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --disable-dev-shm-usage --kiosk --disable-infobars --disable-session-crashed-bubble --disable-features=TranslateUI --no-first-run --disable-notifications --disable-extensions --enable-gpu-rasterization --enable-oop-rasterization --enable-hardware-overlays --force-device-scale-factor=1.0 --start-fullscreen http://localhost:8080
-
-# Make sure Chromium is fullscreen
-for_window [app_id="chromium-browser"] fullscreen enable
-for_window [class="Chromium"] fullscreen enable
-SWAYEOF
-    chown -R "$USER:$USER" "$HOME_DIR/.config"
-    
-    # Create Sway Wayland kiosk service
-    log "Creating Sway Wayland kiosk systemd service"
+    # Create Wayland kiosk service
+    log "Creating Wayland kiosk systemd service"
     cat > /etc/systemd/system/lobby-wayland.service <<EOF
 [Unit]
-Description=Lobby Sway Kiosk Compositor
+Description=Lobby Wayland Kiosk Compositor
 After=graphical.target seatd.service lobby-display.service
 Requires=seatd.service lobby-display.service
 BindsTo=lobby-display.service
@@ -116,13 +86,12 @@ BindsTo=lobby-display.service
 Type=simple
 User=$USER
 Environment=XDG_RUNTIME_DIR=/run/user/1000
-Environment=XDG_CONFIG_HOME=$HOME_DIR/.config
 Environment=WLR_TTY=/dev/tty1
 ExecStartPre=/usr/bin/mkdir -p /run/user/1000
 ExecStartPre=/usr/bin/chown $USER:$USER /run/user/1000
 ExecStartPre=/usr/bin/sleep 3
 ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 2; done'
-ExecStart=/usr/bin/sway
+ExecStart=/usr/bin/cage -d -- /usr/bin/chromium --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --disable-dev-shm-usage --kiosk --disable-infobars --disable-session-crashed-bubble --disable-features=TranslateUI --no-first-run --disable-notifications --disable-extensions --enable-gpu-rasterization --enable-oop-rasterization --enable-hardware-overlays --force-device-scale-factor=1.0 --start-fullscreen http://localhost:8080
 Restart=on-failure
 RestartSec=10
 
