@@ -17,12 +17,12 @@ setup_auto_updates() {
     log "Setting up automatic pacman updates"
     
     # Create the update script
-    cat > /usr/local/bin/pacman-auto-update.sh <<'UPDATESCRIPT'
+    cat > /usr/local/bin/lobby-auto-update.sh <<'UPDATESCRIPT'
 #!/bin/bash
 
-# Automatic Pacman Updates Script with Error Recovery
+# Automatic Lobby System Updates Script with Error Recovery
 # Log file location
-LOG_FILE="/var/log/pacman-auto-update.log"
+LOG_FILE="/var/log/lobby-auto-update.log"
 MAX_LOG_SIZE=10485760  # 10MB in bytes
 
 # Function to log messages
@@ -116,6 +116,58 @@ perform_update() {
     fi
 }
 
+# Function to update lobby-arch project
+update_lobby_arch() {
+    local lobby_arch_dir="/home/lobby/Code/lobby-arch"
+    if [[ -d "$lobby_arch_dir/.git" ]]; then
+        log_message "Updating lobby-arch project..."
+        cd "$lobby_arch_dir"
+        if git pull origin main; then
+            log_message "lobby-arch updated successfully"
+            # Make scripts executable after update
+            chmod +x scripts/modules/*.sh 2>/dev/null || true
+            return 0
+        else
+            log_message "ERROR: Failed to update lobby-arch"
+            return 1
+        fi
+    else
+        log_message "lobby-arch directory not found or not a git repository"
+        return 1
+    fi
+}
+
+# Function to update lobby-display project
+update_lobby_display() {
+    local lobby_display_dir="/opt/lobby-display"
+    local user="lobby"
+    if [[ -d "$lobby_display_dir/.git" ]]; then
+        log_message "Updating lobby-display project..."
+        cd "$lobby_display_dir"
+        if sudo -u "$user" git pull origin main; then
+            log_message "lobby-display updated successfully"
+            # Rebuild the project
+            if sudo -u "$user" npm install && sudo -u "$user" npm run build; then
+                log_message "lobby-display rebuilt successfully"
+                # Restart services to use updated code
+                systemctl restart lobby-display.service
+                sleep 5
+                systemctl restart lobby-kiosk.service
+                return 0
+            else
+                log_message "ERROR: Failed to rebuild lobby-display"
+                return 1
+            fi
+        else
+            log_message "ERROR: Failed to update lobby-display"
+            return 1
+        fi
+    else
+        log_message "lobby-display directory not found or not a git repository"
+        return 1
+    fi
+}
+
 # Function to handle post-update tasks
 post_update_tasks() {
     # Check if reboot is needed (kernel update)
@@ -131,6 +183,10 @@ post_update_tasks() {
     if command -v updatedb >/dev/null; then
         updatedb 2>/dev/null && log_message "File database updated"
     fi
+    
+    # Update lobby projects
+    update_lobby_arch
+    update_lobby_display
 }
 
 # Main execution
@@ -175,19 +231,19 @@ main() {
 main "$@"
 UPDATESCRIPT
 
-    chmod +x /usr/local/bin/pacman-auto-update.sh
+    chmod +x /usr/local/bin/lobby-auto-update.sh
     
     # Create systemd service for automatic updates
-    cat > /etc/systemd/system/pacman-auto-update.service <<'UPDATESERVICE'
+    cat > /etc/systemd/system/lobby-auto-update.service <<'UPDATESERVICE'
 [Unit]
-Description=Automatic Pacman System Updates
+Description=Automatic Lobby System Updates
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=oneshot
 User=root
-ExecStart=/usr/local/bin/pacman-auto-update.sh
+ExecStart=/usr/local/bin/lobby-auto-update.sh
 StandardOutput=journal
 StandardError=journal
 TimeoutStartSec=3600
@@ -196,14 +252,14 @@ TimeoutStartSec=3600
 WantedBy=multi-user.target
 UPDATESERVICE
 
-    # Create systemd timer for weekly scheduling
-    cat > /etc/systemd/system/pacman-auto-update.timer <<'UPDATETIMER'
+    # Create systemd timer for daily scheduling during maintenance window
+    cat > /etc/systemd/system/lobby-auto-update.timer <<'UPDATETIMER'
 [Unit]
-Description=Weekly Automatic Pacman Updates
-Requires=pacman-auto-update.service
+Description=Daily Automatic Lobby Updates
+Requires=lobby-auto-update.service
 
 [Timer]
-OnCalendar=weekly
+OnCalendar=*-*-* 02:00:00
 RandomizedDelaySec=3600
 Persistent=true
 
@@ -212,8 +268,8 @@ WantedBy=timers.target
 UPDATETIMER
 
     # Create logrotate configuration
-    cat > /etc/logrotate.d/pacman-auto-update <<'LOGROTATE'
-/var/log/pacman-auto-update.log {
+    cat > /etc/logrotate.d/lobby-auto-update <<'LOGROTATE'
+/var/log/lobby-auto-update.log {
     weekly
     rotate 4
     compress
@@ -226,10 +282,10 @@ LOGROTATE
 
     # Enable and start the update timer
     systemctl daemon-reload
-    systemctl enable pacman-auto-update.timer
-    systemctl start pacman-auto-update.timer
+    systemctl enable lobby-auto-update.timer
+    systemctl start lobby-auto-update.timer
     
-    log "Automatic pacman updates configured - runs weekly with error recovery and log management"
+    log "Automatic lobby updates configured - runs daily at 2 AM with error recovery and log management"
 }
 
 # Reset function
@@ -237,16 +293,16 @@ reset_auto_updates() {
     log "Resetting automatic updates configuration"
     
     # Stop and disable timer and service
-    systemctl stop pacman-auto-update.timer 2>/dev/null || true
-    systemctl disable pacman-auto-update.timer 2>/dev/null || true
-    systemctl stop pacman-auto-update.service 2>/dev/null || true
-    systemctl disable pacman-auto-update.service 2>/dev/null || true
+    systemctl stop lobby-auto-update.timer 2>/dev/null || true
+    systemctl disable lobby-auto-update.timer 2>/dev/null || true
+    systemctl stop lobby-auto-update.service 2>/dev/null || true
+    systemctl disable lobby-auto-update.service 2>/dev/null || true
     
     # Remove files
-    rm -f /usr/local/bin/pacman-auto-update.sh
-    rm -f /etc/systemd/system/pacman-auto-update.service
-    rm -f /etc/systemd/system/pacman-auto-update.timer
-    rm -f /etc/logrotate.d/pacman-auto-update
+    rm -f /usr/local/bin/lobby-auto-update.sh
+    rm -f /etc/systemd/system/lobby-auto-update.service
+    rm -f /etc/systemd/system/lobby-auto-update.timer
+    rm -f /etc/logrotate.d/lobby-auto-update
     
     # Reload systemd
     systemctl daemon-reload
@@ -262,39 +318,39 @@ validate_auto_updates() {
     local errors=0
     
     # Check if script exists and is executable
-    if [[ ! -f /usr/local/bin/pacman-auto-update.sh ]]; then
+    if [[ ! -f /usr/local/bin/lobby-auto-update.sh ]]; then
         log "ERROR: Update script not found"
         ((errors++))
-    elif [[ ! -x /usr/local/bin/pacman-auto-update.sh ]]; then
+    elif [[ ! -x /usr/local/bin/lobby-auto-update.sh ]]; then
         log "ERROR: Update script not executable"
         ((errors++))
     fi
     
     # Check systemd service
-    if [[ ! -f /etc/systemd/system/pacman-auto-update.service ]]; then
+    if [[ ! -f /etc/systemd/system/lobby-auto-update.service ]]; then
         log "ERROR: Update service not found"
         ((errors++))
     fi
     
     # Check systemd timer
-    if [[ ! -f /etc/systemd/system/pacman-auto-update.timer ]]; then
+    if [[ ! -f /etc/systemd/system/lobby-auto-update.timer ]]; then
         log "ERROR: Update timer not found"
         ((errors++))
     fi
     
     # Check if timer is enabled and active
-    if ! systemctl is-enabled pacman-auto-update.timer >/dev/null 2>&1; then
+    if ! systemctl is-enabled lobby-auto-update.timer >/dev/null 2>&1; then
         log "ERROR: Update timer not enabled"
         ((errors++))
     fi
     
-    if ! systemctl is-active pacman-auto-update.timer >/dev/null 2>&1; then
+    if ! systemctl is-active lobby-auto-update.timer >/dev/null 2>&1; then
         log "ERROR: Update timer not active"
         ((errors++))
     fi
     
     # Check logrotate config
-    if [[ ! -f /etc/logrotate.d/pacman-auto-update ]]; then
+    if [[ ! -f /etc/logrotate.d/lobby-auto-update ]]; then
         log "ERROR: Logrotate configuration not found"
         ((errors++))
     fi

@@ -32,19 +32,16 @@ setup_plymouth() {
     sed "s|{{THEME_DIR}}|$THEME_DIR|g" "$CONFIG_DIR/plymouth/route19.plymouth" > "$THEME_DIR/route19.plymouth"
     cp "$CONFIG_DIR/plymouth/route19.script" "$THEME_DIR/route19.script"
     
-    # Copy logo to user's Hyprland config directory for wallpaper
-    if [ -f /root/assets/route19-logo.png ]; then
-        cp /root/assets/route19-logo.png "$HOME_DIR/.config/hypr/route19-centered.png"
-        chown "$USER:$USER" "$HOME_DIR/.config/hypr/route19-centered.png"
-        log "Route 19 logo copied for Hyprland wallpaper"
-    else
-        log "WARNING: Logo asset not found at /root/assets/route19-logo.png"
-    fi
+    # Logo will be handled by Plymouth only (no desktop wallpaper needed for kiosk)
     
     # Copy logo for Plymouth theme
-    if [ -f /root/assets/route19-logo.png ]; then
-        cp /root/assets/route19-logo.png "$THEME_DIR/logo.png"
+    ASSET_PATH="$SCRIPT_DIR/../../assets/route19-logo.png"
+    if [ -f "$ASSET_PATH" ]; then
+        cp "$ASSET_PATH" "$THEME_DIR/logo.png"
         log "Plymouth logo copied from assets"
+    elif [ -f /root/assets/route19-logo.png ]; then
+        cp /root/assets/route19-logo.png "$THEME_DIR/logo.png"
+        log "Plymouth logo copied from /root/assets"
     else
         log "WARNING: Logo asset not found, creating fallback"
         echo "Route 19" > "$THEME_DIR/logo.png"
