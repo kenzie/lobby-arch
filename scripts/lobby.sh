@@ -423,6 +423,7 @@ declare -A SYNC_FILES=(
     ["modules/99-cleanup.sh"]="modules/99-cleanup.sh"
     ["configs/plymouth/route19.plymouth"]="configs/plymouth/route19.plymouth"
     ["configs/plymouth/route19.script"]="configs/plymouth/route19.script"
+    ["configs/plymouth/logo.png"]="configs/plymouth/logo.png"
 )
 
 # Get file hash

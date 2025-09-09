@@ -131,9 +131,13 @@ EOF
     systemctl enable plymouth-poweroff.service
     
     # Ensure Plymouth shows during shutdown/reboot by configuring kernel params
-    if ! grep -q "splash quiet" /etc/default/grub; then
-        sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="\(.*\)"/GRUB_CMDLINE_LINUX_DEFAULT="\1 splash quiet"/' /etc/default/grub
-        grub-mkconfig -o /boot/grub/grub.cfg
+    if [[ -f /etc/default/grub ]]; then
+        if ! grep -q "splash quiet" /etc/default/grub; then
+            sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="\(.*\)"/GRUB_CMDLINE_LINUX_DEFAULT="\1 splash quiet"/' /etc/default/grub
+            grub-mkconfig -o /boot/grub/grub.cfg
+        fi
+    else
+        log "GRUB not found, assuming systemd-boot - kernel params should already include splash"
     fi
     
     log "Plymouth theme configuration completed"
