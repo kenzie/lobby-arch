@@ -5,17 +5,57 @@ logo_image = Image("logo.png");
 screen_width = Window.GetWidth();
 screen_height = Window.GetHeight();
 
-# Calculate center position
+# Calculate center position for logo
 logo_width = logo_image.GetWidth();
 logo_height = logo_image.GetHeight();
 
-x = (screen_width - logo_width) / 2;
-y = (screen_height - logo_height) / 2;
+logo_x = (screen_width - logo_width) / 2;
+logo_y = (screen_height - logo_height) / 2;
 
-# Create sprite and position it
+# Create logo sprite and position it
 logo_sprite = Sprite(logo_image);
-logo_sprite.SetPosition(x, y, 0);
+logo_sprite.SetPosition(logo_x, logo_y, 0);
 
 # Set background to black
 Window.SetBackgroundTopColor(0, 0, 0);
 Window.SetBackgroundBottomColor(0, 0, 0);
+
+# Simple animated dots below logo
+dots_y = logo_y + logo_height + 40;
+dots_spacing = 15;
+dot_count = 3;
+
+# Create dot images
+dot_image = Image.Text("●", 0.7, 0.7, 0.7);
+dot_dim_image = Image.Text("●", 0.3, 0.3, 0.3);
+
+# Initialize dot sprites
+dots = [];
+for (i = 0; i < dot_count; i++) {
+    dots[i] = Sprite(dot_dim_image);
+    dots[i].SetPosition(screen_width / 2 - ((dot_count - 1) * dots_spacing / 2) + (i * dots_spacing), dots_y, 1);
+}
+
+# Animation variables
+animation_time = 0;
+active_dot = 0;
+
+# Simple animation refresh function
+fun refresh() {
+    animation_time++;
+    
+    # Change active dot every 20 frames (slower animation)
+    if (animation_time % 20 == 0) {
+        # Reset previous dot
+        dots[active_dot].SetImage(dot_dim_image);
+        
+        # Move to next dot
+        active_dot = (active_dot + 1) % dot_count;
+        
+        # Light up current dot
+        dots[active_dot].SetImage(dot_image);
+    }
+}
+
+# Register the refresh function
+Plymouth.SetRefreshFunction(refresh);

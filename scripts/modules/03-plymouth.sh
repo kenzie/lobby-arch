@@ -98,6 +98,37 @@ TimeoutSec=60
 WantedBy=multi-user.target
 EOF
     
+    # Configure Plymouth for shutdown/reboot
+    log "Configuring Plymouth for shutdown and reboot"
+    
+    # Create plymouth shutdown configuration
+    cat > /etc/systemd/system/plymouth-poweroff.service <<EOF
+[Unit]
+Description=Show Plymouth Boot Screen on Shutdown
+DefaultDependencies=false
+Before=poweroff.target reboot.target halt.target
+Conflicts=emergency.service emergency.target rescue.service rescue.target
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/plymouth --show-splash
+ExecStartPost=/bin/bash -c 'while ! plymouth --ping; do sleep 0.1; done'
+RemainAfterExit=yes
+TimeoutStartSec=30
+
+[Install]
+WantedBy=poweroff.target reboot.target halt.target
+EOF
+
+    # Enable the shutdown service
+    systemctl enable plymouth-poweroff.service
+    
+    # Ensure Plymouth shows during shutdown/reboot by configuring kernel params
+    if ! grep -q "splash quiet" /etc/default/grub; then
+        sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="\(.*\)"/GRUB_CMDLINE_LINUX_DEFAULT="\1 splash quiet"/' /etc/default/grub
+        grub-mkconfig -o /boot/grub/grub.cfg
+    fi
+    
     log "Plymouth theme configuration completed"
 }
 
