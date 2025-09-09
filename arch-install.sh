@@ -80,16 +80,16 @@ mount "$ROOT" /mnt
 mkdir -p /mnt/boot
 mount -t vfat "$EFI" /mnt/boot
 
-# --- Install base system + Hyprland + Plymouth (no spinner theme) ---
+# --- Install base system + Cage + Plymouth (no spinner theme) ---
 echo "==> Installing base packages..."
 pacstrap /mnt base linux linux-firmware vim networkmanager sudo git \
-    base-devel openssh rng-tools curl \
-    hyprland swaybg xorg-server \
-    xdg-desktop-portal xdg-desktop-portal-wlr \
-    alacritty \
-    chromium nginx python python-pip rclone \
+    base-devel openssh rng-tools curl bc \
+    cage seatd chromium xorg-xwayland \
+    ttf-cascadia-code-nerd inter-font cairo freetype2 \
     nodejs npm \
-    plymouth cdrtools
+    plymouth cdrtools \
+    amd-ucode mesa vulkan-radeon libva-mesa-driver mesa-vdpau \
+    wireless_tools wpa_supplicant
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
@@ -114,6 +114,7 @@ ROOT_UUID=\$(blkid -s UUID -o value "$ROOT")
 cat > /boot/loader/entries/arch.conf <<ENTRY
 title   Arch Linux
 linux   /vmlinuz-linux
+initrd  /amd-ucode.img
 initrd  /initramfs-linux.img
 options root=UUID=\$ROOT_UUID rw quiet splash loglevel=3
 ENTRY
@@ -139,15 +140,14 @@ curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/post-
 curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/lobby.sh -o /mnt/root/scripts/lobby.sh
 
 # Download modules
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/01-autologin.sh -o /mnt/root/scripts/modules/01-autologin.sh
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/02-hyprland.sh -o /mnt/root/scripts/modules/02-hyprland.sh
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/02-kiosk.sh -o /mnt/root/scripts/modules/02-kiosk.sh
 curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/03-plymouth.sh -o /mnt/root/scripts/modules/03-plymouth.sh
 curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/04-auto-updates.sh -o /mnt/root/scripts/modules/04-auto-updates.sh
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/05-monitoring.sh -o /mnt/root/scripts/modules/05-monitoring.sh
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/06-scheduler.sh -o /mnt/root/scripts/modules/06-scheduler.sh
 curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/99-cleanup.sh -o /mnt/root/scripts/modules/99-cleanup.sh
 
 # Download configuration files
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/configs/hyprland.conf -o /mnt/root/scripts/configs/hyprland.conf
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/configs/start-wallpaper.sh -o /mnt/root/scripts/configs/start-wallpaper.sh
 curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/configs/plymouth/route19.plymouth -o /mnt/root/scripts/configs/plymouth/route19.plymouth
 curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/configs/plymouth/route19.script -o /mnt/root/scripts/configs/plymouth/route19.script
 
@@ -180,4 +180,4 @@ arch-chroot /mnt systemctl enable post-install.service
 
 # --- Unmount and finish ---
 umount -R /mnt
-echo "==> Installation complete. Reboot now. The system will auto-login and launch Hyprland with Plymouth splash."
+echo "==> Installation complete. Reboot now. The system will launch Cage kiosk with Plymouth splash."

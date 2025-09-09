@@ -19,84 +19,114 @@ log() {
 # Main setup function
 setup_cleanup() {
     log "Running cleanup and finalization tasks"
-    
-    # Create first-login script to enable user services after login
-    cat > "$HOME_DIR/.config/first-login.sh" <<'FIRSTLOGIN'
-#!/bin/bash
-# Enable and start Hyprland user service on first login only
-if [ ! -f ~/.hyprland-enabled ]; then
-    systemctl --user enable hyprland.service 2>/dev/null || true
-    systemctl --user start hyprland.service 2>/dev/null || true
-    touch ~/.hyprland-enabled
-fi
-FIRSTLOGIN
 
-    chmod +x "$HOME_DIR/.config/first-login.sh"
-    
-    # Add to user's shell profile to run on first login
-    cat >> "$HOME_DIR/.profile" <<'PROFILE'
-# Run first-login setup if it exists
-if [ -f ~/.config/first-login.sh ]; then
-    ~/.config/first-login.sh
-    rm -f ~/.config/first-login.sh
-fi
-PROFILE
+    # Create global lobby command symlink
+    log "Creating global lobby command"
+    ln -sf /root/scripts/lobby.sh /usr/local/bin/lobby
 
-    chown "$USER:$USER" "$HOME_DIR/.profile" "$HOME_DIR/.config/first-login.sh"
-    
-    log "First-login setup configured"
-    
+    log "Global lobby command created at /usr/local/bin/lobby"
+
+    # Configure log rotation
+    log "Setting up log rotation"
+    cat > /etc/logrotate.d/lobby <<'EOF'
+/var/log/lobby-*.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 root root
+}
+
+/var/log/post-install.log {
+    weekly
+    rotate 4
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 root root
+}
+EOF
+
+    # Configure systemd journal limits to prevent disk space issues
+    log "Configuring systemd journal size limits"
+    mkdir -p /etc/systemd/journald.conf.d
+    cat > /etc/systemd/journald.conf.d/lobby.conf <<'EOF'
+[Journal]
+SystemMaxUse=100M
+SystemMaxFileSize=10M
+SystemMaxFiles=10
+RuntimeMaxUse=50M
+RuntimeMaxFileSize=5M
+RuntimeMaxFiles=10
+MaxRetentionSec=1week
+EOF
+
+    # Restart journald to apply new configuration
+    systemctl restart systemd-journald
+
     # Clean up temporary assets if they exist
     if [[ -d /root/assets ]]; then
         log "Cleaning up temporary assets"
         rm -rf /root/assets
     fi
-    
+
     log "Cleanup and finalization completed"
 }
 
 # Reset function
 reset_cleanup() {
     log "Resetting cleanup configuration"
-    
-    # Remove first-login script
-    rm -f "$HOME_DIR/.config/first-login.sh"
-    
-    # Remove profile additions (this is tricky, so we'll recreate a clean profile)
-    if [[ -f "$HOME_DIR/.profile" ]]; then
-        # Remove our additions from profile
-        sed -i '/# Run first-login setup if it exists/,/fi/d' "$HOME_DIR/.profile"
-    fi
-    
+
+    # Remove global lobby command
+    rm -f /usr/local/bin/lobby
+
+    # Remove log rotation configuration
+    rm -f /etc/logrotate.d/lobby
+
+    # Remove journal configuration
+    rm -f /etc/systemd/journald.conf.d/lobby.conf
+
     # Recreate cleanup
     setup_cleanup
-    
+
     log "Cleanup configuration reset completed"
 }
 
 # Validation function
 validate_cleanup() {
     local errors=0
-    
-    # Check if first-login script exists (it should exist until first login)
-    # We can't reliably validate this since it gets removed after first run
-    
-    # Check if profile exists
-    if [[ ! -f "$HOME_DIR/.profile" ]]; then
-        log "ERROR: User profile not found"
+
+    # Check if global lobby command exists
+    if [[ ! -L /usr/local/bin/lobby ]]; then
+        log "ERROR: Global lobby command symlink not found"
         ((errors++))
     fi
-    
-    # Check profile ownership
-    if [[ -f "$HOME_DIR/.profile" ]]; then
-        local owner
-        owner=$(stat -c '%U' "$HOME_DIR/.profile")
-        if [[ "$owner" != "$USER" ]]; then
-            log "ERROR: Profile ownership incorrect (expected: $USER, found: $owner)"
+
+    # Check if symlink points to correct location
+    if [[ -L /usr/local/bin/lobby ]]; then
+        local target
+        target=$(readlink /usr/local/bin/lobby)
+        if [[ "$target" != "/root/scripts/lobby.sh" ]]; then
+            log "ERROR: Global lobby command points to wrong target (expected: /root/scripts/lobby.sh, found: $target)"
             ((errors++))
         fi
     fi
-    
+
+    # Check if log rotation is configured
+    if [[ ! -f /etc/logrotate.d/lobby ]]; then
+        log "ERROR: Log rotation configuration not found"
+        ((errors++))
+    fi
+
+    # Check if journal limits are configured
+    if [[ ! -f /etc/systemd/journald.conf.d/lobby.conf ]]; then
+        log "ERROR: Journal size limits not configured"
+        ((errors++))
+    fi
+
     if [[ $errors -eq 0 ]]; then
         log "Cleanup validation passed"
         return 0

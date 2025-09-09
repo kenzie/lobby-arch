@@ -1,4 +1,0 @@
-#!/usr/bin/env bash
-# Route 19 Lobby Screen Installer
-# This is a redirect script that downloads and runs the main installer
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/arch-install.sh | bash
