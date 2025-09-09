@@ -338,9 +338,9 @@ system_health_check() {
                 info "Log file size OK: $logfile (${log_size_mb}MB)"
             fi
 
-            # Check for recent errors
+            # Check for recent errors in last 1000 lines
             local recent_errors
-            recent_errors=$(grep -c "ERROR" "$logfile" 2>/dev/null | tail -1000 || echo "0")
+            recent_errors=$(tail -1000 "$logfile" 2>/dev/null | grep -c "ERROR" || echo "0")
             if [[ $recent_errors -gt 10 ]]; then
                 warning "Many recent errors in $logfile: $recent_errors"
                 ((warnings++))

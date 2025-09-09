@@ -41,6 +41,22 @@ export LOBBY_USER="$USER"
 export LOBBY_HOME="$HOME_DIR"
 export LOBBY_LOG="$LOGFILE"
 
+# Check if modules exist and sync if missing
+MODULES_DIR="$SCRIPT_DIR/modules"
+if [[ ! -d "$MODULES_DIR" ]] || [[ -z "$(ls -A "$MODULES_DIR" 2>/dev/null)" ]]; then
+    log "Modules directory missing or empty, attempting to sync from GitHub..."
+    if "$LOBBY_SCRIPT" sync; then
+        log "Successfully synced modules from GitHub"
+    else
+        log "ERROR: Failed to sync modules from GitHub"
+        log "This may be due to network issues during installation."
+        log "Try running 'sudo lobby sync' manually after boot."
+        exit 1
+    fi
+else
+    log "Modules directory exists with $(ls -1 "$MODULES_DIR"/*.sh 2>/dev/null | wc -l) module files"
+fi
+
 # Run modular setup using lobby.sh with better error handling
 log "Running modular setup using lobby.sh"
 
@@ -57,7 +73,9 @@ for module in "${CRITICAL_MODULES[@]}"; do
     if "$LOBBY_SCRIPT" setup "$module"; then
         log "SUCCESS: Critical module $module completed"
     else
-        log "ERROR: Critical module $module failed"
+        exit_code=$?
+        log "ERROR: Critical module $module failed with exit code $exit_code"
+        log "Check '$LOBBY_LOG' and run 'sudo lobby validate $module' for details"
         ((critical_failures++))
     fi
 done
@@ -68,7 +86,9 @@ for module in "${OPTIONAL_MODULES[@]}"; do
     if "$LOBBY_SCRIPT" setup "$module"; then
         log "SUCCESS: Optional module $module completed"
     else
-        log "WARNING: Optional module $module failed (non-critical)"
+        exit_code=$?
+        log "WARNING: Optional module $module failed with exit code $exit_code (non-critical)"
+        log "Check '$LOBBY_LOG' and run 'sudo lobby validate $module' for details"
         ((optional_failures++))
     fi
 done

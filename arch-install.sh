@@ -133,30 +133,77 @@ systemctl enable sshd
 EOF
 
 # --- Download modular installation scripts and assets ---
+echo "==> Downloading installation scripts and assets..."
 mkdir -p /mnt/root/scripts/{modules,configs/plymouth}
 
+# Function to download with error checking
+download_file() {
+    local url="$1"
+    local output="$2"
+    local max_retries=3
+    local retry_delay=5
+    
+    for attempt in $(seq 1 $max_retries); do
+        echo "Downloading $(basename "$output")... (attempt $attempt/$max_retries)"
+        if curl -sSL --fail --connect-timeout 30 --max-time 300 "$url" -o "$output"; then
+            echo "✓ Successfully downloaded $(basename "$output")"
+            return 0
+        else
+            echo "✗ Failed to download $(basename "$output")"
+            if [[ $attempt -lt $max_retries ]]; then
+                echo "Retrying in ${retry_delay}s..."
+                sleep $retry_delay
+                retry_delay=$((retry_delay * 2))
+            fi
+        fi
+    done
+    
+    echo "ERROR: Failed to download $url after $max_retries attempts"
+    return 1
+}
+
 # Download main scripts
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/post-install.sh -o /mnt/root/scripts/post-install.sh
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/lobby.sh -o /mnt/root/scripts/lobby.sh
+download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/post-install.sh" "/mnt/root/scripts/post-install.sh" || exit 1
+download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/lobby.sh" "/mnt/root/scripts/lobby.sh" || exit 1
 
 # Download modules
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/02-kiosk.sh -o /mnt/root/scripts/modules/02-kiosk.sh
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/03-plymouth.sh -o /mnt/root/scripts/modules/03-plymouth.sh
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/04-auto-updates.sh -o /mnt/root/scripts/modules/04-auto-updates.sh
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/05-monitoring.sh -o /mnt/root/scripts/modules/05-monitoring.sh
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/06-scheduler.sh -o /mnt/root/scripts/modules/06-scheduler.sh
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/99-cleanup.sh -o /mnt/root/scripts/modules/99-cleanup.sh
+download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/02-kiosk.sh" "/mnt/root/scripts/modules/02-kiosk.sh" || exit 1
+download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/03-plymouth.sh" "/mnt/root/scripts/modules/03-plymouth.sh" || exit 1
+download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/04-auto-updates.sh" "/mnt/root/scripts/modules/04-auto-updates.sh" || exit 1
+download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/05-monitoring.sh" "/mnt/root/scripts/modules/05-monitoring.sh" || exit 1
+download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/06-scheduler.sh" "/mnt/root/scripts/modules/06-scheduler.sh" || exit 1
+download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/99-cleanup.sh" "/mnt/root/scripts/modules/99-cleanup.sh" || exit 1
 
 # Download configuration files
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/configs/plymouth/route19.plymouth -o /mnt/root/scripts/configs/plymouth/route19.plymouth
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/configs/plymouth/route19.script -o /mnt/root/scripts/configs/plymouth/route19.script
+download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/configs/plymouth/route19.plymouth" "/mnt/root/scripts/configs/plymouth/route19.plymouth" || exit 1
+download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/configs/plymouth/route19.script" "/mnt/root/scripts/configs/plymouth/route19.script" || exit 1
+
+# Download logo asset
+mkdir -p /mnt/root/assets
+download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/assets/route19-logo.png" "/mnt/root/assets/route19-logo.png" || exit 1
 
 # Make scripts executable
 chmod +x /mnt/root/scripts/*.sh /mnt/root/scripts/modules/*.sh
 
-# Download logo asset
-mkdir -p /mnt/root/assets
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/assets/route19-logo.png -o /mnt/root/assets/route19-logo.png
+# Verify all critical files were downloaded
+echo "==> Verifying downloaded files..."
+critical_files=(
+    "/mnt/root/scripts/post-install.sh"
+    "/mnt/root/scripts/lobby.sh" 
+    "/mnt/root/scripts/modules/02-kiosk.sh"
+    "/mnt/root/assets/route19-logo.png"
+)
+
+for file in "${critical_files[@]}"; do
+    if [[ -f "$file" && -s "$file" ]]; then
+        echo "✓ $(basename "$file") verified"
+    else
+        echo "✗ ERROR: $(basename "$file") is missing or empty"
+        exit 1
+    fi
+done
+
+echo "✓ All critical installation files downloaded successfully"
 
 # --- Create systemd service to run post-install automatically on first boot ---
 cat > /mnt/etc/systemd/system/post-install.service <<EOF
