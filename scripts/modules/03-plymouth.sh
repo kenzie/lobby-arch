@@ -42,9 +42,11 @@ setup_plymouth() {
     # Logo will be handled by Plymouth only (no desktop wallpaper needed for kiosk)
     
     # Copy logo for Plymouth theme
-    ASSET_PATH="$SCRIPT_DIR/../../assets/route19-logo.png"
-    if [ -f "$ASSET_PATH" ]; then
-        cp "$ASSET_PATH" "$THEME_DIR/logo.png"
+    if [ -f "$CONFIG_DIR/plymouth/logo.png" ]; then
+        cp "$CONFIG_DIR/plymouth/logo.png" "$THEME_DIR/logo.png"
+        log "Plymouth logo copied from config directory"
+    elif [ -f "$SCRIPT_DIR/../../assets/route19-logo.png" ]; then
+        cp "$SCRIPT_DIR/../../assets/route19-logo.png" "$THEME_DIR/logo.png"
         log "Plymouth logo copied from assets"
     elif [ -f /root/assets/route19-logo.png ]; then
         cp /root/assets/route19-logo.png "$THEME_DIR/logo.png"
