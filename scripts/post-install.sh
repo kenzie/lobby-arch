@@ -41,18 +41,53 @@ export LOBBY_USER="$USER"
 export LOBBY_HOME="$HOME_DIR"
 export LOBBY_LOG="$LOGFILE"
 
-# Run modular setup using lobby.sh
+# Run modular setup using lobby.sh with better error handling
 log "Running modular setup using lobby.sh"
-if "$LOBBY_SCRIPT" setup; then
-    log "Modular setup completed successfully"
-else
-    log "ERROR: Modular setup failed"
+
+# Define critical vs optional modules
+CRITICAL_MODULES=("kiosk")
+OPTIONAL_MODULES=("plymouth" "auto-updates" "monitoring" "scheduler" "cleanup")
+
+critical_failures=0
+optional_failures=0
+
+# Run critical modules first
+for module in "${CRITICAL_MODULES[@]}"; do
+    log "Running critical module: $module"
+    if "$LOBBY_SCRIPT" setup "$module"; then
+        log "SUCCESS: Critical module $module completed"
+    else
+        log "ERROR: Critical module $module failed"
+        ((critical_failures++))
+    fi
+done
+
+# Run optional modules (failures are logged but don't stop installation)
+for module in "${OPTIONAL_MODULES[@]}"; do
+    log "Running optional module: $module"
+    if "$LOBBY_SCRIPT" setup "$module"; then
+        log "SUCCESS: Optional module $module completed"
+    else
+        log "WARNING: Optional module $module failed (non-critical)"
+        ((optional_failures++))
+    fi
+done
+
+# Evaluate results
+if [[ $critical_failures -gt 0 ]]; then
+    log "ERROR: $critical_failures critical module(s) failed - installation incomplete"
+    log "Kiosk may not function properly. Check logs and run 'sudo lobby setup' to retry."
     exit 1
+elif [[ $optional_failures -gt 0 ]]; then
+    log "WARNING: $optional_failures optional module(s) failed but core kiosk should work"
+    log "Run 'sudo lobby setup' to retry failed modules or 'sudo lobby health' to check status"
+else
+    log "SUCCESS: All modules completed successfully"
 fi
 
 # Disable this service since it's completed
 log "Disabling post-install service"
 systemctl disable post-install.service
 
-log "==> Post-install tasks complete. The system will auto-login $USER and launch Hyprland with Plymouth splash."
-log "==> Use 'lobby.sh' for future configuration management."
+log "==> Post-install tasks complete. The system will boot directly to Cage kiosk with Plymouth splash."
+log "==> Use 'sudo lobby help' for system management and 'sudo lobby health' for diagnostics."

@@ -181,21 +181,19 @@ Description=Lobby Kiosk Compositor
 After=multi-user.target lobby-display.service seatd.service
 Requires=lobby-display.service seatd.service
 BindsTo=lobby-display.service
+StartLimitBurst=10
+StartLimitIntervalSec=60
 
 [Service]
 Type=simple
 User=$USER
 Group=seat
 Environment=XDG_RUNTIME_DIR=/run/lobby-kiosk
-ExecStartPre=/usr/bin/mkdir -p /run/lobby-kiosk
-ExecStartPre=/usr/bin/chown $USER:$USER /run/lobby-kiosk
 ExecStartPre=/usr/bin/sleep 3
 ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 2; done'
 ExecStart=/usr/bin/cage -s -- /usr/bin/chromium --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --disable-dev-shm-usage --kiosk --disable-infobars --disable-session-crashed-bubble --disable-features=TranslateUI --no-first-run --disable-notifications --disable-extensions --enable-gpu-rasterization --enable-oop-rasterization --enable-hardware-overlays --force-device-scale-factor=1.0 --start-fullscreen --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --memory-pressure-off --max_old_space_size=512 --aggressive-cache-discard --purge-memory-button --kiosk-printing --disable-pinch --overscroll-history-navigation=0 --disable-touch-editing --disable-touch-adjustment --hide-cursor http://localhost:8080
 Restart=always
 RestartSec=5
-StartLimitBurst=10
-StartLimitIntervalSec=60
 RuntimeDirectory=lobby-kiosk
 RuntimeDirectoryMode=0755
 
@@ -278,9 +276,32 @@ validate_kiosk() {
         ((errors++))
     fi
 
+    # Check if services are actually running
+    if ! systemctl is-active --quiet lobby-display.service; then
+        log "ERROR: Lobby display service not running"
+        ((errors++))
+    fi
+
+    if ! systemctl is-active --quiet lobby-kiosk.service; then
+        log "ERROR: Lobby kiosk service not running"
+        ((errors++))
+    fi
+
+    # Test if lobby-display app is responding
+    if ! curl -s --connect-timeout 5 http://localhost:8080 >/dev/null; then
+        log "ERROR: Lobby display app not responding on port 8080"
+        ((errors++))
+    fi
+
     # Check if getty@tty1 is masked (good for kiosk)
     if ! systemctl is-masked getty@tty1.service >/dev/null 2>&1; then
         log "WARNING: getty@tty1 service not masked - login prompt may interfere with kiosk"
+    fi
+
+    # Check if user is in seat group
+    if ! groups "$USER" | grep -q seat; then
+        log "ERROR: User $USER not in seat group"
+        ((errors++))
     fi
 
     if [[ $errors -eq 0 ]]; then
