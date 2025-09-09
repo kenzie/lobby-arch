@@ -10,12 +10,11 @@ scripts/
 ├── post-install.sh       # Initial setup orchestrator
 ├── modules/              # Individual configuration modules
 │   ├── 01-autologin.sh
-│   ├── 02-hyprland.sh
+│   ├── 02-kiosk.sh
 │   ├── 03-plymouth.sh
 │   ├── 04-auto-updates.sh
 │   └── 99-cleanup.sh
 └── configs/              # Configuration templates
-    ├── hyprland.conf
     ├── start-wallpaper.sh
     └── plymouth/
 ```
@@ -36,7 +35,7 @@ sudo ./lobby.sh validate       # Validate installation
 sudo ./lobby.sh status         # Show system status
 
 # Individual module management  
-sudo ./lobby.sh setup hyprland    # Setup only Hyprland
+sudo ./lobby.sh setup kiosk       # Setup only kiosk
 sudo ./lobby.sh reset plymouth    # Reset Plymouth configuration
 sudo ./lobby.sh update auto-updates  # Update automatic updates
 
@@ -48,7 +47,7 @@ sudo ./lobby.sh update auto-updates  # Update automatic updates
 ## Modules
 
 - **autologin**: Configures automatic login for the lobby user
-- **hyprland**: Sets up Hyprland window manager with wallpaper
+- **kiosk**: Sets up Cage Wayland kiosk compositor with Chromium
 - **plymouth**: Configures Route 19 boot splash screen
 - **auto-updates**: Sets up weekly automatic system updates
 - **cleanup**: Final cleanup and first-login setup

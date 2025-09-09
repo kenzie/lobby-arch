@@ -63,7 +63,6 @@ run_module() {
 }
 
 # Run modules in order
-# Note: 01-autologin.sh and 02-hyprland.sh have been removed
 run_module "02-kiosk.sh"          # Chromium kiosk setup
 run_module "03-plymouth.sh"       # Plymouth boot display
 run_module "04-auto-updates.sh"   # Automated updates

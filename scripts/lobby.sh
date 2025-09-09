@@ -73,16 +73,17 @@ COMMANDS:
     health                  Run comprehensive system health check
 
 MODULES:
-    autologin              Auto-login configuration
-    hyprland               Hyprland window manager setup
+    kiosk                  Cage Wayland kiosk setup
     plymouth               Boot splash screen setup
     auto-updates           Automatic system updates
+    monitoring             Service monitoring setup
+    scheduler              Daily schedule management
     cleanup                Cleanup and finalization
 
 EXAMPLES:
     $0 setup                # Full system setup
-    $0 setup hyprland       # Setup only Hyprland
-    $0 reset hyprland       # Reset Hyprland config
+    $0 setup kiosk          # Setup only kiosk
+    $0 reset kiosk          # Reset kiosk config
     $0 update auto-updates  # Update automatic updates config
     $0 validate             # Validate full installation
     $0 sync                 # Update scripts from GitHub
