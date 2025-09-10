@@ -73,12 +73,14 @@ windowrulev2 = fullscreen,class:^(chromium)$
 windowrulev2 = bordercolor rgb(000000),class:^(chromium)$
 windowrulev2 = noborder,class:^(chromium)$
 
-# Input settings to hide cursor after 1 second of inactivity
+# Input settings - keyboard and mouse are disabled for the kiosk
 input {
-    cursor {
-        inactive_timeout = 1
-    }
-    follow_mouse = 1
+    enabled = false
+}
+
+# Cursor settings - hide after 1 second
+cursor {
+    inactive_timeout = 1
 }
 
 # Disable gestures and other UI elements
