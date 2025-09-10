@@ -65,12 +65,12 @@ setup_plymouth() {
         # Backup original configuration
         cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.backup
         
-        # Add AMD graphics module for proper Plymouth display
-        sed -i 's/^MODULES=()/MODULES=(amdgpu)/' /etc/mkinitcpio.conf
+        # AMD graphics will load automatically - no manual module needed for Picasso/Raven 2
+        # sed -i 's/^MODULES=()/MODULES=(amdgpu)/' /etc/mkinitcpio.conf
         
         # Configure hooks in proper order: systemd must precede plymouth
         sed -i 's/^HOOKS=.*/HOOKS=(systemd plymouth autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck)/' /etc/mkinitcpio.conf
-        log "Configured mkinitcpio with AMD graphics module and proper hook order"
+        log "Configured mkinitcpio with automatic graphics detection and proper hook order"
         
         # Regenerate initramfs
         log "Regenerating initramfs with Plymouth support"
@@ -131,7 +131,7 @@ EOF
             # Extract current root UUID and preserve it
             ROOT_UUID=$(grep "^options" "$BOOT_ENTRY" | grep -o "root=UUID=[^ ]*" || echo "root=LABEL=arch")
             # Update with enhanced kernel parameters for clean kiosk boot
-            sed -i "s|^options.*|options $ROOT_UUID rw quiet splash|" "$BOOT_ENTRY"
+            sed -i "s|^options.*|options $ROOT_UUID rw quiet splash tsc=unstable|" "$BOOT_ENTRY"
             log "Updated systemd-boot configuration with clean boot parameters"
         else
             log "WARNING: systemd-boot configuration not found at $BOOT_ENTRY"
