@@ -61,49 +61,16 @@ setup_kiosk() {
     local hypr_config_dir="$HOME_DIR/.config/hypr"
     mkdir -p "$hypr_config_dir"
     cat > "$hypr_config_dir/hyprland.conf" <<'EOF'
-# --- Hyprland Kiosk Config ---
-
-# Monitor setup
+# --- Hyprland Kiosk Config (Minimal) ---
 monitor=,preferred,auto,1
-
-# Autostart Chromium in kiosk mode on launch
 exec-once = chromium --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --kiosk http://localhost:8080
-
-# Make the Chromium window fullscreen
 windowrulev2 = fullscreen,class:^(chromium)$
-
-# General settings - one per line
 general {
-    gaps_in = 0
-    gaps_out = 0
     border_size = 0
     layout = dwindle
 }
-
-# Decoration settings - disable rounded corners and shadows for a clean kiosk look
-decoration {
-    rounding = 0
-    drop_shadow = false
-}
-
-# Miscellaneous settings
 misc {
     disable_hyprland_logo = true
-    disable_splash_rendering = true
-}
-
-# A minimal input block is required.
-# We explicitly disable keyboard and mouse for the kiosk.
-input {
-    kb_enabled = false
-    mouse_enabled = false
-    touchpad_enabled = false
-    follow_mouse = 1
-}
-
-# We still define the cursor behavior to ensure it's hidden.
-cursor {
-    inactive_timeout = 1
 }
 EOF
     chown -R "$USER:$USER" "$HOME_DIR/.config"
@@ -138,8 +105,6 @@ Wants=seatd.service
 [Service]
 User=lobby
 Group=seat
-# Open a full PAM session to get a proper graphical environment
-PAMName=login
 # Explicitly set wlroots environment variables for AMD GPU
 Environment="WLR_RENDERER=vulkan"
 Environment="WLR_DRM_DEVICE=/dev/dri/card0"
@@ -204,17 +169,17 @@ validate_kiosk() {
     if [[ ! -f /etc/systemd/system/lobby-kiosk.service ]]; then
         log "ERROR: Lobby kiosk service not found"
         ((errors++))
-    fi
+    }
     if [[ ! -f /etc/systemd/system/lobby-display.service ]]; then
         log "ERROR: Lobby display service not found"
         ((errors++))
-    fi
+    }
 
     # Check if Hyprland config exists
     if [[ ! -f "$HOME_DIR/.config/hypr/hyprland.conf" ]]; then
         log "ERROR: Hyprland config not found"
         ((errors++))
-    fi
+    }
 
     # Check if user is in correct groups
     if ! groups "$USER" | grep -q seat; then log "ERROR: User $USER not in seat group"; ((errors++)); fi
