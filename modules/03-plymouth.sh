@@ -126,6 +126,26 @@ EOF
     
         
 
+        # This service waits for the Hyprland process to appear, then quits Plymouth.
+    log "Creating kiosk-aware plymouth-quit-wait service"
+    cat > /etc/systemd/system/plymouth-quit-wait.service <<EOF
+[Unit]
+Description=Hold until boot process finishes up (Kiosk Version)
+After=lobby-kiosk.service
+Wants=lobby-kiosk.service
+
+[Service]
+Type=oneshot
+ExecStartPre=/bin/bash -c 'for i in {1..60}; do pgrep -x Hyprland >/dev/null && break; sleep 1; done'
+ExecStartPre=/bin/bash -c 'sleep 2'
+ExecStart=/usr/bin/plymouth quit
+RemainAfterExit=yes
+[Install]
+WantedBy=graphical.target
+EOF
+
+    systemctl enable plymouth-quit-wait.service
+
     log "Plymouth theme configuration completed"
 }
 

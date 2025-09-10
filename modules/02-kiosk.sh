@@ -123,8 +123,6 @@ Group=seat
 PAMName=login
 # Launch Hyprland
 ExecStart=/usr/bin/Hyprland
-# Quit Plymouth after Hyprland starts to ensure seamless transition
-ExecStartPost=/usr/bin/plymouth quit
 Restart=always
 RestartSec=5
 [Install]
