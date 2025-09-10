@@ -169,17 +169,17 @@ validate_kiosk() {
     if [[ ! -f /etc/systemd/system/lobby-kiosk.service ]]; then
         log "ERROR: Lobby kiosk service not found"
         ((errors++))
-
+    fi
     if [[ ! -f /etc/systemd/system/lobby-display.service ]]; then
         log "ERROR: Lobby display service not found"
         ((errors++))
-
+    fi
 
     # Check if Hyprland config exists
     if [[ ! -f "$HOME_DIR/.config/hypr/hyprland.conf" ]]; then
         log "ERROR: Hyprland config not found"
         ((errors++))
-
+    fi
 
     # Check if user is in correct groups
     if ! groups "$USER" | grep -q seat; then log "ERROR: User $USER not in seat group"; ((errors++)); fi
