@@ -23,6 +23,10 @@ setup_cleanup() {
     # Create global lobby command symlink
     log "Creating global lobby command"
     ln -sf /root/scripts/lobby.sh /usr/local/bin/lobby
+    
+    # Remove any stale module copies in /usr/local/bin to avoid confusion
+    log "Cleaning up stale module copies"
+    rm -rf /usr/local/bin/modules /usr/local/bin/configs
 
     log "Global lobby command created at /usr/local/bin/lobby"
 
