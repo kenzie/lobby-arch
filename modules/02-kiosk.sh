@@ -64,7 +64,8 @@ setup_kiosk() {
     cat > "$hypr_config_dir/hyprland.conf" <<'EOF'
 # --- Hyprland Kiosk Config (Fixed Syntax) ---
 monitor=,preferred,auto,1
-exec-once = chromium --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --kiosk http://localhost:8080
+# Wait for Vue.js app to be ready, then launch Chromium in kiosk mode
+exec-once = bash -c 'while ! curl -s http://localhost:8080 >/dev/null 2>&1; do sleep 1; done; chromium --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --kiosk --disable-gpu-sandbox --disable-software-rasterizer http://localhost:8080'
 windowrulev2 = fullscreen,class:^(chromium)$
 
 general {
