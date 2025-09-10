@@ -7,16 +7,9 @@ set -euo pipefail
 MODULE_NAME="Lobby Kiosk Setup"
 MODULE_VERSION="1.0"
 
-# Get script directory - handle both direct execution and symlink scenarios
+# Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# For symlinked lobby command, find the real script location
-if [[ -L "/usr/local/bin/lobby" ]]; then
-    REAL_LOBBY_SCRIPT="$(readlink -f /usr/local/bin/lobby)"
-    REAL_SCRIPT_DIR="$(dirname "$REAL_LOBBY_SCRIPT")"
-    CONFIG_DIR="$REAL_SCRIPT_DIR/configs"
-else
-    CONFIG_DIR="$SCRIPT_DIR/../configs"
-fi
+CONFIG_DIR="$SCRIPT_DIR/../configs"
 
 # Default values
 USER="${LOBBY_USER:-lobby}"

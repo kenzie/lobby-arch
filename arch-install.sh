@@ -142,19 +142,15 @@ if ! command -v git >/dev/null 2>&1; then
     arch-chroot /mnt pacman -S --noconfirm git
 fi
 
-# Clone the repository to /mnt/root/scripts
-if ! arch-chroot /mnt git clone https://github.com/kenzie/lobby-arch.git /root/lobby-arch-temp; then
+# Clone the repository directly to /root/scripts as a proper git repository
+echo "==> Cloning lobby-arch repository..."
+if ! arch-chroot /mnt git clone https://github.com/kenzie/lobby-arch.git /root/scripts; then
     echo "ERROR: Failed to clone repository"
     exit 1
 fi
 
-# Move scripts directory to correct location
-arch-chroot /mnt mv /root/lobby-arch-temp/scripts /root/scripts
-arch-chroot /mnt mv /root/lobby-arch-temp/assets /root/assets
-
-# Remove temporary clone directory but keep git metadata in scripts
-arch-chroot /mnt mv /root/lobby-arch-temp/.git /root/scripts/.git
-arch-chroot /mnt rm -rf /root/lobby-arch-temp
+# Copy assets to /root/assets for installation
+arch-chroot /mnt cp -r /root/scripts/assets /root/assets
 
 # Make scripts executable
 echo "==> Making scripts executable..."
