@@ -87,7 +87,7 @@ pacstrap /mnt base linux linux-firmware vim networkmanager sudo git \
     cage seatd chromium xorg-xwayland dbus \
     ttf-cascadia-code-nerd inter-font cairo freetype2 \
     nodejs npm \
-    plymouth cdrtools \
+    hyprland \
     amd-ucode mesa vulkan-radeon libva-mesa-driver mesa-vdpau \
     wireless_tools wpa_supplicant
 

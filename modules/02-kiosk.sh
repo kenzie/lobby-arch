@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Lobby Kiosk Configuration Module
+# Lobby Kiosk Configuration Module (Hyprland Edition)
 
 set -euo pipefail
 
 # Module info
-MODULE_NAME="Lobby Kiosk Setup"
-MODULE_VERSION="1.0"
+MODULE_NAME="Lobby Kiosk Setup (Hyprland)"
+MODULE_VERSION="2.0"
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -24,89 +24,20 @@ log() {
 
 # Main setup function
 setup_kiosk() {
-    log "Setting up lobby kiosk system"
+    log "Setting up lobby kiosk system with Hyprland"
 
-    # Install required packages (skip in chroot - already installed by arch-install.sh)
-    if [[ -z "${CHROOT_INSTALL:-}" ]]; then
-        log "Installing Wayland, Chromium, and font packages"
-        pacman -S --noconfirm cage seatd chromium nodejs npm git xorg-xwayland \
-            ttf-cascadia-code-nerd inter-font cairo freetype2 dbus
-    else
-        log "Skipping package installation (packages already installed by arch-install.sh)"
-    fi
+    # --- 1. Install Packages ---
+    log "Ensuring packages are installed"
+    pacman -S --noconfirm --needed hyprland chromium nodejs npm git ttf-cascadia-code-nerd inter-font || {
+        log "ERROR: Failed to install packages"
+        return 1
+    }
+    
+    # --- 2. User and Permissions ---
+    log "Configuring user permissions"
+    usermod -a -G seat,video "$USER"
 
-    # Configure fonts for better rendering
-    log "Configuring font rendering"
-    cat > /etc/fonts/local.conf <<'EOF'
-<?xml version="1.0"?>
-<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
-<fontconfig>
-  <!-- Enable antialiasing -->
-  <match target="font">
-    <edit mode="assign" name="antialias">
-      <bool>true</bool>
-    </edit>
-  </match>
-
-  <!-- Enable hinting -->
-  <match target="font">
-    <edit mode="assign" name="hinting">
-      <bool>true</bool>
-    </edit>
-  </match>
-
-  <!-- Use hintslight for better rendering -->
-  <match target="font">
-    <edit mode="assign" name="hintstyle">
-      <const>hintslight</const>
-    </edit>
-  </match>
-
-  <!-- Enable subpixel rendering for LCD screens -->
-  <match target="font">
-    <edit mode="assign" name="rgba">
-      <const>rgb</const>
-    </edit>
-  </match>
-
-  <!-- Use lcdfilter for subpixel rendering -->
-  <match target="font">
-    <edit mode="assign" name="lcdfilter">
-      <const>lcddefault</const>
-    </edit>
-  </match>
-
-  <!-- Font preferences -->
-  <alias>
-    <family>sans-serif</family>
-    <prefer>
-      <family>Inter</family>
-      <family>system-ui</family>
-    </prefer>
-  </alias>
-
-  <alias>
-    <family>serif</family>
-    <prefer>
-      <family>Inter</family>
-      <family>system-ui</family>
-    </prefer>
-  </alias>
-
-  <alias>
-    <family>monospace</family>
-    <prefer>
-      <family>CaskaydiaCove Nerd Font Mono</family>
-    </prefer>
-  </alias>
-</fontconfig>
-EOF
-
-    # Rebuild font cache
-    log "Rebuilding font cache"
-    fc-cache -fv
-
-    # Clone lobby-display repository
+    # --- 3. Clone and Build Vue App ---
     log "Cloning lobby-display repository"
     if [[ -d "$LOBBY_DISPLAY_DIR" ]]; then
         log "Lobby display directory exists, pulling latest"
@@ -114,59 +45,53 @@ EOF
         git pull
     else
         git clone "$LOBBY_DISPLAY_URL" "$LOBBY_DISPLAY_DIR"
-        chown -R "$USER:$USER" "$LOBBY_DISPLAY_DIR"
     fi
+    chown -R "$USER:$USER" "$LOBBY_DISPLAY_DIR"
 
-    # Install dependencies and build with retry logic
     log "Installing lobby-display dependencies"
     cd "$LOBBY_DISPLAY_DIR"
-
-    # Retry npm install up to 3 times
-    local npm_install_attempts=0
-    while [ $npm_install_attempts -lt 3 ]; do
-        log "Attempting npm install (attempt $((npm_install_attempts + 1))/3)"
-        if sudo -u "$USER" npm install; then
-            log "npm install successful"
-            break
-        else
-            npm_install_attempts=$((npm_install_attempts + 1))
-            if [ $npm_install_attempts -lt 3 ]; then
-                log "npm install failed, retrying in 10 seconds..."
-                sleep 10
-                # Clean node_modules and package-lock.json for clean retry
-                sudo -u "$USER" rm -rf node_modules package-lock.json
-            else
-                log "ERROR: npm install failed after 3 attempts"
-                return 1
-            fi
-        fi
-    done
-
-    # Build the application
+    sudo -u "$USER" npm install || { log "ERROR: npm install failed"; return 1; }
+    
     log "Building lobby-display application"
-    sudo -u "$USER" npm run build || {
-        log "WARNING: npm run build returned non-zero exit code, but continuing"
-    }
-
+    sudo -u "$USER" npm run build || { log "ERROR: npm run build failed"; return 1; }
     log "lobby-display build completed successfully"
-    
-    log "DEBUG: About to configure auto-login"
-    
-    # Configure auto-login for lobby user (Arch Linux way)
-    log "Configuring auto-login for lobby user"
-    mkdir -p /etc/systemd/system/getty@tty1.service.d
-    cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf <<EOF
-[Service]
-ExecStart=
-ExecStart=-/sbin/agetty -o '-p -f -- \u' --autologin $USER %I \$TERM
-EOF
 
-    # Create user systemd directory
-    mkdir -p "$HOME_DIR/.config/systemd/user"
-    
-    # Create lobby-display user service
-    log "Creating lobby-display user service"
-    cat > "$HOME_DIR/.config/systemd/user/lobby-display.service" <<EOF
+    # --- 4. Configure Hyprland ---
+    log "Creating Hyprland kiosk configuration"
+    local hypr_config_dir="$HOME_DIR/.config/hypr"
+    mkdir -p "$hypr_config_dir"
+    cat > "$hypr_config_dir/hyprland.conf" <<'EOF'
+# --- Hyprland Kiosk Config ---
+# Monitor setup
+monitor=,preferred,auto,1
+
+# Autostart Chromium in kiosk mode on launch
+exec-once = chromium --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --kiosk http://localhost:8080
+
+# Make the Chromium window fullscreen and borderless
+windowrulev2 = fullscreen,class:^(chromium)$
+windowrulev2 = bordercolor rgb(000000),class:^(chromium)$
+windowrulev2 = noborder,class:^(chromium)$
+
+# Input settings to hide cursor after 1 second of inactivity
+input {
+    cursor {
+        inactive_timeout = 1
+    }
+    follow_mouse = 1
+}
+
+# Disable gestures and other UI elements
+gestures { workspace_swipe = off }
+general { gaps_in = 0; gaps_out = 0; border_size = 0; layout = dwindle; }
+decoration { active_opacity = 1.0; inactive_opacity = 1.0; fullscreen_opacity = 1.0; rounding = 0; }
+misc { disable_hyprland_logo = true; disable_splash_rendering = true; }
+EOF
+    chown -R "$USER:$USER" "$HOME_DIR/.config"
+
+    # --- 5. Create Systemd Services ---
+    log "Creating lobby-display systemd service"
+    cat > /etc/systemd/system/lobby-display.service <<'EOF'
 [Unit]
 Description=Lobby Display Vue.js App
 After=network-online.target
@@ -174,85 +99,55 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=$LOBBY_DISPLAY_DIR
+User=lobby
+WorkingDirectory=/opt/lobby-display
 ExecStart=/usr/bin/npm run preview -- --port 8080 --host
 Restart=on-failure
 RestartSec=10
-Environment=NODE_ENV=production
-
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target
 EOF
 
-    # Enable seatd for Wayland session management
-    log "Setting up seatd for Wayland"
-    if [[ -z "${CHROOT_INSTALL:-}" ]]; then
-        systemctl enable --now seatd.service
-    else
-        systemctl enable seatd.service 2>/dev/null || true
-        log "Seatd service enabled (will start on boot)"
-    fi
-    usermod -a -G seat "$USER"
-
-    # Create kiosk user service (Arch Linux way)
-    log "Creating kiosk user service"
-    cat > "$HOME_DIR/.config/systemd/user/lobby-kiosk.service" <<EOF
+    log "Creating Hyprland kiosk systemd service"
+    cat > /etc/systemd/system/lobby-kiosk.service <<'EOF'
 [Unit]
-Description=Lobby Kiosk Compositor
+Description=Hyprland Kiosk
 After=lobby-display.service
-Wants=lobby-display.service
+Requires=lobby-display.service
 
 [Service]
-Type=simple
-# Wait for display service to be ready
-ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 2; done'
-# Start Cage compositor with Chromium
-ExecStart=/usr/bin/cage -s -- /usr/bin/chromium \
-    --enable-features=UseOzonePlatform --ozone-platform=wayland \
-    --no-sandbox --disable-dev-shm-usage --kiosk \
-    --disable-infobars --disable-session-crashed-bubble \
-    --disable-features=TranslateUI --no-first-run \
-    --disable-notifications --disable-extensions \
-    --start-fullscreen --hide-cursor \
-    --disable-logging --disable-sync \
-    --disable-default-apps --disable-background-networking \
-    http://localhost:8080
-# Quit plymouth after cage starts to ensure seamless transition
+User=lobby
+Group=seat
+# Let systemd manage the user's runtime directory
+RuntimeDirectory=lobby
+# Launch Hyprland
+ExecStart=/usr/bin/Hyprland
+# Quit Plymouth after Hyprland starts to ensure seamless transition
 ExecStartPost=/usr/bin/plymouth quit
-Environment=WLR_NO_HARDWARE_CURSORS=1
-Restart=on-failure
+Restart=always
 RestartSec=5
-
 [Install]
-WantedBy=default.target
+WantedBy=graphical.target
 EOF
 
-    # Set correct ownership for user systemd files
-    chown -R "$USER:$USER" "$HOME_DIR/.config"
-    
-    # Enable user services (the Arch way)
-    log "Enabling user services"
-    # Enable lingering so user services start on boot without a login session
-    log "Enabling lingering for user $USER"
-    loginctl enable-linger "$USER"
+    # --- 6. Enable Services and Set Boot Target ---
+    log "Enabling services and setting default boot target"
+    systemctl enable lobby-display.service
+    systemctl enable lobby-kiosk.service
+    systemctl set-default graphical.target
 
-    # Manually enable user services by creating symlinks.
-    # This is more robust than `systemctl --user` from a root script.
-    log "Manually enabling user services"
-    mkdir -p "$HOME_DIR/.config/systemd/user/default.target.wants"
-    ln -sf "$HOME_DIR/.config/systemd/user/lobby-display.service" "$HOME_DIR/.config/systemd/user/default.target.wants/lobby-display.service"
-    ln -sf "$HOME_DIR/.config/systemd/user/lobby-kiosk.service" "$HOME_DIR/.config/systemd/user/default.target.wants/lobby-kiosk.service"
-    
-    # Set correct ownership again after creating new files/dirs as root
-    chown -R "$USER:$USER" "$HOME_DIR/.config"
-    log "User services enabled and lingering configured"
+    # --- 7. Remove Old Auto-Login Config ---
+    log "Removing old auto-login configuration if it exists"
+    rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf
+    systemctl set-default graphical.target
+    systemctl daemon-reload
 
-    log "Lobby kiosk setup completed"
+    log "Lobby kiosk setup with Hyprland completed"
 }
 
 # Reset function
 reset_kiosk() {
-    log "Resetting kiosk configuration"
+    log "Resetting kiosk configuration to a standard console state"
 
     # Stop and disable services
     systemctl stop lobby-kiosk.service || true
@@ -264,17 +159,16 @@ reset_kiosk() {
     rm -f /etc/systemd/system/lobby-kiosk.service
     rm -f /etc/systemd/system/lobby-display.service
 
-    # Re-enable getty@tty1
-    systemctl unmask getty@tty1.service || true
-    systemctl enable getty@tty1.service || true
+    # Set boot target back to default
+    systemctl set-default multi-user.target
+
+    # Clean up Hyprland config
+    rm -rf "$HOME_DIR/.config/hypr"
 
     # Clean up lobby-display directory
     rm -rf "$LOBBY_DISPLAY_DIR"
 
     systemctl daemon-reload
-
-    # Recreate
-    setup_kiosk
 
     log "Kiosk configuration reset completed"
 }
@@ -283,38 +177,29 @@ reset_kiosk() {
 validate_kiosk() {
     local errors=0
 
-    # Check if user service files exist
-    if [[ ! -f "$HOME_DIR/.config/systemd/user/lobby-kiosk.service" ]]; then
-        log "ERROR: Lobby kiosk user service not found"
+    # Check if service files exist
+    if [[ ! -f /etc/systemd/system/lobby-kiosk.service ]]; then
+        log "ERROR: Lobby kiosk service not found"
+        ((errors++))
+    fi
+    if [[ ! -f /etc/systemd/system/lobby-display.service ]]; then
+        log "ERROR: Lobby display service not found"
         ((errors++))
     fi
 
-    if [[ ! -f "$HOME_DIR/.config/systemd/user/lobby-display.service" ]]; then
-        log "ERROR: Lobby display user service not found"
+    # Check if Hyprland config exists
+    if [[ ! -f "$HOME_DIR/.config/hypr/hyprland.conf" ]]; then
+        log "ERROR: Hyprland config not found"
         ((errors++))
     fi
 
-    # Check if lobby-display directory exists
-    if [[ ! -d "$LOBBY_DISPLAY_DIR" ]]; then
-        log "ERROR: Lobby display directory not found"
-        ((errors++))
-    fi
+    # Check if user is in correct groups
+    if ! groups "$USER" | grep -q seat; then log "ERROR: User $USER not in seat group"; ((errors++)); fi
+    if ! groups "$USER" | grep -q video; then log "ERROR: User $USER not in video group"; ((errors++)); fi
 
-    # Check if auto-login is configured
-    if [[ ! -f /etc/systemd/system/getty@tty1.service.d/autologin.conf ]]; then
-        log "ERROR: Auto-login not configured"
-        ((errors++))
-    fi
-
-    # Check if user is in seat group
-    if ! groups "$USER" | grep -q seat; then
-        log "ERROR: User $USER not in seat group"
-        ((errors++))
-    fi
-
-    # Check if lingering is enabled
-    if [[ ! -f "/var/lib/systemd/linger/$USER" ]]; then
-        log "WARNING: User lingering not enabled - services may not start"
+    # Check if default target is graphical
+    if ! systemctl get-default | grep -q "graphical.target"; then
+        log "WARNING: Default target is not graphical.target"
     fi
 
     if [[ $errors -eq 0 ]]; then
