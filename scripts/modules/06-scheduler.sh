@@ -164,13 +164,12 @@ Persistent=false
 WantedBy=timers.target
 EOF
     
-    # Enable both timers for maintenance window
-    log "Enabling daily schedule timers"
+    # Enable shutdown timer only - services should not auto-start on boot
+    log "Enabling shutdown timer (startup timer disabled to prevent boot issues)"
     systemctl daemon-reload
     systemctl enable lobby-shutdown.timer
-    systemctl enable lobby-startup.timer
     systemctl start lobby-shutdown.timer
-    systemctl start lobby-startup.timer
+    # Startup timer not enabled - manual start only when needed
     
     log "Daily scheduler setup completed"
 }

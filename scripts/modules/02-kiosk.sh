@@ -216,8 +216,7 @@ Environment=USER=$USER
 Environment=WLR_NO_HARDWARE_CURSORS=1
 ExecStartPre=/usr/bin/sleep 3
 ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 2; done'
-# Create user runtime directory if it doesn't exist
-ExecStartPre=/bin/bash -c 'mkdir -p /run/user/1001 && chown $USER:$USER /run/user/1001 && chmod 700 /run/user/1001'
+# Runtime directory is created automatically by systemd
 # Start user DBUS session
 ExecStartPre=/bin/bash -c 'systemctl --user --machine=$USER@ start dbus.service || true'
 ExecStart=/usr/bin/cage -s -- /usr/bin/chromium --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --disable-dev-shm-usage --kiosk --disable-infobars --disable-session-crashed-bubble --disable-features=TranslateUI --no-first-run --disable-notifications --disable-extensions --enable-gpu-rasterization --enable-oop-rasterization --enable-hardware-overlays --force-device-scale-factor=1.0 --start-fullscreen --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --memory-pressure-off --max_old_space_size=512 --aggressive-cache-discard --purge-memory-button --kiosk-printing --disable-pinch --overscroll-history-navigation=0 --disable-touch-editing --disable-touch-adjustment --hide-cursor --disable-logging --disable-breakpad --disable-features=VizDisplayCompositor --disable-dbus --disable-sync --no-first-run --disable-default-apps --disable-background-networking --disable-component-update http://localhost:8080
@@ -225,6 +224,8 @@ Restart=always
 RestartSec=5
 RuntimeDirectory=lobby-kiosk
 RuntimeDirectoryMode=0755
+# Let systemd create user runtime directory
+ExecStartPre=/bin/bash -c 'systemd-run --uid=1001 --gid=1001 --wait /bin/true'
 # Better process management
 KillMode=mixed
 KillSignal=SIGTERM
