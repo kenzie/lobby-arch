@@ -230,32 +230,20 @@ EOF
     
     # Enable user services (the Arch way)
     log "Enabling user services"
-    if [[ -z "${CHROOT_INSTALL:-}" ]]; then
-        # Enable user services immediately with proper session handling
-        sudo -u "$USER" systemctl --user daemon-reload
-        sudo -u "$USER" systemctl --user enable lobby-display.service || {
-            log "WARNING: Failed to enable lobby-display.service - may need manual enable"
-        }
-        sudo -u "$USER" systemctl --user enable lobby-kiosk.service || {
-            log "WARNING: Failed to enable lobby-kiosk.service - may need manual enable"
-        }
-        # Enable lingering so user services start without login
-        loginctl enable-linger "$USER"
-        log "User services enabled and lingering configured"
-    else
-        # Enable lingering so user services start on boot without a login session
-        log "Enabling lingering for user $USER"
-        loginctl enable-linger "$USER"
+    # Enable lingering so user services start on boot without a login session
+    log "Enabling lingering for user $USER"
+    loginctl enable-linger "$USER"
 
-        # Manually enable user services by creating symlinks, as systemctl --user does not work in chroot
-        log "Manually enabling user services for boot"
-        mkdir -p "$HOME_DIR/.config/systemd/user/default.target.wants"
-        ln -sf "$HOME_DIR/.config/systemd/user/lobby-display.service" "$HOME_DIR/.config/systemd/user/default.target.wants/lobby-display.service"
-        ln -sf "$HOME_DIR/.config/systemd/user/lobby-kiosk.service" "$HOME_DIR/.config/systemd/user/default.target.wants/lobby-kiosk.service"
-        # Set ownership again after creating new files/dirs as root
-        chown -R "$USER:$USER" "$HOME_DIR/.config"
-        log "User services enabled and lingering configured for boot"
-    fi
+    # Manually enable user services by creating symlinks.
+    # This is more robust than `systemctl --user` from a root script.
+    log "Manually enabling user services"
+    mkdir -p "$HOME_DIR/.config/systemd/user/default.target.wants"
+    ln -sf "$HOME_DIR/.config/systemd/user/lobby-display.service" "$HOME_DIR/.config/systemd/user/default.target.wants/lobby-display.service"
+    ln -sf "$HOME_DIR/.config/systemd/user/lobby-kiosk.service" "$HOME_DIR/.config/systemd/user/default.target.wants/lobby-kiosk.service"
+    
+    # Set correct ownership again after creating new files/dirs as root
+    chown -R "$USER:$USER" "$HOME_DIR/.config"
+    log "User services enabled and lingering configured"
 
     log "Lobby kiosk setup completed"
 }
