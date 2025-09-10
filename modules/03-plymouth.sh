@@ -126,20 +126,26 @@ EOF
     
         
 
-        # This service waits for the Hyprland process to appear, then quits Plymouth.
+        # This service waits for the Hyprland process and Chromium to be running, then quits Plymouth.
     log "Creating kiosk-aware plymouth-quit-wait service"
     cat > /etc/systemd/system/plymouth-quit-wait.service <<EOF
 [Unit]
 Description=Hold until boot process finishes up (Kiosk Version)
 After=lobby-kiosk.service
 Wants=lobby-kiosk.service
+# Ensure we run after the kiosk service is actually active
+Requisite=lobby-kiosk.service
 
 [Service]
 Type=oneshot
-ExecStartPre=/bin/bash -c 'for i in {1..60}; do pgrep Hyprland >/dev/null && break; sleep 1; done'
-ExecStartPre=/bin/bash -c 'sleep 2'
+# Wait for both Hyprland and Chromium to be running (indicates kiosk is ready)
+ExecStartPre=/bin/bash -c 'echo "Waiting for kiosk to be ready..."; for i in {1..120}; do if pgrep Hyprland >/dev/null && pgrep chromium >/dev/null; then echo "Kiosk ready after $i seconds"; break; fi; sleep 1; done'
+# Give an extra moment for display to stabilize
+ExecStartPre=/bin/bash -c 'sleep 3'
 ExecStart=/usr/bin/plymouth quit
 RemainAfterExit=yes
+# Add timeout to prevent hanging
+TimeoutStartSec=150
 [Install]
 WantedBy=graphical.target
 EOF
