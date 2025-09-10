@@ -7,6 +7,17 @@ set -euo pipefail
 MODULE_NAME="Cleanup"
 MODULE_VERSION="1.0"
 
+# Get script directory - handle both direct execution and symlink scenarios
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# For symlinked lobby command, find the real script location
+if [[ -L "/usr/local/bin/lobby" ]]; then
+    REAL_LOBBY_SCRIPT="$(readlink -f /usr/local/bin/lobby)"
+    REAL_SCRIPT_DIR="$(dirname "$REAL_LOBBY_SCRIPT")"
+    CONFIG_DIR="$REAL_SCRIPT_DIR/configs"
+else
+    CONFIG_DIR="$SCRIPT_DIR/../configs"
+fi
+
 # Default values
 USER="${LOBBY_USER:-lobby}"
 HOME_DIR="${LOBBY_HOME:-/home/$USER}"
@@ -20,6 +31,32 @@ log() {
 setup_cleanup() {
     log "Running cleanup and finalization tasks"
 
+    # Install maintenance boot check service
+    log "Installing maintenance boot check"
+    cp "$CONFIG_DIR/maintenance-boot-check.sh" /usr/local/bin/maintenance-boot-check.sh
+    chmod +x /usr/local/bin/maintenance-boot-check.sh
+    
+    # Create maintenance boot check service
+    cat > /etc/systemd/system/maintenance-boot-check.service <<EOF
+[Unit]
+Description=Check for maintenance window on boot
+After=multi-user.target
+Before=lobby-display.service lobby-kiosk.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/maintenance-boot-check.sh
+User=root
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    
+    # Enable maintenance boot check
+    systemctl daemon-reload
+    systemctl enable maintenance-boot-check.service
+    
     # Create global lobby command symlink
     log "Creating global lobby command"
     ln -sf /root/scripts/lobby.sh /usr/local/bin/lobby
@@ -84,6 +121,11 @@ EOF
 reset_cleanup() {
     log "Resetting cleanup configuration"
 
+    # Remove maintenance boot check
+    systemctl disable maintenance-boot-check.service || true
+    rm -f /etc/systemd/system/maintenance-boot-check.service
+    rm -f /usr/local/bin/maintenance-boot-check.sh
+    
     # Remove global lobby command
     rm -f /usr/local/bin/lobby
 
@@ -128,6 +170,22 @@ validate_cleanup() {
     # Check if journal limits are configured
     if [[ ! -f /etc/systemd/journald.conf.d/lobby.conf ]]; then
         log "ERROR: Journal size limits not configured"
+        ((errors++))
+    fi
+    
+    # Check if maintenance boot check is configured
+    if [[ ! -f /usr/local/bin/maintenance-boot-check.sh ]]; then
+        log "ERROR: Maintenance boot check script not found"
+        ((errors++))
+    fi
+    
+    if [[ ! -f /etc/systemd/system/maintenance-boot-check.service ]]; then
+        log "ERROR: Maintenance boot check service not found"
+        ((errors++))
+    fi
+    
+    if ! systemctl is-enabled maintenance-boot-check.service >/dev/null 2>&1; then
+        log "ERROR: Maintenance boot check service not enabled"
         ((errors++))
     fi
 
