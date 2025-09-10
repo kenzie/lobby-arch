@@ -121,7 +121,7 @@ Group=seat
 # Let systemd manage the user's runtime directory
 RuntimeDirectory=lobby
 # Launch Hyprland
-ExecStart=/usr/bin/Hyprland
+ExecStart=/usr/bin/seatd-launch /usr/bin/Hyprland
 # Quit Plymouth after Hyprland starts to ensure seamless transition
 ExecStartPost=/usr/bin/plymouth quit
 Restart=always
