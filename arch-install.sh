@@ -196,7 +196,8 @@ echo "==> Running post-install setup directly..."
 
 # Instead of relying on systemd service that keeps failing,
 # just run the post-install script directly in chroot
-if ! arch-chroot /mnt /root/scripts/post-install.sh; then
+# Set CHROOT_INSTALL flag to skip network checks and systemd operations
+if ! arch-chroot /mnt env CHROOT_INSTALL=1 /root/scripts/post-install.sh; then
     echo "ERROR: Post-install setup failed"
     exit 1
 fi

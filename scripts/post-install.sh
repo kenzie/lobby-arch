@@ -22,19 +22,23 @@ if ! id "$USER" >/dev/null 2>&1; then
     exit 1
 fi
 
-# Wait for network connectivity
-log "Waiting for network connectivity..."
-for i in {1..30}; do
-    if curl -s --connect-timeout 5 https://www.google.com >/dev/null 2>&1; then
-        log "Network connectivity confirmed"
-        break
-    fi
-    if [ $i -eq 30 ]; then
-        log "ERROR: Network connectivity timeout"
-        exit 1
-    fi
-    sleep 2
-done
+# Wait for network connectivity (skip in chroot)
+if [[ -z "${CHROOT_INSTALL:-}" ]]; then
+    log "Waiting for network connectivity..."
+    for i in {1..30}; do
+        if curl -s --connect-timeout 5 https://www.google.com >/dev/null 2>&1; then
+            log "Network connectivity confirmed"
+            break
+        fi
+        if [ $i -eq 30 ]; then
+            log "ERROR: Network connectivity timeout"
+            exit 1
+        fi
+        sleep 2
+    done
+else
+    log "Skipping network check (chroot environment)"
+fi
 
 # Set environment variables for lobby.sh
 export LOBBY_USER="$USER"
@@ -105,9 +109,13 @@ else
     log "SUCCESS: All modules completed successfully"
 fi
 
-# Disable this service since it's completed
-log "Disabling post-install service"
-systemctl disable post-install.service
+# Disable this service since it's completed (skip in chroot)
+if [[ -z "${CHROOT_INSTALL:-}" ]]; then
+    log "Disabling post-install service"
+    systemctl disable post-install.service 2>/dev/null || true
+else
+    log "Skipping service disable (chroot environment)"
+fi
 
 log "==> Post-install tasks complete. The system will boot directly to Cage kiosk with Plymouth splash."
 log "==> Use 'sudo lobby help' for system management and 'sudo lobby health' for diagnostics."
