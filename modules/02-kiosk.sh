@@ -74,8 +74,8 @@ general {
 }
 
 decoration {
-    drop_shadow = false
     rounding = 0
+    # drop_shadow removed - deprecated in newer Hyprland versions
 }
 
 input {
