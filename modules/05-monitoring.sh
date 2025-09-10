@@ -81,9 +81,12 @@ if ! check_url "http://localhost:8080"; then
     systemctl restart lobby-kiosk.service
 fi
 
-# Check if Cage compositor is running (basic process check)
-if ! pgrep -f "cage.*chromium" >/dev/null; then
-    log "WARNING: Cage compositor not running, restarting kiosk service"
+# Check if Hyprland compositor and Chromium are running
+if ! pgrep "Hyprland" >/dev/null; then
+    log "WARNING: Hyprland compositor not running, restarting kiosk service"
+    systemctl restart lobby-kiosk.service
+elif ! pgrep "chromium" >/dev/null; then
+    log "WARNING: Chromium not running, restarting kiosk service"  
     systemctl restart lobby-kiosk.service
 fi
 
