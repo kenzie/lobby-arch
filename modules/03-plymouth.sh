@@ -136,7 +136,7 @@ Wants=lobby-kiosk.service
 
 [Service]
 Type=oneshot
-ExecStartPre=/bin/bash -c 'for i in {1..60}; do pgrep -x Hyprland >/dev/null && break; sleep 1; done'
+ExecStartPre=/bin/bash -c 'for i in {1..60}; do pgrep Hyprland >/dev/null && break; sleep 1; done'
 ExecStartPre=/bin/bash -c 'sleep 2'
 ExecStart=/usr/bin/plymouth quit
 RemainAfterExit=yes

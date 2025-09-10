@@ -124,6 +124,8 @@ PAMName=login
 # Explicitly set wlroots environment variables for AMD GPU
 Environment="WLR_RENDERER=vulkan"
 Environment="WLR_DRM_DEVICE=/dev/dri/card0"
+# Wait for the display server to be ready before starting
+ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 1; done'
 # Launch Hyprland
 ExecStart=/usr/bin/Hyprland
 Restart=always
