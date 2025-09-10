@@ -117,7 +117,7 @@ EOF
     # Ensure Plymouth shows during shutdown/reboot by configuring kernel params
     if [[ -f /etc/default/grub ]]; then
         if ! grep -q "splash quiet" /etc/default/grub; then
-            sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="\(.*\)"/GRUB_CMDLINE_LINUX_DEFAULT="\1 splash quiet"/' /etc/default/grub
+            sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="\(.*\)"/GRUB_CMDLINE_LINUX_DEFAULT="\1 splash quiet loglevel=0 rd.udev.log_level=0 rd.systemd.show_status=false systemd.show_status=false fbcon=nodefer vt.global_cursor_default=0 console=tty2"/' /etc/default/grub
             grub-mkconfig -o /boot/grub/grub.cfg
         fi
     else
@@ -139,7 +139,7 @@ Wants=lobby-kiosk.service
 Type=oneshot
 # Wait for Hyprland to be running (optimized for speed)
 ExecStartPre=/bin/bash -c 'echo "Waiting for kiosk to be ready..."; for i in \$(seq 1 15); do if pgrep Hyprland >/dev/null; then echo "Hyprland ready after \$i seconds"; sleep 1; echo "Kiosk display ready"; break; fi; sleep 0.5; done'
-ExecStart=/bin/bash -c "/usr/bin/plymouth quit || echo \"Plymouth already quit or not running\""
+ExecStart=/bin/bash -c "/usr/bin/plymouth quit || echo \"Plymouth already quit or not running\"; chvt 2"
 RemainAfterExit=yes
 # Add timeout to prevent hanging
 TimeoutStartSec=40

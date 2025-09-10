@@ -140,7 +140,7 @@ PrivateUsers=false
 # Wait for the display server to be ready before starting
 ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 1; done'
 # Launch Hyprland with proper environment (XDG_RUNTIME_DIR set by systemd)
-ExecStart=/bin/bash -c 'export XDG_RUNTIME_DIR=/run/user/1000; export XDG_SESSION_TYPE=wayland; export XDG_CURRENT_DESKTOP=Hyprland; export WLR_RENDERER=vulkan; export WLR_DRM_DEVICE=/dev/dri/card0; export WLR_NO_HARDWARE_CURSORS=1; exec /usr/bin/Hyprland 2>/dev/null'
+ExecStart=/bin/bash -c 'export XDG_RUNTIME_DIR=/run/user/1000; export XDG_SESSION_TYPE=wayland; export XDG_CURRENT_DESKTOP=Hyprland; export WLR_RENDERER=vulkan; export WLR_DRM_DEVICE=/dev/dri/card0; export WLR_NO_HARDWARE_CURSORS=1; export WLR_VT=2; exec /usr/bin/Hyprland 2>/dev/null'
 Restart=always
 RestartSec=2
 # Better logging
