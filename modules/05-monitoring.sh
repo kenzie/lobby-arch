@@ -121,6 +121,8 @@ Requires=lobby-monitor.service
 [Timer]
 OnCalendar=*:*:00/2
 Persistent=true
+# Delay initial run to allow kiosk to fully initialize during boot
+OnBootSec=3min
 
 [Install]
 WantedBy=timers.target
