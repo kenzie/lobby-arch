@@ -175,7 +175,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 WorkingDirectory=$LOBBY_DISPLAY_DIR
-ExecStart=/usr/bin/npm run preview -- --port 8080 --host --force
+ExecStart=/usr/bin/npm run preview -- --port 8080 --host
 Restart=on-failure
 RestartSec=10
 Environment=NODE_ENV=production
