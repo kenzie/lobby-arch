@@ -182,7 +182,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 WorkingDirectory=$LOBBY_DISPLAY_DIR
-ExecStart=/usr/bin/npm run preview -- --port 8080 --host
+ExecStart=/usr/bin/npm run preview -- --port 8080 --host --force
 Restart=on-failure
 RestartSec=10
 Environment=NODE_ENV=production
@@ -238,12 +238,17 @@ EOF
     # Enable user services (the Arch way)
     log "Enabling user services"
     if [[ -z "${CHROOT_INSTALL:-}" ]]; then
-        # Enable user services immediately
+        # Enable user services immediately with proper session handling
         sudo -u "$USER" systemctl --user daemon-reload
-        sudo -u "$USER" systemctl --user enable lobby-display.service
-        sudo -u "$USER" systemctl --user enable lobby-kiosk.service
+        sudo -u "$USER" systemctl --user enable lobby-display.service || {
+            log "WARNING: Failed to enable lobby-display.service - may need manual enable"
+        }
+        sudo -u "$USER" systemctl --user enable lobby-kiosk.service || {
+            log "WARNING: Failed to enable lobby-kiosk.service - may need manual enable"
+        }
         # Enable lingering so user services start without login
         loginctl enable-linger "$USER"
+        log "User services enabled and lingering configured"
     else
         log "User services will be enabled on first boot"
     fi
