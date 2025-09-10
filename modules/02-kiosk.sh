@@ -92,8 +92,16 @@ misc {
     disable_splash_rendering = true
 }
 
-# Input is implicitly disabled by not defining any input devices.
-# We only define the cursor behavior.
+# A minimal input block is required.
+# We explicitly disable keyboard and mouse for the kiosk.
+input {
+    kb_enabled = false
+    mouse_enabled = false
+    touchpad_enabled = false
+    follow_mouse = 1
+}
+
+# We still define the cursor behavior to ensure it's hidden.
 cursor {
     inactive_timeout = 1
 }
