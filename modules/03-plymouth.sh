@@ -59,15 +59,18 @@ setup_plymouth() {
         echo "Route 19" > "$SLEEP_THEME_DIR/logo.png"
     fi
     
-    # Configure mkinitcpio hooks for Plymouth
-    log "Configuring mkinitcpio hooks for Plymouth"
+    # Configure mkinitcpio hooks for Plymouth (Arch best practices)
+    log "Configuring mkinitcpio hooks and modules for Plymouth"
     if ! grep -q "plymouth" /etc/mkinitcpio.conf; then
         # Backup original configuration
         cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.backup
         
-        # Add plymouth hook before filesystems
-        sed -i 's/HOOKS=(\([^)]*\) filesystems/HOOKS=(\1 plymouth filesystems/' /etc/mkinitcpio.conf
-        log "Added Plymouth hook to mkinitcpio configuration"
+        # Add AMD graphics module for proper Plymouth display
+        sed -i 's/^MODULES=()/MODULES=(amdgpu)/' /etc/mkinitcpio.conf
+        
+        # Configure hooks in proper order: systemd must precede plymouth
+        sed -i 's/^HOOKS=.*/HOOKS=(systemd plymouth autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck)/' /etc/mkinitcpio.conf
+        log "Configured mkinitcpio with AMD graphics module and proper hook order"
         
         # Regenerate initramfs
         log "Regenerating initramfs with Plymouth support"
@@ -128,7 +131,7 @@ EOF
             # Extract current root UUID and preserve it
             ROOT_UUID=$(grep "^options" "$BOOT_ENTRY" | grep -o "root=UUID=[^ ]*" || echo "root=LABEL=arch")
             # Update with enhanced kernel parameters for clean kiosk boot
-            sed -i "s|^options.*|options $ROOT_UUID rw splash quiet loglevel=3 rd.systemd.show_status=false systemd.show_status=false fbcon=nodefer vt.global_cursor_default=0|" "$BOOT_ENTRY"
+            sed -i "s|^options.*|options $ROOT_UUID rw quiet splash|" "$BOOT_ENTRY"
             log "Updated systemd-boot configuration with clean boot parameters"
         else
             log "WARNING: systemd-boot configuration not found at $BOOT_ENTRY"
