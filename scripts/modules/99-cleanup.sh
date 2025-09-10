@@ -33,8 +33,15 @@ setup_cleanup() {
 
     # Install maintenance boot check service
     log "Installing maintenance boot check"
-    cp "$CONFIG_DIR/maintenance-boot-check.sh" /usr/local/bin/maintenance-boot-check.sh
-    chmod +x /usr/local/bin/maintenance-boot-check.sh
+    if [[ -f "$CONFIG_DIR/maintenance-boot-check.sh" ]]; then
+        cp "$CONFIG_DIR/maintenance-boot-check.sh" /usr/local/bin/maintenance-boot-check.sh
+        chmod +x /usr/local/bin/maintenance-boot-check.sh
+        log "Maintenance boot check script installed"
+    else
+        log "ERROR: maintenance-boot-check.sh not found at $CONFIG_DIR/maintenance-boot-check.sh"
+        log "Available files in config dir: $(ls -la "$CONFIG_DIR" 2>/dev/null || echo 'directory not found')"
+        return 1
+    fi
     
     # Create maintenance boot check service
     cat > /etc/systemd/system/maintenance-boot-check.service <<EOF
