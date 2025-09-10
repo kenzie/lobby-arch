@@ -31,7 +31,7 @@ setup_kiosk() {
     pacman -S --noconfirm --needed hyprland xorg-xwayland chromium nodejs npm git ttf-cascadia-code-nerd inter-font || {
         log "ERROR: Failed to install packages"
         return 1
-    }
+
     
     # --- 2. User and Permissions ---
     log "Configuring user permissions"
@@ -169,17 +169,17 @@ validate_kiosk() {
     if [[ ! -f /etc/systemd/system/lobby-kiosk.service ]]; then
         log "ERROR: Lobby kiosk service not found"
         ((errors++))
-    }
+
     if [[ ! -f /etc/systemd/system/lobby-display.service ]]; then
         log "ERROR: Lobby display service not found"
         ((errors++))
-    }
+
 
     # Check if Hyprland config exists
     if [[ ! -f "$HOME_DIR/.config/hypr/hyprland.conf" ]]; then
         log "ERROR: Hyprland config not found"
         ((errors++))
-    }
+
 
     # Check if user is in correct groups
     if ! groups "$USER" | grep -q seat; then log "ERROR: User $USER not in seat group"; ((errors++)); fi
