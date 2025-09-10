@@ -125,25 +125,22 @@ EOF
     cat > /etc/systemd/system/lobby-kiosk.service <<'EOF'
 [Unit]
 Description=Hyprland Kiosk
-After=lobby-display.service seatd.service
+After=lobby-display.service seatd.service user@1000.service
 Requires=lobby-display.service
-Wants=seatd.service
+Wants=seatd.service user@1000.service
 
 [Service]
 Type=simple
 User=lobby
 Group=seat
-# Set up proper runtime directory and permissions
-RuntimeDirectory=lobby-kiosk
-RuntimeDirectoryMode=0700
+# Use systemd's user runtime directory (managed automatically)
+PrivateUsers=false
 # Wait for the display server to be ready before starting
 ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 1; done'
-# Set up runtime directory with correct user ID
-ExecStartPre=/bin/bash -c 'USER_ID=$(id -u lobby); mkdir -p /run/user/$USER_ID; chown lobby:lobby /run/user/$USER_ID'
-# Launch Hyprland with wrapper script that sets proper environment
-ExecStart=/bin/bash -c 'USER_ID=$(id -u lobby); export XDG_RUNTIME_DIR=/run/user/$USER_ID; export XDG_SESSION_TYPE=wayland; export XDG_CURRENT_DESKTOP=Hyprland; export WLR_RENDERER=vulkan; export WLR_DRM_DEVICE=/dev/dri/card0; export WLR_NO_HARDWARE_CURSORS=1; exec /usr/bin/Hyprland'
+# Launch Hyprland with proper environment (XDG_RUNTIME_DIR set by systemd)
+ExecStart=/bin/bash -c 'export XDG_RUNTIME_DIR=/run/user/1000; export XDG_SESSION_TYPE=wayland; export XDG_CURRENT_DESKTOP=Hyprland; export WLR_RENDERER=vulkan; export WLR_DRM_DEVICE=/dev/dri/card0; export WLR_NO_HARDWARE_CURSORS=1; exec /usr/bin/Hyprland'
 Restart=always
-RestartSec=5
+RestartSec=2
 # Better logging
 StandardOutput=journal
 StandardError=journal
