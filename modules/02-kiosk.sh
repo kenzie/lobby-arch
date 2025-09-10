@@ -112,8 +112,9 @@ EOF
     cat > /etc/systemd/system/lobby-kiosk.service <<'EOF'
 [Unit]
 Description=Hyprland Kiosk
-After=lobby-display.service
+After=lobby-display.service seatd.service
 Requires=lobby-display.service
+Wants=seatd.service
 
 [Service]
 User=lobby
