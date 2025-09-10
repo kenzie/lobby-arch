@@ -65,7 +65,7 @@ setup_kiosk() {
 # --- Hyprland Kiosk Config (Fixed Syntax) ---
 monitor=,preferred,auto,1
 # Wait for Vue.js app to be ready, then launch Chromium in kiosk mode
-exec-once = bash -c 'while ! curl -s http://localhost:8080 >/dev/null 2>&1; do sleep 1; done; sleep 2; export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1000/bus"; chromium --no-sandbox --disable-dev-shm-usage --disable-gpu --disable-software-rasterizer --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-extensions --disable-plugins --disable-sync --disable-translate --no-first-run --no-default-browser-check --kiosk http://localhost:8080'
+exec-once = bash -c 'while ! curl -s http://localhost:8080 >/dev/null 2>&1; do sleep 1; done; sleep 2; export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1000/bus"; chromium --no-sandbox --disable-dev-shm-usage --disable-gpu --disable-software-rasterizer --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-extensions --disable-plugins --disable-sync --disable-translate --no-first-run --no-default-browser-check --kiosk http://localhost:8080 2>/dev/null'
 windowrulev2 = fullscreen,class:^(chromium)$
 
 general {
@@ -138,7 +138,7 @@ PrivateUsers=false
 # Wait for the display server to be ready before starting
 ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 1; done'
 # Launch Hyprland with proper environment (XDG_RUNTIME_DIR set by systemd)
-ExecStart=/bin/bash -c 'export XDG_RUNTIME_DIR=/run/user/1000; export XDG_SESSION_TYPE=wayland; export XDG_CURRENT_DESKTOP=Hyprland; export WLR_RENDERER=vulkan; export WLR_DRM_DEVICE=/dev/dri/card0; export WLR_NO_HARDWARE_CURSORS=1; exec /usr/bin/Hyprland'
+ExecStart=/bin/bash -c 'export XDG_RUNTIME_DIR=/run/user/1000; export XDG_SESSION_TYPE=wayland; export XDG_CURRENT_DESKTOP=Hyprland; export WLR_RENDERER=vulkan; export WLR_DRM_DEVICE=/dev/dri/card0; export WLR_NO_HARDWARE_CURSORS=1; exec /usr/bin/Hyprland 2>/dev/null'
 Restart=always
 RestartSec=2
 # Better logging
