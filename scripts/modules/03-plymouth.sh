@@ -89,19 +89,20 @@ setup_plymouth() {
     cat > /etc/systemd/system/plymouth-quit-wait.service <<EOF
 [Unit]
 Description=Hold until boot process finishes up (Kiosk Version)
-After=rc-local.service plymouth-start.service systemd-user-sessions.service lobby-kiosk.service
-Requires=lobby-kiosk.service
+After=rc-local.service plymouth-start.service systemd-user-sessions.service
+# Remove Requires=lobby-kiosk.service to avoid circular dependency
+# Instead, wait for cage process in ExecStartPre
 
 [Service]
 Type=oneshot
 # Wait for cage process to be running (kiosk is up)
-ExecStartPre=/bin/bash -c 'while ! pgrep -f cage >/dev/null; do sleep 1; done'
+ExecStartPre=/bin/bash -c 'for i in {1..60}; do pgrep -f cage >/dev/null && break; sleep 1; done'
 # Give it a moment to fully initialize
 ExecStartPre=/bin/bash -c 'sleep 2'
 # Quit plymouth boot screen
 ExecStart=/usr/bin/plymouth quit
 RemainAfterExit=yes
-TimeoutSec=60
+TimeoutSec=120
 
 [Install]
 WantedBy=multi-user.target
