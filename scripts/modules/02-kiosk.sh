@@ -33,10 +33,14 @@ log() {
 setup_kiosk() {
     log "Setting up lobby kiosk system"
 
-    # Install required packages
-    log "Installing Wayland, Chromium, and font packages"
-    pacman -S --noconfirm cage seatd chromium nodejs npm git xorg-xwayland \
-        ttf-cascadia-code-nerd inter-font cairo freetype2
+    # Install required packages (skip in chroot - already installed by arch-install.sh)
+    if [[ -z "${CHROOT_INSTALL:-}" ]]; then
+        log "Installing Wayland, Chromium, and font packages"
+        pacman -S --noconfirm cage seatd chromium nodejs npm git xorg-xwayland \
+            ttf-cascadia-code-nerd inter-font cairo freetype2
+    else
+        log "Skipping package installation (packages already installed by arch-install.sh)"
+    fi
 
     # Configure fonts for better rendering
     log "Configuring font rendering"
@@ -177,7 +181,12 @@ EOF
 
     # Enable seatd for Wayland session management
     log "Setting up seatd for Wayland"
-    systemctl enable --now seatd.service
+    if [[ -z "${CHROOT_INSTALL:-}" ]]; then
+        systemctl enable --now seatd.service
+    else
+        systemctl enable seatd.service 2>/dev/null || true
+        log "Seatd service enabled (will start on boot)"
+    fi
     usermod -a -G seat "$USER"
 
     # Create kiosk service - runs Cage directly without login
@@ -210,14 +219,18 @@ EOF
 
     # Disable getty on tty1 to prevent login prompt interference
     log "Disabling getty@tty1 service for clean kiosk boot"
-    systemctl disable getty@tty1.service || true
-    systemctl mask getty@tty1.service || true
+    systemctl disable getty@tty1.service 2>/dev/null || true
+    systemctl mask getty@tty1.service 2>/dev/null || true
 
     # Enable services
     log "Enabling kiosk services"
-    systemctl daemon-reload
-    systemctl enable lobby-display.service
-    systemctl enable lobby-kiosk.service
+    systemctl daemon-reload 2>/dev/null || true
+    systemctl enable lobby-display.service 2>/dev/null || true
+    systemctl enable lobby-kiosk.service 2>/dev/null || true
+    
+    if [[ -n "${CHROOT_INSTALL:-}" ]]; then
+        log "Services enabled for boot (chroot environment)"
+    fi
 
     log "Lobby kiosk setup completed"
 }
