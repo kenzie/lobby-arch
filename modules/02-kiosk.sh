@@ -91,14 +91,8 @@ misc {
     force_default_wallpaper = 0
 }
 
-# Disable all input devices for true kiosk mode
-device:mouse {
-    enabled = false
-}
-
-device:keyboard {
-    enabled = false
-}
+# Input devices managed through input section above for kiosk mode
+# Note: device-specific blocks can cause crashes in some Hyprland versions
 EOF
     chown -R "$USER:$USER" "$HOME_DIR/.config"
 
