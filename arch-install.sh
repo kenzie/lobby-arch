@@ -84,7 +84,7 @@ mount -t vfat "$EFI" /mnt/boot
 echo "==> Installing base packages..."
 pacstrap /mnt base linux linux-firmware vim networkmanager sudo git \
     base-devel openssh rng-tools curl bc \
-    cage seatd chromium xorg-xwayland \
+    cage seatd chromium xorg-xwayland dbus \
     ttf-cascadia-code-nerd inter-font cairo freetype2 \
     nodejs npm \
     plymouth cdrtools \
@@ -127,9 +127,10 @@ useradd -m -G wheel -s /bin/bash $USERNAME
 echo "${USERNAME}:${PASSWORD}" | chpasswd
 echo "%wheel ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/999_lobby
 
-# Enable NetworkManager and SSH
+# Enable NetworkManager, SSH, and DBUS
 systemctl enable NetworkManager
 systemctl enable sshd
+systemctl enable dbus
 EOF
 
 # --- Clone lobby-arch repository ---

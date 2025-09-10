@@ -37,7 +37,7 @@ setup_kiosk() {
     if [[ -z "${CHROOT_INSTALL:-}" ]]; then
         log "Installing Wayland, Chromium, and font packages"
         pacman -S --noconfirm cage seatd chromium nodejs npm git xorg-xwayland \
-            ttf-cascadia-code-nerd inter-font cairo freetype2
+            ttf-cascadia-code-nerd inter-font cairo freetype2 dbus
     else
         log "Skipping package installation (packages already installed by arch-install.sh)"
     fi
@@ -194,7 +194,7 @@ EOF
     cat > /etc/systemd/system/lobby-kiosk.service <<EOF
 [Unit]
 Description=Lobby Kiosk Compositor
-After=multi-user.target lobby-display.service seatd.service
+After=multi-user.target lobby-display.service seatd.service dbus.service
 Requires=lobby-display.service seatd.service
 BindsTo=lobby-display.service
 StartLimitBurst=10
@@ -204,14 +204,31 @@ StartLimitIntervalSec=60
 Type=simple
 User=$USER
 Group=seat
-Environment=XDG_RUNTIME_DIR=/run/lobby-kiosk
+# Proper session environment setup
+Environment=XDG_RUNTIME_DIR=/run/user/1001
+Environment=XDG_SESSION_CLASS=user
+Environment=XDG_SESSION_TYPE=wayland
+Environment=WAYLAND_DISPLAY=wayland-0
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus
+Environment=HOME=$HOME_DIR
+Environment=USER=$USER
+# Hide cursor at system level
+Environment=WLR_NO_HARDWARE_CURSORS=1
 ExecStartPre=/usr/bin/sleep 3
 ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 2; done'
-ExecStart=/usr/bin/cage -s -- /usr/bin/chromium --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --disable-dev-shm-usage --kiosk --disable-infobars --disable-session-crashed-bubble --disable-features=TranslateUI --no-first-run --disable-notifications --disable-extensions --enable-gpu-rasterization --enable-oop-rasterization --enable-hardware-overlays --force-device-scale-factor=1.0 --start-fullscreen --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --memory-pressure-off --max_old_space_size=512 --aggressive-cache-discard --purge-memory-button --kiosk-printing --disable-pinch --overscroll-history-navigation=0 --disable-touch-editing --disable-touch-adjustment --hide-cursor http://localhost:8080
+# Create user runtime directory if it doesn't exist
+ExecStartPre=/bin/bash -c 'mkdir -p /run/user/1001 && chown $USER:$USER /run/user/1001 && chmod 700 /run/user/1001'
+# Start user DBUS session
+ExecStartPre=/bin/bash -c 'systemctl --user --machine=$USER@ start dbus.service || true'
+ExecStart=/usr/bin/cage -s -- /usr/bin/chromium --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --disable-dev-shm-usage --kiosk --disable-infobars --disable-session-crashed-bubble --disable-features=TranslateUI --no-first-run --disable-notifications --disable-extensions --enable-gpu-rasterization --enable-oop-rasterization --enable-hardware-overlays --force-device-scale-factor=1.0 --start-fullscreen --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --memory-pressure-off --max_old_space_size=512 --aggressive-cache-discard --purge-memory-button --kiosk-printing --disable-pinch --overscroll-history-navigation=0 --disable-touch-editing --disable-touch-adjustment --hide-cursor --disable-logging --disable-breakpad --disable-features=VizDisplayCompositor --disable-dbus --disable-sync --no-first-run --disable-default-apps --disable-background-networking --disable-component-update http://localhost:8080
 Restart=always
 RestartSec=5
 RuntimeDirectory=lobby-kiosk
 RuntimeDirectoryMode=0755
+# Better process management
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=10
 
 [Install]
 WantedBy=multi-user.target
