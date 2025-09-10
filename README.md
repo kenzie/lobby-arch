@@ -99,12 +99,12 @@ sudo lobby help                          # Full command reference
 
 The system uses a modular architecture with the following components:
 
-- **02-kiosk.sh** - Auto-login + user services for Cage (Wayland compositor) + Chromium kiosk with cursor hiding
-- **03-plymouth.sh** - Route 19 boot splash screen with logo and animated loading dots
-- **04-auto-updates.sh** - Automated system and project updates with error recovery
-- **05-monitoring.sh** - Service health monitoring with automatic restart
-- **06-scheduler.sh** - Daily operation schedule (8:00 AM start, 11:59 PM stop)  
-- **99-cleanup.sh** - Global command setup, log rotation, and system optimization
+- **modules/02-kiosk.sh** - Auto-login + user services for Cage (Wayland compositor) + Chromium kiosk with cursor hiding
+- **modules/03-plymouth.sh** - Route 19 boot splash screen with logo and animated loading dots
+- **modules/04-auto-updates.sh** - Automated system and project updates with error recovery
+- **modules/05-monitoring.sh** - Service health monitoring with automatic restart
+- **modules/06-scheduler.sh** - Daily operation schedule (8:00 AM start, 11:59 PM stop)  
+- **modules/99-cleanup.sh** - Global command setup, log rotation, and system optimization
 
 ### Daily Schedule
 

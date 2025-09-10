@@ -5,12 +5,16 @@ USER="lobby"
 HOME_DIR="/home/$USER"
 LOGFILE="/var/log/post-install.log"
 
+# Get script directory  
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOBBY_SCRIPT="$SCRIPT_DIR/lobby.sh"
+
 # Logging function
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOGFILE"
 }
 
-log "==> Starting post-install tasks..."
+log "==> Starting modular post-install tasks..."
 
 # Check if user exists
 if ! id "$USER" >/dev/null 2>&1; then
@@ -18,91 +22,100 @@ if ! id "$USER" >/dev/null 2>&1; then
     exit 1
 fi
 
-# Wait for network connectivity
-log "Waiting for network connectivity..."
-for i in {1..30}; do
-    if curl -s --connect-timeout 5 https://www.google.com >/dev/null 2>&1; then
-        log "Network connectivity confirmed"
-        break
-    fi
-    if [ $i -eq 30 ]; then
-        log "ERROR: Network connectivity timeout"
-        exit 1
-    fi
-    sleep 2
-done
+# Wait for network connectivity (skip in chroot)
+if [[ -z "${CHROOT_INSTALL:-}" ]]; then
+    log "Waiting for network connectivity..."
+    for i in {1..30}; do
+        if curl -s --connect-timeout 5 https://www.google.com >/dev/null 2>&1; then
+            log "Network connectivity confirmed"
+            break
+        fi
+        if [ $i -eq 30 ]; then
+            log "ERROR: Network connectivity timeout"
+            exit 1
+        fi
+        sleep 2
+    done
+else
+    log "Skipping network check (chroot environment)"
+fi
 
-# Set environment variables for modules
+# Set environment variables for lobby.sh
 export LOBBY_USER="$USER"
 export LOBBY_HOME="$HOME_DIR"
 export LOBBY_LOG="$LOGFILE"
 
-# Module directory
-MODULES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/scripts/modules"
-
-# Execute modules in order
-log "==> Running lobby setup modules..."
-
-# Module execution function
-run_module() {
-    local module="$1"
-    local module_path="$MODULES_DIR/$module"
-    
-    if [[ -f "$module_path" && -x "$module_path" ]]; then
-        log "Running module: $module"
-        if "$module_path" setup; then
-            log "Module $module completed successfully"
-        else
-            log "ERROR: Module $module failed"
-            return 1
-        fi
+# Check if modules exist and sync if missing
+MODULES_DIR="$SCRIPT_DIR/modules"
+if [[ ! -d "$MODULES_DIR" ]] || [[ -z "$(ls -A "$MODULES_DIR" 2>/dev/null)" ]]; then
+    log "Modules directory missing or empty, attempting to sync from GitHub..."
+    if "$LOBBY_SCRIPT" sync; then
+        log "Successfully synced modules from GitHub"
     else
-        log "WARNING: Module $module not found or not executable: $module_path"
-        return 1
+        log "ERROR: Failed to sync modules from GitHub"
+        log "This may be due to network issues during installation."
+        log "Try running 'sudo lobby sync' manually after boot."
+        exit 1
     fi
-}
+else
+    log "Modules directory exists with $(ls -1 "$MODULES_DIR"/*.sh 2>/dev/null | wc -l) module files"
+fi
 
-# Run modules in order
-run_module "02-kiosk.sh"          # Chromium kiosk setup
-run_module "03-plymouth.sh"       # Plymouth boot display
-run_module "04-auto-updates.sh"   # Automated updates
-run_module "05-monitoring.sh"     # Service monitoring
-run_module "06-scheduler.sh"      # Daily schedule
-run_module "99-cleanup.sh"        # Final cleanup
+# Run modular setup using lobby.sh with better error handling
+log "Running modular setup using lobby.sh"
 
-# Validate all modules
-log "==> Validating module configurations..."
-validation_errors=0
+# Define critical vs optional modules
+CRITICAL_MODULES=("kiosk")
+OPTIONAL_MODULES=("plymouth" "auto-updates" "monitoring" "scheduler" "cleanup")
 
-for module in "02-kiosk.sh" "03-plymouth.sh" "04-auto-updates.sh" "05-monitoring.sh" "06-scheduler.sh" "99-cleanup.sh"; do
-    module_path="$MODULES_DIR/$module"
-    if [[ -f "$module_path" && -x "$module_path" ]]; then
-        log "Validating module: $module"
-        if "$module_path" validate; then
-            log "Module $module validation passed"
-        else
-            log "ERROR: Module $module validation failed"
-            ((validation_errors++))
-        fi
+critical_failures=0
+optional_failures=0
+
+# Run critical modules first
+for module in "${CRITICAL_MODULES[@]}"; do
+    log "Running critical module: $module"
+    if "$LOBBY_SCRIPT" setup "$module"; then
+        log "SUCCESS: Critical module $module completed"
+    else
+        exit_code=$?
+        log "ERROR: Critical module $module failed with exit code $exit_code"
+        log "Check '$LOBBY_LOG' and run 'sudo lobby validate $module' for details"
+        ((critical_failures++))
     fi
 done
 
-if [[ $validation_errors -eq 0 ]]; then
-    log "==> All module validations passed"
+# Run optional modules (failures are logged but don't stop installation)
+for module in "${OPTIONAL_MODULES[@]}"; do
+    log "Running optional module: $module"
+    if "$LOBBY_SCRIPT" setup "$module"; then
+        log "SUCCESS: Optional module $module completed"
+    else
+        exit_code=$?
+        log "WARNING: Optional module $module failed with exit code $exit_code (non-critical)"
+        log "Check '$LOBBY_LOG' and run 'sudo lobby validate $module' for details"
+        ((optional_failures++))
+    fi
+done
+
+# Evaluate results
+if [[ $critical_failures -gt 0 ]]; then
+    log "ERROR: $critical_failures critical module(s) failed - installation incomplete"
+    log "Kiosk may not function properly. Check logs and run 'sudo lobby setup' to retry."
+    exit 1
+elif [[ $optional_failures -gt 0 ]]; then
+    log "WARNING: $optional_failures optional module(s) failed but core kiosk should work"
+    log "Run 'sudo lobby setup' to retry failed modules or 'sudo lobby health' to check status"
 else
-    log "WARNING: $validation_errors module validation(s) failed"
+    log "SUCCESS: All modules completed successfully"
 fi
 
-# Final system status
-log "==> Checking final system status..."
-log "Enabled systemd services:"
-systemctl list-unit-files --state=enabled | grep -E "(lobby|xserver)" || log "No lobby services found"
+# Disable this service since it's completed (skip in chroot)
+if [[ -z "${CHROOT_INSTALL:-}" ]]; then
+    log "Disabling post-install service"
+    systemctl disable post-install.service 2>/dev/null || true
+else
+    log "Skipping service disable (chroot environment)"
+fi
 
-log "Active systemd timers:"
-systemctl list-timers | grep -E "(lobby|update)" || log "No lobby timers found"
-
-log "==> Post-install setup completed"
-log "System is ready for kiosk operation"
-log "Services will start automatically on boot"
-log "Daily schedule: Shutdown at 11:59 PM, Startup at 8:00 AM"
-log "Updates run daily at 2:00 AM"
+log "==> Post-install tasks complete. The system will boot directly to Cage kiosk with Plymouth splash."
+log "==> Use 'sudo lobby help' for system management and 'sudo lobby health' for diagnostics."

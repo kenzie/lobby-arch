@@ -89,6 +89,21 @@ sudo lobby validate        # Check all components
 sudo lobby help            # Complete command reference
 ```
 
+### Repository Structure
+```
+lobby-arch/
+├── lobby.sh              # Main management script
+├── post-install.sh       # Installation orchestrator
+├── modules/              # Configuration modules
+│   ├── 02-kiosk.sh
+│   ├── 03-plymouth.sh
+│   ├── 04-auto-updates.sh
+│   ├── 05-monitoring.sh
+│   ├── 06-scheduler.sh
+│   └── 99-cleanup.sh
+└── configs/              # Configuration templates
+```
+
 ## Development Notes
 
 - This project is being developed on a live test system, so local configuration changes need also be made in this git repository.
