@@ -30,6 +30,8 @@ log() {
 # Main setup function
 setup_cleanup() {
     log "Running cleanup and finalization tasks"
+    log "SCRIPT_DIR: $SCRIPT_DIR"
+    log "Checking symlink: $(ls -la /usr/local/bin/lobby)"
 
     # Install maintenance boot check service
     log "Installing maintenance boot check"
