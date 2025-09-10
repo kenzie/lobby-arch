@@ -139,13 +139,13 @@ Requisite=lobby-kiosk.service
 [Service]
 Type=oneshot
 # Wait for both Hyprland and Chromium to be running (indicates kiosk is ready)
-ExecStartPre=/bin/bash -c 'echo "Waiting for kiosk to be ready..."; for i in {1..120}; do if pgrep Hyprland >/dev/null && pgrep chromium >/dev/null; then echo "Kiosk ready after $i seconds"; break; fi; sleep 1; done'
+ExecStartPre=/bin/bash -c 'echo "Waiting for kiosk to be ready..."; for i in $(seq 1 30); do if pgrep Hyprland >/dev/null && pgrep chromium >/dev/null; then echo "Kiosk ready after $i seconds"; break; fi; sleep 1; done'
 # Give an extra moment for display to stabilize
-ExecStartPre=/bin/bash -c 'sleep 3'
+ExecStartPre=/bin/bash -c 'sleep 2'
 ExecStart=/usr/bin/plymouth quit
 RemainAfterExit=yes
 # Add timeout to prevent hanging
-TimeoutStartSec=150
+TimeoutStartSec=40
 [Install]
 WantedBy=graphical.target
 EOF
