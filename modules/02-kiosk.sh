@@ -129,13 +129,24 @@ Requires=lobby-display.service
 Wants=seatd.service
 
 [Service]
+Type=simple
 User=lobby
 Group=seat
-# Explicitly set wlroots environment variables for AMD GPU
+# Set up proper runtime directory and permissions
+RuntimeDirectory=lobby-kiosk
+RuntimeDirectoryMode=0700
+# Wayland/Hyprland environment variables
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
+Environment="XDG_SESSION_TYPE=wayland"
+Environment="XDG_CURRENT_DESKTOP=Hyprland"
+# AMD GPU environment variables
 Environment="WLR_RENDERER=vulkan"
 Environment="WLR_DRM_DEVICE=/dev/dri/card0"
 # Wait for the display server to be ready before starting
 ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 1; done'
+# Ensure runtime directory exists and is owned by lobby user
+ExecStartPre=/bin/mkdir -p /run/user/1000
+ExecStartPre=/bin/chown lobby:lobby /run/user/1000
 # Launch Hyprland
 ExecStart=/usr/bin/Hyprland
 Restart=always
