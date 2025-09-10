@@ -22,6 +22,7 @@ fi
 USER="${LOBBY_USER:-lobby}"
 HOME_DIR="${LOBBY_HOME:-/home/$USER}"
 THEME_DIR="/usr/share/plymouth/themes/route19"
+SLEEP_THEME_DIR="/usr/share/plymouth/themes/route19-sleep"
 
 # Logging function
 log() {
@@ -32,28 +33,37 @@ log() {
 setup_plymouth() {
     log "Setting up Plymouth splash theme"
     
-    # Create theme directory
+    # Create theme directories
     mkdir -p "$THEME_DIR"
+    mkdir -p "$SLEEP_THEME_DIR"
     
     # Copy and process Plymouth theme files
     sed "s|{{THEME_DIR}}|$THEME_DIR|g" "$CONFIG_DIR/plymouth/route19.plymouth" > "$THEME_DIR/route19.plymouth"
     cp "$CONFIG_DIR/plymouth/route19.script" "$THEME_DIR/route19.script"
     
+    # Copy and process sleep theme files
+    sed "s|{{THEME_DIR}}|$SLEEP_THEME_DIR|g" "$CONFIG_DIR/plymouth/route19-sleep.plymouth" > "$SLEEP_THEME_DIR/route19-sleep.plymouth"
+    cp "$CONFIG_DIR/plymouth/route19-sleep.script" "$SLEEP_THEME_DIR/route19-sleep.script"
+    
     # Logo will be handled by Plymouth only (no desktop wallpaper needed for kiosk)
     
-    # Copy logo for Plymouth theme
+    # Copy logo for both Plymouth themes
     if [ -f "$CONFIG_DIR/plymouth/logo.png" ]; then
         cp "$CONFIG_DIR/plymouth/logo.png" "$THEME_DIR/logo.png"
+        cp "$CONFIG_DIR/plymouth/logo.png" "$SLEEP_THEME_DIR/logo.png"
         log "Plymouth logo copied from config directory"
     elif [ -f "$SCRIPT_DIR/../../assets/route19-logo.png" ]; then
         cp "$SCRIPT_DIR/../../assets/route19-logo.png" "$THEME_DIR/logo.png"
+        cp "$SCRIPT_DIR/../../assets/route19-logo.png" "$SLEEP_THEME_DIR/logo.png"
         log "Plymouth logo copied from assets"
     elif [ -f /root/assets/route19-logo.png ]; then
         cp /root/assets/route19-logo.png "$THEME_DIR/logo.png"
+        cp /root/assets/route19-logo.png "$SLEEP_THEME_DIR/logo.png"
         log "Plymouth logo copied from /root/assets"
     else
         log "WARNING: Logo asset not found, creating fallback"
         echo "Route 19" > "$THEME_DIR/logo.png"
+        echo "Route 19" > "$SLEEP_THEME_DIR/logo.png"
     fi
     
     # Configure mkinitcpio hooks for Plymouth
@@ -150,8 +160,9 @@ EOF
 reset_plymouth() {
     log "Resetting Plymouth configuration"
     
-    # Remove theme directory
+    # Remove theme directories
     rm -rf "$THEME_DIR"
+    rm -rf "$SLEEP_THEME_DIR"
     
     # Reset Plymouth services
     systemctl unmask plymouth-quit.service || true

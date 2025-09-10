@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Route19 Sleep
+Description=Route19 logo with sleep message for maintenance window
+ModuleName=script
+
+[script]
+ImageDir={{THEME_DIR}}
+ScriptFile={{THEME_DIR}}/route19-sleep.script

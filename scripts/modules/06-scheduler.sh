@@ -7,6 +7,17 @@ set -euo pipefail
 MODULE_NAME="Lobby Scheduler"
 MODULE_VERSION="1.0"
 
+# Get script directory - handle both direct execution and symlink scenarios
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# For symlinked lobby command, find the real script location
+if [[ -L "/usr/local/bin/lobby" ]]; then
+    REAL_LOBBY_SCRIPT="$(readlink -f /usr/local/bin/lobby)"
+    REAL_SCRIPT_DIR="$(dirname "$REAL_LOBBY_SCRIPT")"
+    CONFIG_DIR="$REAL_SCRIPT_DIR/configs"
+else
+    CONFIG_DIR="$SCRIPT_DIR/../configs"
+fi
+
 # Default values
 USER="${LOBBY_USER:-lobby}"
 
@@ -18,6 +29,13 @@ log() {
 # Main setup function
 setup_scheduler() {
     log "Setting up lobby daily scheduler"
+    
+    # Install Plymouth switching scripts
+    log "Installing Plymouth switching scripts"
+    cp "$CONFIG_DIR/plymouth/switch-to-sleep.sh" /usr/local/bin/plymouth-switch-sleep.sh
+    cp "$CONFIG_DIR/plymouth/switch-to-normal.sh" /usr/local/bin/plymouth-switch-normal.sh
+    chmod +x /usr/local/bin/plymouth-switch-sleep.sh
+    chmod +x /usr/local/bin/plymouth-switch-normal.sh
     
     # Create shutdown script
     log "Creating shutdown script"
@@ -42,9 +60,9 @@ systemctl stop lobby-display.service || true
 log "Stopping monitoring during shutdown"
 systemctl stop lobby-monitor.timer || true
 
-# Show Plymouth screen during maintenance window
-log "Showing Plymouth splash for maintenance window"
-systemctl start plymouth-poweroff.service || true
+# Show Plymouth sleep theme during maintenance window
+log "Showing Plymouth sleep theme for maintenance window"
+/usr/local/bin/plymouth-switch-sleep.sh || true
 
 log "Nightly shutdown completed"
 EOF
@@ -76,9 +94,8 @@ systemctl start lobby-kiosk.service
 sleep 2
 
 # Hide Plymouth screen and resume monitoring
-log "Hiding Plymouth splash"
-plymouth quit || true
-systemctl stop plymouth-poweroff.service || true
+log "Switching back to normal Plymouth theme"
+/usr/local/bin/plymouth-switch-normal.sh || true
 
 # Resume monitoring
 log "Starting monitoring system"
@@ -183,6 +200,8 @@ reset_scheduler() {
     rm -f /etc/systemd/system/lobby-startup.service
     rm -f /etc/systemd/system/lobby-startup.timer
     rm -f /usr/local/bin/lobby-startup.sh
+    rm -f /usr/local/bin/plymouth-switch-sleep.sh
+    rm -f /usr/local/bin/plymouth-switch-normal.sh
     
     systemctl daemon-reload
     
