@@ -121,8 +121,8 @@ User=lobby
 Group=seat
 # Open a full PAM session to get a proper graphical environment
 PAMName=login
-# Add a delay to wait for graphics hardware to initialize
-ExecStartPre=/bin/sleep 3
+# Load environment variables from the user's working session for debugging
+EnvironmentFile=/home/lobby/env.txt
 # Launch Hyprland
 ExecStart=/usr/bin/Hyprland
 Restart=always
