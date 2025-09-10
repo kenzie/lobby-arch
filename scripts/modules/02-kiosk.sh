@@ -176,7 +176,7 @@ RestartSec=10
 Environment=NODE_ENV=production
 
 [Install]
-WantedBy=multi-user.target
+# Don't auto-start on boot - managed by scheduler and kiosk service
 EOF
 
     # Enable seatd for Wayland session management
@@ -231,7 +231,7 @@ KillSignal=SIGTERM
 TimeoutStopSec=10
 
 [Install]
-WantedBy=multi-user.target
+# Don't auto-start on boot - managed by scheduler
 EOF
 
     # Disable getty on tty1 to prevent login prompt interference

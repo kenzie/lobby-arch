@@ -88,45 +88,7 @@ EOF
         rm -rf /root/assets
     fi
 
-    # Install maintenance boot check service
-    log "Installing maintenance boot check service"
-    # Try both possible paths due to git repository structure differences
-    if [[ -f "/root/scripts/configs/maintenance-boot-check.sh" ]]; then
-        cp "/root/scripts/configs/maintenance-boot-check.sh" /usr/local/bin/maintenance-boot-check.sh
-    elif [[ -f "/root/scripts/scripts/configs/maintenance-boot-check.sh" ]]; then
-        cp "/root/scripts/scripts/configs/maintenance-boot-check.sh" /usr/local/bin/maintenance-boot-check.sh
-        log "Found maintenance boot check script at /root/scripts/scripts/configs/maintenance-boot-check.sh"
-    else
-        log "WARNING: maintenance-boot-check.sh not found in either location"
-        log "Tried: /root/scripts/configs/maintenance-boot-check.sh"
-        log "Tried: /root/scripts/scripts/configs/maintenance-boot-check.sh"
-        return 0  # Don't fail the entire cleanup
-    fi
-    
-    # Common installation steps for either path
-    chmod +x /usr/local/bin/maintenance-boot-check.sh
-    
-    # Create maintenance boot check service
-    cat > /etc/systemd/system/maintenance-boot-check.service <<'EOF'
-[Unit]
-Description=Check for maintenance window on boot
-After=multi-user.target
-Before=lobby-display.service lobby-kiosk.service
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/maintenance-boot-check.sh
-User=root
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-EOF
-    
-    # Enable maintenance boot check
-    systemctl daemon-reload
-    systemctl enable maintenance-boot-check.service
-    log "Maintenance boot check service installed and enabled"
+    # Maintenance boot check removed - simplified system just uses scheduler
 
     log "Cleanup and finalization completed"
 }

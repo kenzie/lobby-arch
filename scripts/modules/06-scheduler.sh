@@ -158,7 +158,7 @@ Requires=lobby-startup.service
 
 [Timer]
 OnCalendar=*-*-* 08:00:00
-Persistent=true
+Persistent=false
 
 [Install]
 WantedBy=timers.target
