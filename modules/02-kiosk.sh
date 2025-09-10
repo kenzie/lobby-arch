@@ -207,16 +207,18 @@ Type=simple
 # Wait for display service to be ready
 ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 2; done'
 # Start Cage compositor with Chromium
-ExecStart=/usr/bin/cage -s -- /usr/bin/chromium \\
-    --enable-features=UseOzonePlatform --ozone-platform=wayland \\
-    --no-sandbox --disable-dev-shm-usage --kiosk \\
-    --disable-infobars --disable-session-crashed-bubble \\
-    --disable-features=TranslateUI --no-first-run \\
-    --disable-notifications --disable-extensions \\
-    --start-fullscreen --hide-cursor \\
-    --disable-logging --disable-sync \\
-    --disable-default-apps --disable-background-networking \\
+ExecStart=/usr/bin/cage -s -- /usr/bin/chromium \
+    --enable-features=UseOzonePlatform --ozone-platform=wayland \
+    --no-sandbox --disable-dev-shm-usage --kiosk \
+    --disable-infobars --disable-session-crashed-bubble \
+    --disable-features=TranslateUI --no-first-run \
+    --disable-notifications --disable-extensions \
+    --start-fullscreen --hide-cursor \
+    --disable-logging --disable-sync \
+    --disable-default-apps --disable-background-networking \
     http://localhost:8080
+# Quit plymouth after cage starts to ensure seamless transition
+ExecStartPost=/usr/bin/plymouth quit
 Environment=WLR_NO_HARDWARE_CURSORS=1
 Restart=on-failure
 RestartSec=5
