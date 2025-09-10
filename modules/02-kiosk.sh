@@ -243,7 +243,18 @@ EOF
         loginctl enable-linger "$USER"
         log "User services enabled and lingering configured"
     else
-        log "User services will be enabled on first boot"
+        # Enable lingering so user services start on boot without a login session
+        log "Enabling lingering for user $USER"
+        loginctl enable-linger "$USER"
+
+        # Manually enable user services by creating symlinks, as systemctl --user does not work in chroot
+        log "Manually enabling user services for boot"
+        mkdir -p "$HOME_DIR/.config/systemd/user/default.target.wants"
+        ln -sf "$HOME_DIR/.config/systemd/user/lobby-display.service" "$HOME_DIR/.config/systemd/user/default.target.wants/lobby-display.service"
+        ln -sf "$HOME_DIR/.config/systemd/user/lobby-kiosk.service" "$HOME_DIR/.config/systemd/user/default.target.wants/lobby-kiosk.service"
+        # Set ownership again after creating new files/dirs as root
+        chown -R "$USER:$USER" "$HOME_DIR/.config"
+        log "User services enabled and lingering configured for boot"
     fi
 
     log "Lobby kiosk setup completed"
