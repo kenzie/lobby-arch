@@ -262,7 +262,6 @@ Requires=lobby-auto-update.service
 [Timer]
 OnCalendar=*-*-* 02:00:00
 RandomizedDelaySec=3600
-Persistent=true
 
 [Install]
 WantedBy=timers.target
