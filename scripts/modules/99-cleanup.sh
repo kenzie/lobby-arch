@@ -33,14 +33,33 @@ setup_cleanup() {
 
     # Install maintenance boot check service
     log "Installing maintenance boot check"
-    if [[ -f "$CONFIG_DIR/maintenance-boot-check.sh" ]]; then
-        cp "$CONFIG_DIR/maintenance-boot-check.sh" /usr/local/bin/maintenance-boot-check.sh
+    log "CONFIG_DIR resolved to: $CONFIG_DIR"
+    
+    # Try multiple possible locations for the maintenance boot check script
+    MAINTENANCE_SCRIPT=""
+    for path in \
+        "$CONFIG_DIR/maintenance-boot-check.sh" \
+        "/root/scripts/configs/maintenance-boot-check.sh" \
+        "$SCRIPT_DIR/../configs/maintenance-boot-check.sh"; do
+        if [[ -f "$path" ]]; then
+            MAINTENANCE_SCRIPT="$path"
+            log "Found maintenance boot check script at: $path"
+            break
+        fi
+    done
+    
+    if [[ -n "$MAINTENANCE_SCRIPT" ]]; then
+        cp "$MAINTENANCE_SCRIPT" /usr/local/bin/maintenance-boot-check.sh
         chmod +x /usr/local/bin/maintenance-boot-check.sh
         log "Maintenance boot check script installed"
     else
-        log "ERROR: maintenance-boot-check.sh not found at $CONFIG_DIR/maintenance-boot-check.sh"
-        log "Available files in config dir: $(ls -la "$CONFIG_DIR" 2>/dev/null || echo 'directory not found')"
-        return 1
+        log "ERROR: maintenance-boot-check.sh not found in any expected location"
+        log "Tried: $CONFIG_DIR/maintenance-boot-check.sh"
+        log "Tried: /root/scripts/configs/maintenance-boot-check.sh" 
+        log "Tried: $SCRIPT_DIR/../configs/maintenance-boot-check.sh"
+        log "Available files in $CONFIG_DIR: $(ls -la "$CONFIG_DIR" 2>/dev/null || echo 'directory not found')"
+        log "WARNING: Skipping maintenance boot check installation"
+        # Don't return 1 here - continue with rest of cleanup
     fi
     
     # Create maintenance boot check service
