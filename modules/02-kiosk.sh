@@ -107,8 +107,8 @@ EOF
     cat > /etc/systemd/system/lobby-display.service <<'EOF'
 [Unit]
 Description=Lobby Display Vue.js App
-After=network-online.target
-Wants=network-online.target
+# Removed network-online.target dependency for faster boot
+# Local Vue.js app doesn't require network connectivity to start
 
 [Service]
 Type=simple

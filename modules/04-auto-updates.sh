@@ -237,8 +237,8 @@ UPDATESCRIPT
     cat > /etc/systemd/system/lobby-auto-update.service <<'UPDATESERVICE'
 [Unit]
 Description=Automatic Lobby System Updates
-After=network-online.target
-Wants=network-online.target
+# Removed network-online.target dependency to avoid boot delays
+# This service should only run via timer, not during boot
 
 [Service]
 Type=oneshot
@@ -249,7 +249,8 @@ StandardError=journal
 TimeoutStartSec=3600
 
 [Install]
-WantedBy=multi-user.target
+# Removed WantedBy to prevent auto-start during boot
+# Service only runs via timer scheduling
 UPDATESERVICE
 
     # Create systemd timer for daily scheduling during maintenance window
