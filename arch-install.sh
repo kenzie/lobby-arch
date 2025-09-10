@@ -137,20 +137,16 @@ EOF
 echo "==> Cloning lobby-arch repository..."
 
 # Install git if not present
-if ! command -v git >/dev/null 2>&1; then
+if ! command -v git >/dev/null 2>&1;
     echo "Installing git..."
     arch-chroot /mnt pacman -S --noconfirm git
 fi
 
-# Clone the repository directly to /root/scripts as a proper git repository
-echo "==> Cloning lobby-arch repository..."
+# Clone the repository directly to /root/scripts
 if ! arch-chroot /mnt git clone https://github.com/kenzie/lobby-arch.git /root/scripts; then
     echo "ERROR: Failed to clone repository"
     exit 1
 fi
-
-# Copy assets to /root/assets for installation
-arch-chroot /mnt cp -r /root/scripts/assets /root/assets
 
 # Make scripts executable
 echo "==> Making scripts executable..."
@@ -173,9 +169,9 @@ fi
 echo "==> Verifying installation files..."
 critical_files=(
     "/mnt/root/scripts/post-install.sh"
-    "/mnt/root/scripts/lobby.sh" 
+    "/mnt/root/scripts/lobby.sh"
     "/mnt/root/scripts/modules/02-kiosk.sh"
-    "/mnt/root/assets/route19-logo.png"
+    "/mnt/root/scripts/assets/route19-logo.png"
 )
 
 for file in "${critical_files[@]}"; do
