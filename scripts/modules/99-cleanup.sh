@@ -30,61 +30,7 @@ log() {
 # Main setup function
 setup_cleanup() {
     log "Running cleanup and finalization tasks"
-    log "SCRIPT_DIR: $SCRIPT_DIR"
-    log "Checking symlink: $(ls -la /usr/local/bin/lobby)"
 
-    # Install maintenance boot check service
-    log "Installing maintenance boot check"
-    log "CONFIG_DIR resolved to: $CONFIG_DIR"
-    
-    # Try multiple possible locations for the maintenance boot check script
-    MAINTENANCE_SCRIPT=""
-    for path in \
-        "$CONFIG_DIR/maintenance-boot-check.sh" \
-        "/root/scripts/configs/maintenance-boot-check.sh" \
-        "$SCRIPT_DIR/../configs/maintenance-boot-check.sh"; do
-        if [[ -f "$path" ]]; then
-            MAINTENANCE_SCRIPT="$path"
-            log "Found maintenance boot check script at: $path"
-            break
-        fi
-    done
-    
-    if [[ -n "$MAINTENANCE_SCRIPT" ]]; then
-        cp "$MAINTENANCE_SCRIPT" /usr/local/bin/maintenance-boot-check.sh
-        chmod +x /usr/local/bin/maintenance-boot-check.sh
-        log "Maintenance boot check script installed"
-    else
-        log "ERROR: maintenance-boot-check.sh not found in any expected location"
-        log "Tried: $CONFIG_DIR/maintenance-boot-check.sh"
-        log "Tried: /root/scripts/configs/maintenance-boot-check.sh" 
-        log "Tried: $SCRIPT_DIR/../configs/maintenance-boot-check.sh"
-        log "Available files in $CONFIG_DIR: $(ls -la "$CONFIG_DIR" 2>/dev/null || echo 'directory not found')"
-        log "WARNING: Skipping maintenance boot check installation"
-        # Don't return 1 here - continue with rest of cleanup
-    fi
-    
-    # Create maintenance boot check service
-    cat > /etc/systemd/system/maintenance-boot-check.service <<EOF
-[Unit]
-Description=Check for maintenance window on boot
-After=multi-user.target
-Before=lobby-display.service lobby-kiosk.service
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/maintenance-boot-check.sh
-User=root
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-EOF
-    
-    # Enable maintenance boot check
-    systemctl daemon-reload
-    systemctl enable maintenance-boot-check.service
-    
     # Create global lobby command symlink
     log "Creating global lobby command"
     ln -sf /root/scripts/lobby.sh /usr/local/bin/lobby
@@ -140,6 +86,37 @@ EOF
     if [[ -d /root/assets ]]; then
         log "Cleaning up temporary assets"
         rm -rf /root/assets
+    fi
+
+    # Install maintenance boot check service
+    log "Installing maintenance boot check service"
+    if [[ -f "/root/scripts/configs/maintenance-boot-check.sh" ]]; then
+        cp "/root/scripts/configs/maintenance-boot-check.sh" /usr/local/bin/maintenance-boot-check.sh
+        chmod +x /usr/local/bin/maintenance-boot-check.sh
+        
+        # Create maintenance boot check service
+        cat > /etc/systemd/system/maintenance-boot-check.service <<'EOF'
+[Unit]
+Description=Check for maintenance window on boot
+After=multi-user.target
+Before=lobby-display.service lobby-kiosk.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/maintenance-boot-check.sh
+User=root
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+        
+        # Enable maintenance boot check
+        systemctl daemon-reload
+        systemctl enable maintenance-boot-check.service
+        log "Maintenance boot check service installed and enabled"
+    else
+        log "WARNING: maintenance-boot-check.sh not found, skipping installation"
     fi
 
     log "Cleanup and finalization completed"
