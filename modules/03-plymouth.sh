@@ -65,8 +65,9 @@ setup_plymouth() {
         # Backup original configuration
         cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.backup
         
-        # AMD graphics will load automatically - no manual module needed for Picasso/Raven 2
-        # sed -i 's/^MODULES=()/MODULES=(amdgpu)/' /etc/mkinitcpio.conf
+        # AMD graphics will load automatically - remove any explicit module loading
+        sed -i 's/^MODULES=(amdgpu)/MODULES=()/' /etc/mkinitcpio.conf
+        sed -i 's/^MODULES=()/MODULES=()/' /etc/mkinitcpio.conf
         
         # Configure hooks in proper order: systemd must precede plymouth
         sed -i 's/^HOOKS=.*/HOOKS=(systemd plymouth autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck)/' /etc/mkinitcpio.conf
