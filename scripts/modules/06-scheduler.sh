@@ -46,10 +46,10 @@ log() {
 
 log "Starting nightly shutdown sequence"
 
-# Stop kiosk services (Wayland/Cage architecture)
-log "Stopping lobby services and turning off display"
-systemctl stop lobby-kiosk.service || true
-systemctl stop lobby-display.service || true
+# Stop kiosk user services (Arch Linux way)
+log "Stopping lobby user services and turning off display"
+sudo -u lobby systemctl --user stop lobby-kiosk.service || true
+sudo -u lobby systemctl --user stop lobby-display.service || true
 
 # Stop monitoring during downtime
 log "Stopping monitoring during downtime"
@@ -81,16 +81,14 @@ log "Starting morning startup sequence"
 # Display will turn on automatically when kiosk starts
 log "Display will turn on when kiosk starts"
 
-# Ensure lobby display app is running (robust restart)
-log "Starting/restarting lobby display service"
-systemctl stop lobby-display.service 2>/dev/null || true
-systemctl start lobby-display.service
+# Ensure lobby user services are running (robust restart)
+log "Starting/restarting lobby user services"
+sudo -u lobby systemctl --user stop lobby-display.service 2>/dev/null || true
+sudo -u lobby systemctl --user start lobby-display.service
 sleep 5
 
-# Ensure kiosk is running (robust restart)
-log "Starting/restarting lobby kiosk"
-systemctl stop lobby-kiosk.service 2>/dev/null || true
-systemctl start lobby-kiosk.service
+sudo -u lobby systemctl --user stop lobby-kiosk.service 2>/dev/null || true
+sudo -u lobby systemctl --user start lobby-kiosk.service
 sleep 3
 
 # Resume monitoring

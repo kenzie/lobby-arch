@@ -158,17 +158,28 @@ EOF
 
     log "lobby-display build completed successfully"
 
-    # Create systemd service for lobby display app
-    log "Creating lobby-display systemd service"
-    cat > /etc/systemd/system/lobby-display.service <<EOF
+    # Configure auto-login for lobby user (Arch Linux way)
+    log "Configuring auto-login for lobby user"
+    mkdir -p /etc/systemd/system/getty@tty1.service.d
+    cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf <<EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty -o '-p -f -- \\u' --noclear --autologin $USER %I \$TERM
+EOF
+
+    # Create user systemd directory
+    mkdir -p "$HOME_DIR/.config/systemd/user"
+    
+    # Create lobby-display user service
+    log "Creating lobby-display user service"
+    cat > "$HOME_DIR/.config/systemd/user/lobby-display.service" <<EOF
 [Unit]
 Description=Lobby Display Vue.js App
-After=network.target
-Requires=network.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
-User=$USER
 WorkingDirectory=$LOBBY_DISPLAY_DIR
 ExecStart=/usr/bin/npm run preview -- --port 8080 --host
 Restart=on-failure
@@ -176,7 +187,7 @@ RestartSec=10
 Environment=NODE_ENV=production
 
 [Install]
-# Don't auto-start on boot - managed by scheduler and kiosk service
+WantedBy=default.target
 EOF
 
     # Enable seatd for Wayland session management
@@ -189,65 +200,51 @@ EOF
     fi
     usermod -a -G seat "$USER"
 
-    # Create kiosk service - runs Cage directly without login
-    log "Creating kiosk systemd service"
-    cat > /etc/systemd/system/lobby-kiosk.service <<EOF
+    # Create kiosk user service (Arch Linux way)
+    log "Creating kiosk user service"
+    cat > "$HOME_DIR/.config/systemd/user/lobby-kiosk.service" <<EOF
 [Unit]
 Description=Lobby Kiosk Compositor
-After=multi-user.target lobby-display.service seatd.service dbus.service
-Requires=seatd.service
+After=lobby-display.service
 Wants=lobby-display.service
-StartLimitBurst=10
-StartLimitIntervalSec=60
 
 [Service]
 Type=simple
-User=$USER
-Group=seat
-# Proper session environment setup
-Environment=XDG_RUNTIME_DIR=/run/user/1001
-Environment=XDG_SESSION_CLASS=user
-Environment=XDG_SESSION_TYPE=wayland
-Environment=WAYLAND_DISPLAY=wayland-0
-Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus
-Environment=HOME=$HOME_DIR
-Environment=USER=$USER
-# Hide cursor at system level
-Environment=WLR_NO_HARDWARE_CURSORS=1
-ExecStartPre=/usr/bin/sleep 3
+# Wait for display service to be ready
 ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 2; done'
-# Runtime directory is created automatically by systemd
-# Start user DBUS session
-ExecStartPre=/bin/bash -c 'systemctl --user --machine=$USER@ start dbus.service || true'
-ExecStart=/usr/bin/cage -s -- /usr/bin/chromium --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --disable-dev-shm-usage --kiosk --disable-infobars --disable-session-crashed-bubble --disable-features=TranslateUI --no-first-run --disable-notifications --disable-extensions --enable-gpu-rasterization --enable-oop-rasterization --enable-hardware-overlays --force-device-scale-factor=1.0 --start-fullscreen --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows --memory-pressure-off --max_old_space_size=512 --aggressive-cache-discard --purge-memory-button --kiosk-printing --disable-pinch --overscroll-history-navigation=0 --disable-touch-editing --disable-touch-adjustment --hide-cursor --disable-logging --disable-breakpad --disable-features=VizDisplayCompositor --disable-dbus --disable-sync --no-first-run --disable-default-apps --disable-background-networking --disable-component-update http://localhost:8080
-Restart=always
+# Start Cage compositor with Chromium
+ExecStart=/usr/bin/cage -s -- /usr/bin/chromium \\
+    --enable-features=UseOzonePlatform --ozone-platform=wayland \\
+    --no-sandbox --disable-dev-shm-usage --kiosk \\
+    --disable-infobars --disable-session-crashed-bubble \\
+    --disable-features=TranslateUI --no-first-run \\
+    --disable-notifications --disable-extensions \\
+    --start-fullscreen --hide-cursor \\
+    --disable-logging --disable-sync \\
+    --disable-default-apps --disable-background-networking \\
+    http://localhost:8080
+Environment=WLR_NO_HARDWARE_CURSORS=1
+Restart=on-failure
 RestartSec=5
-RuntimeDirectory=lobby-kiosk
-RuntimeDirectoryMode=0755
-# Let systemd create user runtime directory
-ExecStartPre=/bin/bash -c 'systemd-run --uid=1001 --gid=1001 --wait /bin/true'
-# Better process management
-KillMode=mixed
-KillSignal=SIGTERM
-TimeoutStopSec=10
 
 [Install]
-# Don't auto-start on boot - managed by scheduler
+WantedBy=default.target
 EOF
 
-    # Disable getty on tty1 to prevent login prompt interference
-    log "Disabling getty@tty1 service for clean kiosk boot"
-    systemctl disable getty@tty1.service 2>/dev/null || true
-    systemctl mask getty@tty1.service 2>/dev/null || true
-
-    # Enable services
-    log "Enabling kiosk services"
-    systemctl daemon-reload 2>/dev/null || true
-    systemctl enable lobby-display.service 2>/dev/null || true
-    systemctl enable lobby-kiosk.service 2>/dev/null || true
+    # Set correct ownership for user systemd files
+    chown -R "$USER:$USER" "$HOME_DIR/.config"
     
-    if [[ -n "${CHROOT_INSTALL:-}" ]]; then
-        log "Services enabled for boot (chroot environment)"
+    # Enable user services (the Arch way)
+    log "Enabling user services"
+    if [[ -z "${CHROOT_INSTALL:-}" ]]; then
+        # Enable user services immediately
+        sudo -u "$USER" systemctl --user daemon-reload
+        sudo -u "$USER" systemctl --user enable lobby-display.service
+        sudo -u "$USER" systemctl --user enable lobby-kiosk.service
+        # Enable lingering so user services start without login
+        loginctl enable-linger "$USER"
+    else
+        log "User services will be enabled on first boot"
     fi
 
     log "Lobby kiosk setup completed"
@@ -286,14 +283,14 @@ reset_kiosk() {
 validate_kiosk() {
     local errors=0
 
-    # Check if service files exist
-    if [[ ! -f /etc/systemd/system/lobby-kiosk.service ]]; then
-        log "ERROR: Lobby kiosk service not found"
+    # Check if user service files exist
+    if [[ ! -f "$HOME_DIR/.config/systemd/user/lobby-kiosk.service" ]]; then
+        log "ERROR: Lobby kiosk user service not found"
         ((errors++))
     fi
 
-    if [[ ! -f /etc/systemd/system/lobby-display.service ]]; then
-        log "ERROR: Lobby display service not found"
+    if [[ ! -f "$HOME_DIR/.config/systemd/user/lobby-display.service" ]]; then
+        log "ERROR: Lobby display user service not found"
         ((errors++))
     fi
 
@@ -303,43 +300,21 @@ validate_kiosk() {
         ((errors++))
     fi
 
-    # Check if services are enabled
-    if ! systemctl is-enabled lobby-kiosk.service >/dev/null 2>&1; then
-        log "ERROR: Lobby kiosk service not enabled"
+    # Check if auto-login is configured
+    if [[ ! -f /etc/systemd/system/getty@tty1.service.d/autologin.conf ]]; then
+        log "ERROR: Auto-login not configured"
         ((errors++))
-    fi
-
-    if ! systemctl is-enabled lobby-display.service >/dev/null 2>&1; then
-        log "ERROR: Lobby display service not enabled"
-        ((errors++))
-    fi
-
-    # Check if services are actually running
-    if ! systemctl is-active --quiet lobby-display.service; then
-        log "ERROR: Lobby display service not running"
-        ((errors++))
-    fi
-
-    if ! systemctl is-active --quiet lobby-kiosk.service; then
-        log "ERROR: Lobby kiosk service not running"
-        ((errors++))
-    fi
-
-    # Test if lobby-display app is responding
-    if ! curl -s --connect-timeout 5 http://localhost:8080 >/dev/null; then
-        log "ERROR: Lobby display app not responding on port 8080"
-        ((errors++))
-    fi
-
-    # Check if getty@tty1 is masked (good for kiosk)
-    if ! systemctl is-masked getty@tty1.service >/dev/null 2>&1; then
-        log "WARNING: getty@tty1 service not masked - login prompt may interfere with kiosk"
     fi
 
     # Check if user is in seat group
     if ! groups "$USER" | grep -q seat; then
         log "ERROR: User $USER not in seat group"
         ((errors++))
+    fi
+
+    # Check if lingering is enabled
+    if [[ ! -f "/var/lib/systemd/linger/$USER" ]]; then
+        log "WARNING: User lingering not enabled - services may not start"
     fi
 
     if [[ $errors -eq 0 ]]; then
