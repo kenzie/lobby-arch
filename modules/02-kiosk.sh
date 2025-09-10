@@ -32,7 +32,6 @@ setup_kiosk() {
         log "ERROR: Failed to install packages"
         return 1
     }
-    fi # <--- This is the missing 'fi'
 
     
     # --- 2. User and Permissions ---
