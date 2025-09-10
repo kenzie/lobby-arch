@@ -128,7 +128,7 @@ EOF
             # Extract current root UUID and preserve it
             ROOT_UUID=$(grep "^options" "$BOOT_ENTRY" | grep -o "root=UUID=[^ ]*" || echo "root=LABEL=arch")
             # Update with enhanced kernel parameters for clean kiosk boot
-            sed -i "s|^options.*|options $ROOT_UUID rw splash quiet loglevel=0 rd.udev.log_level=0 rd.systemd.show_status=false systemd.show_status=false fbcon=nodefer vt.global_cursor_default=0 console=tty2|" "$BOOT_ENTRY"
+            sed -i "s|^options.*|options $ROOT_UUID rw splash quiet loglevel=3 rd.systemd.show_status=false systemd.show_status=false fbcon=nodefer vt.global_cursor_default=0|" "$BOOT_ENTRY"
             log "Updated systemd-boot configuration with clean boot parameters"
         else
             log "WARNING: systemd-boot configuration not found at $BOOT_ENTRY"
