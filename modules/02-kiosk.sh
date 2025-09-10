@@ -89,8 +89,6 @@ misc {
     disable_hyprland_logo = true
     disable_splash_rendering = true
     force_default_wallpaper = 0
-    no_cursor_warps = true
-    hide_cursor_on_touch = true
 }
 
 cursor {
