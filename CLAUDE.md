@@ -1,14 +1,16 @@
 # Lobby Arch Linux Setup
 
-This project contains **production-tested scripts** to automate the setup of an Arch Linux system for the Route 19 lobby display.
+This project contains **production-tested and reliable scripts** to automate the setup of an Arch Linux system for the Route 19 lobby display with animated Plymouth boot theme and git-based synchronization.
 
 ## Overview
 
 After booting from the latest Arch Linux ISO on USB, these scripts will:
 - Prepare Arch Linux with minimal prompts and AMD hardware support
-- Install and configure all necessary software with proper error handling
-- Set up a system that launches quickly with the Route 19 logo on boot
+- Install and configure all necessary software with robust error handling
+- Set up a system with animated Plymouth boot theme (Route 19 logo + loading dots)
+- Run post-install setup during installation (not first boot) for immediate functionality
 - Deploy the [lobby-display](https://github.com/kenzie/lobby-display.git) project in a Cage+Chromium kiosk
+- Use git-based synchronization for reliable updates and version control
 
 ## System Requirements
 
@@ -19,7 +21,8 @@ After booting from the latest Arch Linux ISO on USB, these scripts will:
 - Ethernet connection (required for installation)
 
 ### Boot Display
-- Plymouth boot splash with Route 19 logo for professional startup
+- Animated Plymouth boot splash with Route 19 logo and cycling loading dots
+- Smooth transition from boot animation to kiosk display
 
 ### Application Architecture
 - **Cage (Wayland compositor)** - Minimal kiosk environment
@@ -39,6 +42,7 @@ After booting from the latest Arch Linux ISO on USB, these scripts will:
 - **2:00 AM**: Automated system updates during downtime
 
 ### Update Management
+- **Git-based synchronization** for reliable script updates with version control
 - **Automatic updates** for Arch Linux packages, lobby-arch scripts, and lobby-display app
 - **Error handling** with retry logic and fallback strategies
 - **Log rotation** prevents disk space issues
@@ -58,11 +62,14 @@ chmod +x /tmp/arch-install.sh
 **What happens automatically:**
 1. Partitions disk and installs Arch Linux base system
 2. Installs AMD drivers and required packages
-3. Creates lobby user and configures services
-4. Downloads and builds lobby-display Vue.js app
-5. Configures Cage kiosk with Chromium browser
-6. Sets up monitoring, scheduling, and maintenance
-7. **Reboots directly into working kiosk**
+3. Clones lobby-arch repository using git for version control
+4. Runs chroot-compatible post-install setup during installation
+5. Creates lobby user and configures all services
+6. Downloads and builds lobby-display Vue.js app
+7. Configures animated Plymouth theme with Route 19 logo
+8. Sets up Cage kiosk with Chromium browser
+9. Configures monitoring, scheduling, and maintenance
+10. **Reboots directly into working animated kiosk**
 
 ## 🔧 System Management
 
@@ -74,8 +81,8 @@ sudo lobby health          # Comprehensive system check
 sudo lobby status          # Quick service overview
 sudo lobby logs            # View recent system logs
 
-# Maintenance and updates  
-sudo lobby sync            # Update scripts from GitHub
+# Maintenance and updates (git-based)
+sudo lobby sync            # Update scripts from GitHub using git pull
 sudo lobby setup           # Re-run full system setup
 sudo lobby validate        # Check all components
 sudo lobby help            # Complete command reference

@@ -1,24 +1,27 @@
 # Lobby Screen Arch Installer
 
-This repository provides a **tested and reliable Arch Linux installer** for lobby screens, designed to display information for a sports team. It installs a base Arch system with **Cage (Wayland compositor)** running Chromium in kiosk mode, sets up users, networking, and automatically runs a modular post-install script to configure the complete lobby display system.
+This repository provides a **production-tested and reliable Arch Linux installer** for lobby screens, designed to display information for a sports team. It installs a base Arch system with **Cage (Wayland compositor)** running Chromium in kiosk mode, featuring an **animated Plymouth boot theme** with Route 19 logo and loading dots. The installer uses **git-based synchronization** for reliable updates and runs a **chroot-compatible post-install system** during installation for immediate functionality.
 
 ---
 
 ## Features
 
-- **Fully automated** Arch Linux base install with AMD hardware support
+- **Fully automated** Arch Linux base install with AMD hardware support and robust error handling
 - User creation with default `lobby` user and hostname `lobby-screen`
 - EFI + root partition setup (supports NVMe and SATA drives)
 - **Cage (Wayland compositor)** running Chromium in kiosk mode (no desktop environment)
+- **Animated Plymouth boot theme** with Route 19 logo and cycling loading dots
 - NetworkManager + SSH enabled with proper AMD graphics drivers
-- **Modular post-install system**:
-  - Route 19 Plymouth boot splash screen with logo
+- **Git-based synchronization** for reliable script updates and version control
+- **Chroot-compatible post-install system** that runs during installation (not first boot):
+  - Route 19 Plymouth boot splash with animation that transitions smoothly to kiosk
   - **lobby-display Vue.js app** automatic build and deployment
-  - **Service monitoring** with automatic restart on failure
-  - **Daily schedule**: 11:59 PM shutdown, 8:00 AM startup
-  - **Automated updates**: System and project updates at 2:00 AM daily
-  - **Complete systemd service integration** with proper error handling
+  - **Service monitoring** with automatic restart on failure and intelligent limits
+  - **Daily schedule**: 11:59 PM shutdown, 8:00 AM startup for power management
+  - **Automated updates**: System and project updates at 2:00 AM daily with error recovery
+  - **Complete systemd service integration** with circular dependency resolution
 - **Production tested** on Lenovo M75q-1 with 16GB RAM and 256GB NVMe
+- **Immediate functionality** - boots directly into working kiosk after installation
 - Fully idempotent and repeatable on new AMD hardware
 
 ---
@@ -58,7 +61,7 @@ chmod +x /tmp/arch-install.sh
 
 ### 3. Automatic post-install setup
 
-The installer automatically runs the post-install script on first boot, setting up all lobby components.
+The installer automatically runs the post-install script **during installation** (not first boot), setting up all lobby components. The system boots directly into a working kiosk with animated Plymouth theme.
 
 ---
 
@@ -81,10 +84,10 @@ sudo lobby setup                         # Full system setup (run automatically 
 sudo lobby validate                      # Validate all modules and services
 sudo lobby list                          # List available modules
 
-# Updates and maintenance
-sudo lobby sync                          # Update scripts from GitHub repository
+# Updates and maintenance (git-based)
+sudo lobby sync                          # Update scripts from GitHub repository using git pull
 sudo lobby sync --force                  # Force update (bypass cache)
-sudo lobby check-updates                 # Check for available updates
+sudo lobby check-updates                 # Check for available updates using git fetch
 
 # Module-specific operations  
 sudo lobby setup kiosk                   # Setup specific module
@@ -97,7 +100,7 @@ sudo lobby help                          # Full command reference
 The system uses a modular architecture with the following components:
 
 - **02-kiosk.sh** - Cage (Wayland compositor) + Chromium kiosk with cursor hiding
-- **03-plymouth.sh** - Route 19 boot splash screen with logo display
+- **03-plymouth.sh** - Route 19 boot splash screen with logo and animated loading dots
 - **04-auto-updates.sh** - Automated system and project updates with error recovery
 - **05-monitoring.sh** - Service health monitoring with automatic restart
 - **06-scheduler.sh** - Daily operation schedule (8:00 AM start, 11:59 PM stop)  
@@ -118,3 +121,53 @@ The system operates on an automated schedule:
 - **Log rotation** - Automatic cleanup to prevent disk space issues
 - **AMD hardware optimization** - Includes microcode updates and graphics drivers
 - **Network resilience** - Handles connectivity issues during updates and operations
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+**Plymouth theme stays on screen after boot:**
+```bash
+# Check if kiosk services are running
+sudo lobby health
+
+# Manually transition to kiosk if needed
+sudo systemctl isolate graphical.target
+```
+
+**Updates failing:**
+```bash
+# Check git repository status
+sudo lobby sync
+
+# Force update if needed
+sudo lobby sync --force
+```
+
+**Service failures:**
+```bash
+# Check specific service status
+sudo systemctl status lobby-kiosk.service
+
+# Restart services if needed
+sudo lobby setup kiosk
+```
+
+### System Architecture
+
+The system uses **Wayland/Cage compositor** instead of X11 for better performance and security:
+- **No desktop environment** - Direct boot to kiosk
+- **Systemd service management** - All components managed by systemd
+- **Git-based updates** - Reliable synchronization with version control
+- **Chroot-compatible setup** - Installation completes during arch-install.sh execution
+
+### Support
+
+For issues with the installer or system setup, check the logs:
+```bash
+sudo lobby logs
+sudo lobby health
+sudo journalctl -b | grep lobby
+```
