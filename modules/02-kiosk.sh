@@ -89,6 +89,14 @@ misc {
     disable_hyprland_logo = true
     disable_splash_rendering = true
     force_default_wallpaper = 0
+    no_cursor_warps = true
+    hide_cursor_on_touch = true
+}
+
+cursor {
+    no_hardware_cursors = true
+    hide_on_key_press = true
+    inactive_timeout = 1
 }
 
 # Input devices managed through input section above for kiosk mode
