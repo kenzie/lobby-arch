@@ -135,22 +135,17 @@ Group=seat
 # Set up proper runtime directory and permissions
 RuntimeDirectory=lobby-kiosk
 RuntimeDirectoryMode=0700
-# Wayland/Hyprland environment variables
-Environment="XDG_RUNTIME_DIR=/run/user/1000"
-Environment="XDG_SESSION_TYPE=wayland"
-Environment="XDG_CURRENT_DESKTOP=Hyprland"
-# AMD GPU environment variables
-Environment="WLR_RENDERER=vulkan"
-Environment="WLR_DRM_DEVICE=/dev/dri/card0"
 # Wait for the display server to be ready before starting
 ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 1; done'
-# Ensure runtime directory exists and is owned by lobby user
-ExecStartPre=/bin/mkdir -p /run/user/1000
-ExecStartPre=/bin/chown lobby:lobby /run/user/1000
-# Launch Hyprland
-ExecStart=/usr/bin/Hyprland
+# Set up runtime directory with correct user ID
+ExecStartPre=/bin/bash -c 'USER_ID=$(id -u lobby); mkdir -p /run/user/$USER_ID; chown lobby:lobby /run/user/$USER_ID'
+# Launch Hyprland with wrapper script that sets proper environment
+ExecStart=/bin/bash -c 'USER_ID=$(id -u lobby); export XDG_RUNTIME_DIR=/run/user/$USER_ID; export XDG_SESSION_TYPE=wayland; export XDG_CURRENT_DESKTOP=Hyprland; export WLR_RENDERER=vulkan; export WLR_DRM_DEVICE=/dev/dri/card0; export WLR_NO_HARDWARE_CURSORS=1; exec /usr/bin/Hyprland'
 Restart=always
 RestartSec=5
+# Better logging
+StandardOutput=journal
+StandardError=journal
 [Install]
 WantedBy=graphical.target
 EOF
