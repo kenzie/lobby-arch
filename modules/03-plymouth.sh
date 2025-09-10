@@ -61,7 +61,7 @@ setup_plymouth() {
     
     # Configure mkinitcpio hooks for Plymouth (Arch best practices)
     log "Configuring mkinitcpio hooks and modules for Plymouth"
-    if ! grep -q "plymouth" /etc/mkinitcpio.conf; then
+    if ! grep -q "systemd plymouth" /etc/mkinitcpio.conf; then
         # Backup original configuration
         cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.backup
         
