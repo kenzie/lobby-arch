@@ -133,8 +133,7 @@ EOF
 Description=Hold until boot process finishes up (Kiosk Version)
 After=lobby-kiosk.service
 Wants=lobby-kiosk.service
-# Ensure we run after the kiosk service is actually active
-Requisite=lobby-kiosk.service
+# Removed Requisite to prevent dependency failures - Wants is sufficient
 
 [Service]
 Type=oneshot
