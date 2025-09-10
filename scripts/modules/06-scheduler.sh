@@ -33,11 +33,10 @@ log() {
 
 log "Starting nightly shutdown sequence"
 
-# Stop kiosk services
+# Stop kiosk services (Wayland/Cage architecture)
 log "Stopping lobby kiosk services"
 systemctl stop lobby-kiosk.service || true
 systemctl stop lobby-display.service || true
-systemctl stop xserver.service || true
 
 # Stop monitoring temporarily
 log "Stopping monitoring during shutdown"
@@ -48,43 +47,10 @@ EOF
     
     chmod +x /usr/local/bin/lobby-shutdown.sh
     
-    # Create startup script
-    log "Creating startup script"
-    cat > /usr/local/bin/lobby-startup.sh <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-
-LOGFILE="/var/log/lobby-scheduler.log"
-
-log() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOGFILE"
-}
-
-log "Starting morning startup sequence"
-
-# Start X server first
-log "Starting X server"
-systemctl start xserver.service
-sleep 3
-
-# Start lobby display app
-log "Starting lobby display service"
-systemctl start lobby-display.service
-sleep 5
-
-# Start kiosk
-log "Starting lobby kiosk"
-systemctl start lobby-kiosk.service
-sleep 2
-
-# Resume monitoring
-log "Starting monitoring system"
-systemctl start lobby-monitor.timer
-
-log "Morning startup completed"
-EOF
-    
-    chmod +x /usr/local/bin/lobby-startup.sh
+    # Note: No startup script needed - services start automatically on boot
+    # lobby-display.service and lobby-kiosk.service are enabled and start automatically
+    # Only create scripts for manual control if needed
+    log "Kiosk services start automatically on boot - no startup script needed"
     
     # Create shutdown service
     log "Creating shutdown service"
@@ -102,21 +68,7 @@ User=root
 WantedBy=multi-user.target
 EOF
     
-    # Create startup service
-    log "Creating startup service"
-    cat > /etc/systemd/system/lobby-startup.service <<EOF
-[Unit]
-Description=Lobby Daily Startup
-After=multi-user.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/lobby-startup.sh
-User=root
-
-[Install]
-WantedBy=multi-user.target
-EOF
+    # No startup service needed - lobby services start automatically on boot
     
     # Create shutdown timer (11:59 PM daily)
     log "Creating shutdown timer"
@@ -133,28 +85,13 @@ Persistent=true
 WantedBy=timers.target
 EOF
     
-    # Create startup timer (8:00 AM daily)
-    log "Creating startup timer"
-    cat > /etc/systemd/system/lobby-startup.timer <<EOF
-[Unit]
-Description=Daily Lobby Startup at 8:00 AM
-Requires=lobby-startup.service
-
-[Timer]
-OnCalendar=*-*-* 08:00:00
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-EOF
+    # No startup timer needed - services start automatically on boot
     
-    # Enable scheduling
-    log "Enabling daily schedule timers"
+    # Enable shutdown scheduling only
+    log "Enabling nightly shutdown timer"
     systemctl daemon-reload
     systemctl enable lobby-shutdown.timer
-    systemctl enable lobby-startup.timer
     systemctl start lobby-shutdown.timer
-    systemctl start lobby-startup.timer
     
     log "Daily scheduler setup completed"
 }
@@ -163,18 +100,22 @@ EOF
 reset_scheduler() {
     log "Resetting scheduler system"
     
-    # Stop and disable timers
+    # Stop and disable shutdown timer
     systemctl stop lobby-shutdown.timer || true
-    systemctl stop lobby-startup.timer || true
     systemctl disable lobby-shutdown.timer || true
+    
+    # Remove old startup files if they exist (cleanup from previous versions)
+    systemctl stop lobby-startup.timer || true
     systemctl disable lobby-startup.timer || true
     
     # Remove files
     rm -f /etc/systemd/system/lobby-shutdown.service
-    rm -f /etc/systemd/system/lobby-startup.service
     rm -f /etc/systemd/system/lobby-shutdown.timer
-    rm -f /etc/systemd/system/lobby-startup.timer
     rm -f /usr/local/bin/lobby-shutdown.sh
+    
+    # Clean up old startup files
+    rm -f /etc/systemd/system/lobby-startup.service
+    rm -f /etc/systemd/system/lobby-startup.timer
     rm -f /usr/local/bin/lobby-startup.sh
     
     systemctl daemon-reload
@@ -189,14 +130,9 @@ reset_scheduler() {
 validate_scheduler() {
     local errors=0
     
-    # Check if scripts exist
+    # Check if shutdown script exists
     if [[ ! -f /usr/local/bin/lobby-shutdown.sh ]]; then
         log "ERROR: Shutdown script not found"
-        ((errors++))
-    fi
-    
-    if [[ ! -f /usr/local/bin/lobby-startup.sh ]]; then
-        log "ERROR: Startup script not found"
         ((errors++))
     fi
     
@@ -205,19 +141,9 @@ validate_scheduler() {
         ((errors++))
     fi
     
-    if [[ ! -x /usr/local/bin/lobby-startup.sh ]]; then
-        log "ERROR: Startup script not executable"
-        ((errors++))
-    fi
-    
-    # Check if timers exist and are enabled
+    # Check if shutdown timer exists and is enabled
     if [[ ! -f /etc/systemd/system/lobby-shutdown.timer ]]; then
         log "ERROR: Shutdown timer not found"
-        ((errors++))
-    fi
-    
-    if [[ ! -f /etc/systemd/system/lobby-startup.timer ]]; then
-        log "ERROR: Startup timer not found"
         ((errors++))
     fi
     
@@ -226,8 +152,14 @@ validate_scheduler() {
         ((errors++))
     fi
     
-    if ! systemctl is-enabled lobby-startup.timer >/dev/null 2>&1; then
-        log "ERROR: Startup timer not enabled"
+    # Check that lobby services are enabled (they should start automatically)
+    if ! systemctl is-enabled lobby-display.service >/dev/null 2>&1; then
+        log "WARNING: lobby-display.service not enabled"
+        ((errors++))
+    fi
+    
+    if ! systemctl is-enabled lobby-kiosk.service >/dev/null 2>&1; then
+        log "WARNING: lobby-kiosk.service not enabled"
         ((errors++))
     fi
     
