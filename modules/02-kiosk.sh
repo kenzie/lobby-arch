@@ -158,7 +158,7 @@ EOF
     cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf <<EOF
 [Service]
 ExecStart=
-ExecStart=-/sbin/agetty -o '-p -f -- \\u' --noclear --autologin $USER %I \$TERM
+ExecStart=-/sbin/agetty -o '-p -f -- \u' --autologin $USER %I \$TERM
 EOF
 
     # Create user systemd directory
