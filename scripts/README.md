@@ -9,10 +9,11 @@ scripts/
 ├── lobby.sh              # Main management script
 ├── post-install.sh       # Initial setup orchestrator
 ├── modules/              # Individual configuration modules
-│   ├── 01-autologin.sh
 │   ├── 02-kiosk.sh
 │   ├── 03-plymouth.sh
 │   ├── 04-auto-updates.sh
+│   ├── 05-monitoring.sh
+│   ├── 06-scheduler.sh
 │   └── 99-cleanup.sh
 └── configs/              # Configuration templates
     ├── start-wallpaper.sh
@@ -46,11 +47,12 @@ sudo ./lobby.sh update auto-updates  # Update automatic updates
 
 ## Modules
 
-- **autologin**: Configures automatic login for the lobby user
-- **kiosk**: Sets up Cage Wayland kiosk compositor with Chromium
-- **plymouth**: Configures Route 19 boot splash screen
-- **auto-updates**: Sets up weekly automatic system updates
-- **cleanup**: Final cleanup and first-login setup
+- **kiosk**: Sets up auto-login + user systemd services for Cage Wayland kiosk compositor with Chromium
+- **plymouth**: Configures animated Route 19 boot splash screen with loading dots  
+- **auto-updates**: Sets up daily automatic system updates with git synchronization
+- **monitoring**: Service health monitoring with automatic restart capabilities
+- **scheduler**: Daily operation schedule (8:00 AM start, 11:59 PM stop)
+- **cleanup**: Final cleanup, log rotation, and global command setup
 
 Each module supports `setup`, `reset`, and `validate` operations.
 

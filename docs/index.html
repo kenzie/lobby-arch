@@ -132,7 +132,9 @@
         
         <div class="command-box" id="install-command">
             <button class="copy-button" onclick="copyCommand()">Copy</button>
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/install | bash
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/arch-install.sh -o /tmp/arch-install.sh
+chmod +x /tmp/arch-install.sh
+/tmp/arch-install.sh
         </div>
         
         <div class="warning">
@@ -165,20 +167,21 @@ curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/install | bas
         
         <div style="margin: 1.5rem 0;">
             <span class="step-number">5</span>
-            <strong>Reboot:</strong> System will auto-configure on first boot
+            <strong>Reboot:</strong> System configures during installation and boots directly into working kiosk
         </div>
     </div>
 
     <div class="install-section">
         <h3>What Gets Installed</h3>
         <ul>
-            <li>Base Arch Linux system</li>
-            <li>Cage Wayland kiosk compositor</li>
-            <li>Plymouth boot splash with Route 19 branding</li>
-            <li>Auto-login as user: <code>lobby</code></li>
+            <li>Base Arch Linux system with proper git repository</li>
+            <li>Cage Wayland kiosk compositor with user systemd services</li>
+            <li>Animated Plymouth boot splash with Route 19 logo and loading dots</li>
+            <li>Auto-login configuration (Arch Linux way) for user: <code>lobby</code></li>
             <li>Hostname: <code>lobby-screen</code></li>
-            <li>Automatic weekly system updates</li>
-            <li>SSH access enabled</li>
+            <li>Daily automated updates with git-based synchronization</li>
+            <li>SSH access enabled with AMD hardware optimization</li>
+            <li>lobby-display Vue.js app with automatic build and deployment</li>
         </ul>
     </div>
 
@@ -192,7 +195,9 @@ curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/install | bas
 
     <script>
         function copyCommand() {
-            const command = 'curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/install | bash';
+            const command = `curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/arch-install.sh -o /tmp/arch-install.sh
+chmod +x /tmp/arch-install.sh
+/tmp/arch-install.sh`;
             navigator.clipboard.writeText(command).then(() => {
                 const button = document.querySelector('.copy-button');
                 const originalText = button.textContent;

@@ -30,8 +30,9 @@ After booting from the latest Arch Linux ISO on USB, these scripts will:
 - **lobby-display Vue.js app** - Automatically built and served locally
 - **No desktop environment** - Direct boot to kiosk for maximum performance
 
-### Application Management
-- **System services** manage all components with automatic restart
+### Application Management  
+- **Arch Linux approach** - Auto-login + user systemd services (no complex system service dependencies)
+- **User services** manage display and kiosk with automatic restart and proper ordering
 - **Health monitoring** tracks service status and resource usage
 - **Error recovery** handles failures gracefully with restart limits
 - **Professional display** with no visible cursor or browser UI
@@ -62,14 +63,14 @@ chmod +x /tmp/arch-install.sh
 **What happens automatically:**
 1. Partitions disk and installs Arch Linux base system
 2. Installs AMD drivers and required packages
-3. Clones lobby-arch repository using git for version control
+3. Clones lobby-arch repository as proper git repository for reliable updates
 4. Runs chroot-compatible post-install setup during installation
-5. Creates lobby user and configures all services
+5. Creates lobby user and configures auto-login (Arch Linux way)
 6. Downloads and builds lobby-display Vue.js app
 7. Configures animated Plymouth theme with Route 19 logo
-8. Sets up Cage kiosk with Chromium browser
+8. Sets up user systemd services for display and kiosk
 9. Configures monitoring, scheduling, and maintenance
-10. **Reboots directly into working animated kiosk**
+10. **Reboots directly into working animated kiosk with clean boot process**
 
 ## 🔧 System Management
 

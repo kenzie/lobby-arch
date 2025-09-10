@@ -19,7 +19,7 @@ This repository provides a **production-tested and reliable Arch Linux installer
   - **Service monitoring** with automatic restart on failure and intelligent limits
   - **Daily schedule**: 11:59 PM shutdown, 8:00 AM startup for power management
   - **Automated updates**: System and project updates at 2:00 AM daily with error recovery
-  - **Complete systemd service integration** with circular dependency resolution
+  - **Arch Linux service approach** with auto-login + user systemd services (eliminates complex system service dependencies)
 - **Production tested** on Lenovo M75q-1 with 16GB RAM and 256GB NVMe
 - **Immediate functionality** - boots directly into working kiosk after installation
 - Fully idempotent and repeatable on new AMD hardware
@@ -99,7 +99,7 @@ sudo lobby help                          # Full command reference
 
 The system uses a modular architecture with the following components:
 
-- **02-kiosk.sh** - Cage (Wayland compositor) + Chromium kiosk with cursor hiding
+- **02-kiosk.sh** - Auto-login + user services for Cage (Wayland compositor) + Chromium kiosk with cursor hiding
 - **03-plymouth.sh** - Route 19 boot splash screen with logo and animated loading dots
 - **04-auto-updates.sh** - Automated system and project updates with error recovery
 - **05-monitoring.sh** - Service health monitoring with automatic restart
@@ -157,10 +157,10 @@ sudo lobby setup kiosk
 
 ### System Architecture
 
-The system uses **Wayland/Cage compositor** instead of X11 for better performance and security:
-- **No desktop environment** - Direct boot to kiosk
-- **Systemd service management** - All components managed by systemd
-- **Git-based updates** - Reliable synchronization with version control
+The system uses **Wayland/Cage compositor** with Arch Linux best practices:
+- **No desktop environment** - Direct boot to kiosk via auto-login
+- **User systemd services** - Clean service management without complex system dependencies  
+- **Git-based updates** - Reliable synchronization with proper repository structure
 - **Chroot-compatible setup** - Installation completes during arch-install.sh execution
 
 ### Support
