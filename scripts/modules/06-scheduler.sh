@@ -30,12 +30,7 @@ log() {
 setup_scheduler() {
     log "Setting up lobby daily scheduler"
     
-    # Install Plymouth switching scripts
-    log "Installing Plymouth switching scripts"
-    cp "$CONFIG_DIR/plymouth/switch-to-sleep.sh" /usr/local/bin/plymouth-switch-sleep.sh
-    cp "$CONFIG_DIR/plymouth/switch-to-normal.sh" /usr/local/bin/plymouth-switch-normal.sh
-    chmod +x /usr/local/bin/plymouth-switch-sleep.sh
-    chmod +x /usr/local/bin/plymouth-switch-normal.sh
+    # Simple shutdown/startup - no complex Plymouth switching needed
     
     # Create shutdown script
     log "Creating shutdown script"
@@ -52,17 +47,17 @@ log() {
 log "Starting nightly shutdown sequence"
 
 # Stop kiosk services (Wayland/Cage architecture)
-log "Stopping lobby kiosk services"
+log "Stopping lobby services and turning off display"
 systemctl stop lobby-kiosk.service || true
 systemctl stop lobby-display.service || true
 
-# Stop monitoring during maintenance window
-log "Stopping monitoring during shutdown"
+# Stop monitoring during downtime
+log "Stopping monitoring during downtime"
 systemctl stop lobby-monitor.timer || true
 
-# Show Plymouth sleep theme during maintenance window
-log "Showing Plymouth sleep theme for maintenance window"
-/usr/local/bin/plymouth-switch-sleep.sh || true
+# Turn off display by stopping all display services
+log "Turning off display for downtime"
+# In Wayland, stopping the compositor effectively turns off display
 
 log "Nightly shutdown completed"
 EOF
@@ -83,19 +78,20 @@ log() {
 
 log "Starting morning startup sequence"
 
-# Ensure lobby display app is running
-log "Starting lobby display service"
+# Display will turn on automatically when kiosk starts
+log "Display will turn on when kiosk starts"
+
+# Ensure lobby display app is running (robust restart)
+log "Starting/restarting lobby display service"
+systemctl stop lobby-display.service 2>/dev/null || true
 systemctl start lobby-display.service
 sleep 5
 
-# Ensure kiosk is running (Wayland/Cage architecture)
-log "Starting lobby kiosk"
+# Ensure kiosk is running (robust restart)
+log "Starting/restarting lobby kiosk"
+systemctl stop lobby-kiosk.service 2>/dev/null || true
 systemctl start lobby-kiosk.service
-sleep 2
-
-# Hide Plymouth screen and resume monitoring
-log "Switching back to normal Plymouth theme"
-/usr/local/bin/plymouth-switch-normal.sh || true
+sleep 3
 
 # Resume monitoring
 log "Starting monitoring system"
@@ -200,8 +196,6 @@ reset_scheduler() {
     rm -f /etc/systemd/system/lobby-startup.service
     rm -f /etc/systemd/system/lobby-startup.timer
     rm -f /usr/local/bin/lobby-startup.sh
-    rm -f /usr/local/bin/plymouth-switch-sleep.sh
-    rm -f /usr/local/bin/plymouth-switch-normal.sh
     
     systemctl daemon-reload
     
