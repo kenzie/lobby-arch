@@ -61,11 +61,11 @@ setup_kiosk() {
     log "Creating Hyprland kiosk configuration"
     local hypr_config_dir="$HOME_DIR/.config/hypr"
     mkdir -p "$hypr_config_dir"
-    cat > "$hypr_config_dir/hyprland.conf" <<'EOF'
+    cat > "$hypr_config_dir/hyprland.conf" <<EOF
 # --- Hyprland Kiosk Config (Fixed Syntax) ---
 monitor=,preferred,auto,1
 # Wait for Vue.js app to be ready, then launch Chromium in kiosk mode
-exec-once = bash -c 'while ! curl -s http://localhost:8080 >/dev/null 2>&1; do sleep 1; done; sleep 2; USER_ID=$(id -u); export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$USER_ID/bus"; chromium --no-sandbox --disable-dev-shm-usage --disable-gpu --disable-software-rasterizer --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-extensions --disable-plugins --disable-sync --disable-translate --no-first-run --no-default-browser-check --kiosk http://localhost:8080 2>/dev/null'
+exec-once = bash -c 'while ! curl -s http://localhost:8080 >/dev/null 2>&1; do sleep 1; done; sleep 2; USER_ID=\$(id -u); export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/\$USER_ID/bus"; chromium --no-sandbox --disable-dev-shm-usage --disable-gpu --disable-software-rasterizer --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-extensions --disable-plugins --disable-sync --disable-translate --no-first-run --no-default-browser-check --kiosk http://localhost:8080 2>/dev/null'
 # Removed fullscreen window rule - kiosk mode handles fullscreen natively
 
 general {
