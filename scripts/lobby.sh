@@ -6,7 +6,12 @@ set -euo pipefail
 
 VERSION="1.0.0"
 SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
-MODULES_DIR="$SCRIPT_DIR/modules"
+# Handle nested scripts structure on live system
+if [[ -d "$SCRIPT_DIR/scripts/modules" ]]; then
+    MODULES_DIR="$SCRIPT_DIR/scripts/modules"
+else
+    MODULES_DIR="$SCRIPT_DIR/modules"
+fi
 LOGFILE="/var/log/lobby-setup.log"
 
 # Default values
