@@ -5,7 +5,7 @@
 set -euo pipefail
 
 VERSION="1.0.0"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 MODULES_DIR="$SCRIPT_DIR/modules"
 LOGFILE="/var/log/lobby-setup.log"
 
