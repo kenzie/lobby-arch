@@ -121,7 +121,18 @@ EOF
             grub-mkconfig -o /boot/grub/grub.cfg
         fi
     else
-        log "GRUB not found, assuming systemd-boot - kernel params should already include splash"
+        log "GRUB not found, configuring systemd-boot kernel parameters"
+        # Update systemd-boot configuration
+        BOOT_ENTRY="/boot/loader/entries/arch.conf"
+        if [[ -f "$BOOT_ENTRY" ]]; then
+            # Extract current root UUID and preserve it
+            ROOT_UUID=$(grep "^options" "$BOOT_ENTRY" | grep -o "root=UUID=[^ ]*" || echo "root=LABEL=arch")
+            # Update with enhanced kernel parameters for clean kiosk boot
+            sed -i "s|^options.*|options $ROOT_UUID rw splash quiet loglevel=0 rd.udev.log_level=0 rd.systemd.show_status=false systemd.show_status=false fbcon=nodefer vt.global_cursor_default=0 console=tty2|" "$BOOT_ENTRY"
+            log "Updated systemd-boot configuration with clean boot parameters"
+        else
+            log "WARNING: systemd-boot configuration not found at $BOOT_ENTRY"
+        fi
     fi
     
         
