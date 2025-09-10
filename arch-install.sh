@@ -132,61 +132,47 @@ systemctl enable NetworkManager
 systemctl enable sshd
 EOF
 
-# --- Download modular installation scripts and assets ---
-echo "==> Downloading installation scripts and assets..."
-mkdir -p /mnt/root/scripts/{modules,configs/plymouth}
+# --- Clone lobby-arch repository ---
+echo "==> Cloning lobby-arch repository..."
 
-# Function to download with error checking
-download_file() {
-    local url="$1"
-    local output="$2"
-    local max_retries=3
-    local retry_delay=5
-    
-    for attempt in $(seq 1 $max_retries); do
-        echo "Downloading $(basename "$output")... (attempt $attempt/$max_retries)"
-        if curl -sSL --fail --connect-timeout 30 --max-time 300 "$url" -o "$output"; then
-            echo "✓ Successfully downloaded $(basename "$output")"
-            return 0
-        else
-            echo "✗ Failed to download $(basename "$output")"
-            if [[ $attempt -lt $max_retries ]]; then
-                echo "Retrying in ${retry_delay}s..."
-                sleep $retry_delay
-                retry_delay=$((retry_delay * 2))
-            fi
-        fi
-    done
-    
-    echo "ERROR: Failed to download $url after $max_retries attempts"
-    return 1
-}
+# Install git if not present
+if ! command -v git >/dev/null 2>&1; then
+    echo "Installing git..."
+    arch-chroot /mnt pacman -S --noconfirm git
+fi
 
-# Download main scripts
-download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/post-install.sh" "/mnt/root/scripts/post-install.sh" || exit 1
-download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/lobby.sh" "/mnt/root/scripts/lobby.sh" || exit 1
+# Clone the repository to /mnt/root/scripts
+if ! arch-chroot /mnt git clone https://github.com/kenzie/lobby-arch.git /root/lobby-arch-temp; then
+    echo "ERROR: Failed to clone repository"
+    exit 1
+fi
 
-# Download modules
-download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/02-kiosk.sh" "/mnt/root/scripts/modules/02-kiosk.sh" || exit 1
-download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/03-plymouth.sh" "/mnt/root/scripts/modules/03-plymouth.sh" || exit 1
-download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/04-auto-updates.sh" "/mnt/root/scripts/modules/04-auto-updates.sh" || exit 1
-download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/05-monitoring.sh" "/mnt/root/scripts/modules/05-monitoring.sh" || exit 1
-download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/06-scheduler.sh" "/mnt/root/scripts/modules/06-scheduler.sh" || exit 1
-download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/modules/99-cleanup.sh" "/mnt/root/scripts/modules/99-cleanup.sh" || exit 1
+# Move scripts directory to correct location
+arch-chroot /mnt mv /root/lobby-arch-temp/scripts /root/scripts
+arch-chroot /mnt mv /root/lobby-arch-temp/assets /root/assets
 
-# Download configuration files
-download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/configs/plymouth/route19.plymouth" "/mnt/root/scripts/configs/plymouth/route19.plymouth" || exit 1
-download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/scripts/configs/plymouth/route19.script" "/mnt/root/scripts/configs/plymouth/route19.script" || exit 1
-
-# Download logo asset
-mkdir -p /mnt/root/assets
-download_file "https://raw.githubusercontent.com/kenzie/lobby-arch/main/assets/route19-logo.png" "/mnt/root/assets/route19-logo.png" || exit 1
+# Remove temporary clone directory but keep git metadata in scripts
+arch-chroot /mnt mv /root/lobby-arch-temp/.git /root/scripts/.git
+arch-chroot /mnt rm -rf /root/lobby-arch-temp
 
 # Make scripts executable
-chmod +x /mnt/root/scripts/*.sh /mnt/root/scripts/modules/*.sh
+arch-chroot /mnt chmod +x /root/scripts/*.sh /root/scripts/modules/*.sh
 
-# Verify all critical files were downloaded
-echo "==> Verifying downloaded files..."
+# Verify git repository is properly set up
+echo "==> Verifying git repository setup..."
+if arch-chroot /mnt test -d /root/scripts/.git; then
+    echo "✓ Git repository initialized"
+    # Set git config for lobby system
+    arch-chroot /mnt git -C /root/scripts config --local user.name "Lobby System"
+    arch-chroot /mnt git -C /root/scripts config --local user.email "lobby@lobby-system"
+    arch-chroot /mnt git -C /root/scripts config --local pull.rebase false
+else
+    echo "✗ ERROR: Git repository not properly initialized"
+    exit 1
+fi
+
+# Verify critical files exist
+echo "==> Verifying installation files..."
 critical_files=(
     "/mnt/root/scripts/post-install.sh"
     "/mnt/root/scripts/lobby.sh" 
@@ -203,7 +189,7 @@ for file in "${critical_files[@]}"; do
     fi
 done
 
-echo "✓ All critical installation files downloaded successfully"
+echo "✓ Repository cloned and verified successfully"
 
 # --- Create systemd service to run post-install automatically on first boot ---
 cat > /mnt/etc/systemd/system/post-install.service <<EOF

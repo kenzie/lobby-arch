@@ -409,188 +409,124 @@ check_root() {
 
 # GitHub repository configuration
 GITHUB_REPO="kenzie/lobby-arch"
-GITHUB_BASE_URL="https://raw.githubusercontent.com/$GITHUB_REPO/main/scripts"
 
-# File list for syncing
-declare -A SYNC_FILES=(
-    ["lobby.sh"]="lobby.sh"
-    ["post-install.sh"]="post-install.sh"
-    ["modules/02-kiosk.sh"]="modules/02-kiosk.sh"
-    ["modules/03-plymouth.sh"]="modules/03-plymouth.sh"
-    ["modules/04-auto-updates.sh"]="modules/04-auto-updates.sh"
-    ["modules/05-monitoring.sh"]="modules/05-monitoring.sh"
-    ["modules/06-scheduler.sh"]="modules/06-scheduler.sh"
-    ["modules/99-cleanup.sh"]="modules/99-cleanup.sh"
-    ["configs/plymouth/route19.plymouth"]="configs/plymouth/route19.plymouth"
-    ["configs/plymouth/route19.script"]="configs/plymouth/route19.script"
-    ["configs/plymouth/logo.png"]="configs/plymouth/logo.png"
-)
-
-# Get file hash
-get_file_hash() {
-    local file="$1"
-    if [[ -f "$file" ]]; then
-        sha256sum "$file" | cut -d' ' -f1
-    else
-        echo "missing"
-    fi
-}
-
-# Download file with cache handling
-download_file() {
-    local url="$1"
-    local output="$2"
-    local force_cache_bypass="${3:-false}"
-    local max_retries=3
-    local retry_delay=5
-
-    for attempt in $(seq 1 $max_retries); do
-        local curl_opts="-sSL"
-
-        if [[ "$force_cache_bypass" == "true" ]]; then
-            # Add timestamp to URL as query parameter for cache busting
-            local cache_buster="?cb=$(date +%s)&t=$(date +%N)"
-            url="${url}${cache_buster}"
-        fi
-
-        if curl -sSL \
-            ${force_cache_bypass:+-H "Cache-Control: no-cache, no-store, must-revalidate"} \
-            ${force_cache_bypass:+-H "Pragma: no-cache"} \
-            ${force_cache_bypass:+-H "Expires: 0"} \
-            "$url" -o "$output" 2>/dev/null; then
-            return 0
-        else
-            if [[ $attempt -lt $max_retries ]]; then
-                warning "Download attempt $attempt failed, retrying in ${retry_delay}s..."
-                sleep $retry_delay
-                retry_delay=$((retry_delay * 2))  # Exponential backoff
-            fi
-        fi
-    done
-
-    return 1
-}
-
-# Check for updates from GitHub
+# Check for updates using git
 check_for_updates() {
     local force_cache_bypass="${1:-false}"
 
-    if [[ "$force_cache_bypass" == "true" ]]; then
-        info "Checking for updates from GitHub repository: $GITHUB_REPO (bypassing cache)"
-    else
-        info "Checking for updates from GitHub repository: $GITHUB_REPO"
+    info "Checking for updates from GitHub repository: $GITHUB_REPO"
+
+    # Check if we're in a git repository
+    if [[ ! -d "$SCRIPT_DIR/.git" ]]; then
+        error "Not a git repository. Run 'sudo lobby setup' to initialize properly."
+        return 1
     fi
 
-    local updates_available=0
-    local temp_dir
-    temp_dir=$(mktemp -d)
+    # Change to script directory
+    cd "$SCRIPT_DIR" || {
+        error "Failed to change to script directory"
+        return 1
+    }
 
-    for local_path in "${!SYNC_FILES[@]}"; do
-        local github_path="${SYNC_FILES[$local_path]}"
-        local local_file="$SCRIPT_DIR/$local_path"
-        local temp_file="$temp_dir/$(basename "$github_path")"
+    # Fetch latest changes without merging
+    info "Fetching latest changes from GitHub"
+    if ! git fetch origin main; then
+        error "Failed to fetch from GitHub"
+        return 1
+    fi
 
-        # Download file from GitHub
-        if download_file "$GITHUB_BASE_URL/$github_path" "$temp_file" "$force_cache_bypass"; then
-            local local_hash
-            local remote_hash
-            local_hash=$(get_file_hash "$local_file")
-            remote_hash=$(get_file_hash "$temp_file")
+    # Check if there are differences
+    local ahead
+    local behind
+    ahead=$(git rev-list --count HEAD..origin/main 2>/dev/null || echo "0")
+    behind=$(git rev-list --count origin/main..HEAD 2>/dev/null || echo "0")
 
-            if [[ "$local_hash" != "$remote_hash" ]]; then
-                warning "Update available for: $local_path"
-                ((updates_available++))
-            fi
-        else
-            warning "Failed to check updates for: $local_path"
-        fi
-    done
-
-    rm -rf "$temp_dir"
-
-    if [[ $updates_available -eq 0 ]]; then
-        success "All files are up to date"
+    if [[ "$ahead" -gt 0 ]]; then
+        warning "Updates available: $ahead commit(s) behind GitHub"
+        info "Run 'sudo lobby sync' to update"
+        return 1
+    elif [[ "$behind" -gt 0 ]]; then
+        warning "Local repository is $behind commit(s) ahead of GitHub"
+        success "No updates needed"
         return 0
     else
-        info "Found $updates_available file(s) with updates available"
-        info "Run 'sudo ./lobby.sh sync' to update"
-        return 1
+        success "All files are up to date"
+        return 0
     fi
 }
 
-# Sync files from GitHub
+# Sync files using git pull
 sync_from_github() {
     local force_cache_bypass="${1:-false}"
 
-    if [[ "$force_cache_bypass" == "true" ]]; then
-        info "Syncing files from GitHub repository: $GITHUB_REPO (bypassing cache)"
-    else
-        info "Syncing files from GitHub repository: $GITHUB_REPO"
-    fi
-
-    local synced_count=0
-    local failed_count=0
-    local temp_dir
-    temp_dir=$(mktemp -d)
+    info "Syncing from GitHub repository: $GITHUB_REPO using git"
 
     # Create backup directory
     local backup_dir="/tmp/lobby-backup-$(date +%Y%m%d-%H%M%S)"
     mkdir -p "$backup_dir"
 
-    for local_path in "${!SYNC_FILES[@]}"; do
-        local github_path="${SYNC_FILES[$local_path]}"
-        local local_file="$SCRIPT_DIR/$local_path"
-        local temp_file="$temp_dir/$(basename "$github_path")"
+    # Check if we're in a git repository
+    if [[ ! -d "$SCRIPT_DIR/.git" ]]; then
+        error "Not a git repository. Run 'sudo lobby setup' to initialize properly."
+        return 1
+    fi
 
-        info "Syncing: $local_path"
+    # Backup current state
+    info "Creating backup of current state"
+    cp -r "$SCRIPT_DIR" "$backup_dir/scripts-backup"
 
-        # Download file from GitHub
-        if download_file "$GITHUB_BASE_URL/$github_path" "$temp_file" "$force_cache_bypass"; then
-            # Check if file content changed
-            local local_hash
-            local remote_hash
-            local_hash=$(get_file_hash "$local_file")
-            remote_hash=$(get_file_hash "$temp_file")
+    # Change to script directory
+    cd "$SCRIPT_DIR" || {
+        error "Failed to change to script directory"
+        return 1
+    }
 
-            if [[ "$local_hash" != "$remote_hash" ]]; then
-                # Backup existing file if it exists
-                if [[ -f "$local_file" ]]; then
-                    cp "$local_file" "$backup_dir/$(basename "$local_file")-$(date +%H%M%S)"
-                fi
+    # Ensure we're on main branch
+    local current_branch
+    current_branch=$(git branch --show-current 2>/dev/null || echo "unknown")
+    if [[ "$current_branch" != "main" ]]; then
+        warning "Not on main branch (currently on: $current_branch), switching to main"
+        git checkout main || {
+            error "Failed to checkout main branch"
+            return 1
+        }
+    fi
 
-                # Ensure directory exists
-                mkdir -p "$(dirname "$local_file")"
+    # Save any local changes (shouldn't be any, but just in case)
+    if ! git diff --quiet || ! git diff --staged --quiet; then
+        warning "Local changes detected, stashing them"
+        git stash push -m "Auto-stash before sync $(date)" || {
+            error "Failed to stash local changes"
+            return 1
+        }
+    fi
 
-                # Copy new file and set permissions
-                cp "$temp_file" "$local_file"
-                if [[ "$local_path" == *.sh ]]; then
-                    chmod +x "$local_file"
-                fi
-
-                success "Updated: $local_path"
-                ((synced_count++))
-            else
-                info "No changes: $local_path"
-            fi
+    # Pull latest changes
+    info "Pulling latest changes from GitHub"
+    if git pull origin main; then
+        # Get list of changed files
+        local changed_files
+        changed_files=$(git diff --name-only HEAD@{1} HEAD 2>/dev/null || echo "")
+        
+        if [[ -n "$changed_files" ]]; then
+            success "Successfully synced. Updated files:"
+            echo "$changed_files" | while read -r file; do
+                [[ -n "$file" ]] && info "  • $file"
+            done
+            
+            # Fix file permissions for shell scripts
+            find "$SCRIPT_DIR" -name "*.sh" -exec chmod +x {} \;
+            
+            info "Backup created at: $backup_dir"
+            warning "Files were updated. Consider running 'sudo lobby validate' to ensure everything works correctly."
         else
-            error "Failed to download: $local_path"
-            ((failed_count++))
+            success "All files are already up to date"
         fi
-    done
-
-    rm -rf "$temp_dir"
-
-    if [[ $synced_count -eq 0 && $failed_count -eq 0 ]]; then
-        success "All files are already up to date"
-    elif [[ $failed_count -eq 0 ]]; then
-        success "Successfully synced $synced_count file(s)"
-        info "Backup created at: $backup_dir"
-
-        if [[ $synced_count -gt 0 ]]; then
-            warning "Some files were updated. Consider running 'sudo ./lobby.sh validate' to ensure everything still works correctly."
-        fi
+        
+        return 0
     else
-        error "Sync completed with errors: $synced_count synced, $failed_count failed"
+        error "Git pull failed"
+        warning "Backup available at: $backup_dir"
         return 1
     fi
 }
