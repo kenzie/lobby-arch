@@ -62,32 +62,41 @@ setup_kiosk() {
     mkdir -p "$hypr_config_dir"
     cat > "$hypr_config_dir/hyprland.conf" <<'EOF'
 # --- Hyprland Kiosk Config ---
+
 # Monitor setup
 monitor=,preferred,auto,1
 
 # Autostart Chromium in kiosk mode on launch
 exec-once = chromium --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --kiosk http://localhost:8080
 
-# Make the Chromium window fullscreen and borderless
+# Make the Chromium window fullscreen
 windowrulev2 = fullscreen,class:^(chromium)$
-windowrulev2 = bordercolor rgb(000000),class:^(chromium)$
-windowrulev2 = noborder,class:^(chromium)$
 
-# Input settings - keyboard and mouse are disabled for the kiosk
-input {
-    enabled = false
+# General settings - one per line
+general {
+    gaps_in = 0
+    gaps_out = 0
+    border_size = 0
+    layout = dwindle
 }
 
-# Cursor settings - hide after 1 second
+# Decoration settings - disable rounded corners and shadows for a clean kiosk look
+decoration {
+    rounding = 0
+    drop_shadow = false
+}
+
+# Miscellaneous settings
+misc {
+    disable_hyprland_logo = true
+    disable_splash_rendering = true
+}
+
+# Input is implicitly disabled by not defining any input devices.
+# We only define the cursor behavior.
 cursor {
     inactive_timeout = 1
 }
-
-# Disable gestures and other UI elements
-gestures { workspace_swipe = off }
-general { gaps_in = 0; gaps_out = 0; border_size = 0; layout = dwindle; }
-decoration { active_opacity = 1.0; inactive_opacity = 1.0; fullscreen_opacity = 1.0; rounding = 0; }
-misc { disable_hyprland_logo = true; disable_splash_rendering = true; }
 EOF
     chown -R "$USER:$USER" "$HOME_DIR/.config"
 
