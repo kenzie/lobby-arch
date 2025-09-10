@@ -121,8 +121,9 @@ User=lobby
 Group=seat
 # Open a full PAM session to get a proper graphical environment
 PAMName=login
-# Load environment variables from the user's working session for debugging
-EnvironmentFile=/home/lobby/env.txt
+# Explicitly set wlroots environment variables for AMD GPU
+Environment="WLR_RENDERER=vulkan"
+Environment="WLR_DRM_DEVICE=/dev/dri/card0"
 # Launch Hyprland
 ExecStart=/usr/bin/Hyprland
 Restart=always
