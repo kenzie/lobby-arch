@@ -62,16 +62,41 @@ setup_kiosk() {
     local hypr_config_dir="$HOME_DIR/.config/hypr"
     mkdir -p "$hypr_config_dir"
     cat > "$hypr_config_dir/hyprland.conf" <<'EOF'
-# --- Hyprland Kiosk Config (Minimal) ---
+# --- Hyprland Kiosk Config (Fixed Syntax) ---
 monitor=,preferred,auto,1
 exec-once = chromium --enable-features=UseOzonePlatform --ozone-platform=wayland --no-sandbox --kiosk http://localhost:8080
 windowrulev2 = fullscreen,class:^(chromium)$
+
 general {
     border_size = 0
     layout = dwindle
 }
+
+decoration {
+    drop_shadow = false
+    rounding = 0
+}
+
+input {
+    kb_layout = us
+    follow_mouse = 0
+    sensitivity = 0
+    # Disable all input for kiosk mode
+}
+
 misc {
     disable_hyprland_logo = true
+    disable_splash_rendering = true
+    force_default_wallpaper = 0
+}
+
+# Disable all input devices for true kiosk mode
+device:mouse {
+    enabled = false
+}
+
+device:keyboard {
+    enabled = false
 }
 EOF
     chown -R "$USER:$USER" "$HOME_DIR/.config"
