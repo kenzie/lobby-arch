@@ -28,7 +28,7 @@ setup_kiosk() {
 
     # --- 1. Install Packages ---
     log "Ensuring packages are installed"
-    pacman -S --noconfirm --needed hyprland chromium nodejs npm git ttf-cascadia-code-nerd inter-font || {
+    pacman -S --noconfirm --needed hyprland xorg-xwayland chromium nodejs npm git ttf-cascadia-code-nerd inter-font || {
         log "ERROR: Failed to install packages"
         return 1
     }
