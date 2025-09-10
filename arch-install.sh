@@ -156,7 +156,8 @@ arch-chroot /mnt mv /root/lobby-arch-temp/.git /root/scripts/.git
 arch-chroot /mnt rm -rf /root/lobby-arch-temp
 
 # Make scripts executable
-arch-chroot /mnt chmod +x /root/scripts/*.sh /root/scripts/modules/*.sh
+echo "==> Making scripts executable..."
+arch-chroot /mnt find /root/scripts -name "*.sh" -type f -exec chmod +x {} \;
 
 # Verify git repository is properly set up
 echo "==> Verifying git repository setup..."
