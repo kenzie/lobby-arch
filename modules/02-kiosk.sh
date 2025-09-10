@@ -119,8 +119,8 @@ Wants=seatd.service
 [Service]
 User=lobby
 Group=seat
-# Let systemd manage the user's runtime directory
-RuntimeDirectory=lobby
+# Open a full PAM session to get a proper graphical environment
+PAMName=login
 # Launch Hyprland
 ExecStart=/usr/bin/Hyprland
 # Quit Plymouth after Hyprland starts to ensure seamless transition
