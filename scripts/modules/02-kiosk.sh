@@ -156,7 +156,9 @@ EOF
     }
 
     log "lobby-display build completed successfully"
-
+    
+    log "DEBUG: About to configure auto-login"
+    
     # Configure auto-login for lobby user (Arch Linux way)
     log "Configuring auto-login for lobby user"
     mkdir -p /etc/systemd/system/getty@tty1.service.d
