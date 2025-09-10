@@ -38,9 +38,13 @@ log "Stopping lobby kiosk services"
 systemctl stop lobby-kiosk.service || true
 systemctl stop lobby-display.service || true
 
-# Stop monitoring temporarily
+# Stop monitoring during maintenance window
 log "Stopping monitoring during shutdown"
 systemctl stop lobby-monitor.timer || true
+
+# Show Plymouth screen during maintenance window
+log "Showing Plymouth splash for maintenance window"
+systemctl start plymouth-poweroff.service || true
 
 log "Nightly shutdown completed"
 EOF
@@ -70,6 +74,11 @@ sleep 5
 log "Starting lobby kiosk"
 systemctl start lobby-kiosk.service
 sleep 2
+
+# Hide Plymouth screen and resume monitoring
+log "Hiding Plymouth splash"
+plymouth quit || true
+systemctl stop plymouth-poweroff.service || true
 
 # Resume monitoring
 log "Starting monitoring system"

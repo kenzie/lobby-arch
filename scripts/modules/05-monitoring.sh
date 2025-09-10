@@ -31,6 +31,15 @@ log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOGFILE"
 }
 
+# Check if we're in maintenance window (12:00 AM - 7:59 AM)
+is_maintenance_window() {
+    local hour=$(date +%H)
+    # Convert to integer and check range
+    hour=$((10#$hour))
+    # Maintenance window: 0-7 (midnight to 7:59 AM)
+    [[ $hour -ge 0 && $hour -lt 8 ]]
+}
+
 check_service() {
     local service="$1"
     if ! systemctl is-active --quiet "$service"; then
@@ -53,6 +62,12 @@ check_url() {
         return 1
     fi
 }
+
+# Skip monitoring during maintenance window
+if is_maintenance_window; then
+    log "INFO: In maintenance window (12:00 AM - 7:59 AM), skipping service monitoring"
+    exit 0
+fi
 
 # Monitor services
 check_service "lobby-display.service" 
