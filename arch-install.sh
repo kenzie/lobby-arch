@@ -193,7 +193,12 @@ echo "✓ Repository cloned and verified successfully"
 
 # --- Create systemd service to run post-install automatically on first boot ---
 echo "==> Creating post-install service..."
-if ! cat > /mnt/etc/systemd/system/post-install.service <<'EOF'
+
+# Ensure systemd system directory exists
+mkdir -p /mnt/etc/systemd/system
+
+# Create the service file with explicit error checking
+cat > /mnt/etc/systemd/system/post-install.service << 'EOF'
 [Unit]
 Description=Post Install Setup
 After=network-online.target
@@ -209,18 +214,26 @@ StandardError=journal
 [Install]
 WantedBy=multi-user.target
 EOF
-then
+
+# Verify the service file was created successfully
+if [[ ! -f /mnt/etc/systemd/system/post-install.service ]]; then
     echo "ERROR: Failed to create post-install service file"
     exit 1
 fi
 
+echo "==> Service file created successfully"
+
+# Enable the service in chroot
 echo "==> Enabling post-install service..."
-if ! arch-chroot /mnt systemctl enable post-install.service; then
+arch-chroot /mnt systemctl enable post-install.service
+
+# Verify the service was enabled
+if ! arch-chroot /mnt systemctl is-enabled post-install.service >/dev/null 2>&1; then
     echo "ERROR: Failed to enable post-install service"
     exit 1
 fi
 
-echo "✓ Post-install service created and enabled"
+echo "✓ Post-install service created and enabled successfully"
 
 # --- Unmount and finish ---
 umount -R /mnt
