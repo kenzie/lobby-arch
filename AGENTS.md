@@ -9,7 +9,7 @@ After booting from the latest Arch Linux ISO on USB, these scripts will:
 - Install and configure all necessary software with robust error handling
 - Set up a system with animated Plymouth boot theme (Route 19 logo + loading dots)
 - Run post-install setup during installation (not first boot) for immediate functionality
-- Deploy the [lobby-display](https://github.com/kenzie/lobby-display.git) project in a Cage+Chromium kiosk
+- Deploy the [lobby-display](https://github.com/kenzie/lobby-display.git) project in a Hyprland+Chromium kiosk
 - Use git-based synchronization for reliable updates and version control
 
 ## System Requirements
@@ -25,10 +25,12 @@ After booting from the latest Arch Linux ISO on USB, these scripts will:
 - Smooth transition from boot animation to kiosk display
 
 ### Application Architecture
-- **Cage (Wayland compositor)** - Minimal kiosk environment
+- **Hyprland (Wayland compositor)** - High-performance kiosk environment
 - **Chromium browser** - Runs in full kiosk mode with hidden cursor
 - **lobby-display Vue.js app** - Automatically built and served locally
 - **No desktop environment** - Direct boot to kiosk for maximum performance
+- **VT Management** - Kiosk on VT2, admin TTY on VT1
+- **Fast Boot** - Optimized 8-15 second boot time with Plymouth animation
 
 ### Application Management  
 - **Arch Linux approach** - Auto-login + user systemd services (no complex system service dependencies)
@@ -68,9 +70,10 @@ chmod +x /tmp/arch-install.sh
 5. Creates lobby user and configures auto-login (Arch Linux way)
 6. Downloads and builds lobby-display Vue.js app
 7. Configures animated Plymouth theme with Route 19 logo
-8. Sets up user systemd services for display and kiosk
+8. Sets up user systemd services for display and Hyprland kiosk
 9. Configures monitoring, scheduling, and maintenance
-10. **Reboots directly into working animated kiosk with clean boot process**
+10. Applies boot optimizations for 8-15 second boot time
+11. **Reboots directly into working animated kiosk with clean boot process**
 
 ## 🔧 System Management
 
