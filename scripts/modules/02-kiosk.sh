@@ -195,8 +195,8 @@ EOF
 [Unit]
 Description=Lobby Kiosk Compositor
 After=multi-user.target lobby-display.service seatd.service dbus.service
-Requires=lobby-display.service seatd.service
-BindsTo=lobby-display.service
+Requires=seatd.service
+Wants=lobby-display.service
 StartLimitBurst=10
 StartLimitIntervalSec=60
 

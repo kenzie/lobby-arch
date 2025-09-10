@@ -123,8 +123,7 @@ EOF
     cat > /etc/systemd/system/lobby-startup.service <<EOF
 [Unit]
 Description=Lobby Daily Startup
-After=multi-user.target graphical.target
-# Don't block boot - this is for scheduled restart, not boot startup
+# No dependencies - only triggered by timer, not boot
 
 [Service]
 Type=oneshot
@@ -132,8 +131,7 @@ ExecStart=/usr/local/bin/lobby-startup.sh
 User=root
 
 [Install]
-# Note: Not WantedBy multi-user.target - only triggered by timer
-WantedBy=lobby-startup.timer
+# Not enabled directly - only triggered by timer
 EOF
     
     # Create shutdown timer (11:59 PM daily)
