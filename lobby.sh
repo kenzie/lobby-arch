@@ -2,7 +2,7 @@
 # Lobby System Management Script
 # Manages installation, updates, and resets for lobby screen systems
 
-set -euo pipefail
+set -uo pipefail
 
 VERSION="1.0.0"
 SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
