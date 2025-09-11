@@ -40,10 +40,9 @@ This is a **production-ready kiosk system** that achieves:
 - **Memory monitoring** - Resource usage tracking with alerts at 80% threshold
 - **Process monitoring** - Tracks service restart counts and failure patterns
 
-### ⏰ **TV Power Management Schedule**
-- **8:00 AM**: System services start, Plymouth quits, full kiosk active
-- **11:59 PM**: Services disabled, Plymouth downtime mode (saves 90% resources)
-- **2:50 AM**: Automated system and application updates during downtime
+### ⏰ **Continuous Operation**
+- **24/7**: Kiosk services run continuously for maximum availability
+- **2:00 AM**: Automated system and application updates during low-usage hours
 - **HDMI CEC ready**: Placeholder for future TV power on/off integration
 
 ### 🔄 **Enterprise Update Management**
@@ -75,7 +74,7 @@ chmod +x /tmp/arch-install.sh
 6. Downloads and builds lobby-display Vue.js app
 7. Configures animated Plymouth theme with Route 19 logo
 8. Sets up user systemd services for display and Hyprland kiosk
-9. Configures monitoring, scheduling, and maintenance
+9. Configures monitoring and maintenance
 10. Applies boot optimizations for 8-15 second boot time
 11. **Reboots directly into working animated kiosk with clean boot process**
 
@@ -106,7 +105,6 @@ lobby-arch/
 │   ├── 03-plymouth.sh
 │   ├── 04-auto-updates.sh
 │   ├── 05-monitoring.sh
-│   ├── 06-scheduler.sh
 │   └── 99-cleanup.sh
 └── configs/              # Configuration templates
 ```
