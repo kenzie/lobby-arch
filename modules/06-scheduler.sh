@@ -243,15 +243,15 @@ validate_scheduler() {
         log "WARNING: Startup timer is enabled but should be manually controlled"
     fi
 
-    # Check that lobby system services are enabled (we use system-level services now)
-    if ! systemctl is-enabled lobby-display.service >/dev/null 2>&1; then
-        log "WARNING: lobby-display.service not enabled at system level"
-        ((errors++))
-    fi
-
+    # Check that lobby-kiosk service is enabled (lobby-display is controlled by scheduler)
     if ! systemctl is-enabled lobby-kiosk.service >/dev/null 2>&1; then
         log "WARNING: lobby-kiosk.service not enabled at system level"
         ((errors++))
+    fi
+    
+    # lobby-display.service should NOT be enabled - it's controlled by scheduler
+    if systemctl is-enabled lobby-display.service >/dev/null 2>&1; then
+        log "INFO: lobby-display.service is enabled but should be scheduler-controlled"
     fi
 
     if [[ $errors -eq 0 ]]; then
