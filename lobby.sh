@@ -21,6 +21,16 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Initialize log file with proper permissions
+init_logging() {
+    # Create log file if it doesn't exist
+    if [[ ! -f "$LOGFILE" ]]; then
+        sudo touch "$LOGFILE"
+        sudo chown "$LOBBY_USER:$LOBBY_USER" "$LOGFILE"
+        sudo chmod 664 "$LOGFILE"
+    fi
+}
+
 # Logging function
 log() {
     local message="$(date '+%Y-%m-%d %H:%M:%S') [lobby.sh] $1"
@@ -643,6 +653,8 @@ main() {
     case "$command" in
         "setup"|"reset"|"update"|"validate")
             check_root
+            # Initialize logging with proper permissions
+            init_logging
             # Update the active lobby.sh script if running setup
             if [[ "$command" == "setup" ]]; then
                 update_self_script || { error "Failed to update self script"; exit 1; }
