@@ -140,9 +140,9 @@ ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do 
 ExecStartPre=/bin/bash -c 'systemctl stop getty@tty1.service getty@tty2.service 2>/dev/null || true; chvt 2; sleep 1'
 # Launch Hyprland with proper environment (Chromium launched via Hyprland exec-once)
 ExecStart=/bin/bash -c 'export XDG_RUNTIME_DIR=/run/user/1000; export XDG_SESSION_TYPE=wayland; export XDG_CURRENT_DESKTOP=Hyprland; export WLR_RENDERER=vulkan; export WLR_DRM_DEVICE=/dev/dri/card0; export WLR_VT=2; exec /usr/bin/Hyprland'
-# Aggressive restart policy to ensure kiosk always comes back
-Restart=always
-RestartSec=1
+# Restart only on failure, not on normal exit
+Restart=on-failure
+RestartSec=3
 # Better logging
 StandardOutput=journal
 StandardError=journal
