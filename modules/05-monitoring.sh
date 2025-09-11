@@ -121,8 +121,6 @@ Requires=lobby-monitor.service
 [Timer]
 OnCalendar=*:*:00/2
 Persistent=true
-# Delay initial run by 3 minutes after boot to allow kiosk initialization
-OnStartupSec=3min
 AccuracySec=30s
 
 [Install]
