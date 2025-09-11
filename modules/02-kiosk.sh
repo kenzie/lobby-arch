@@ -154,7 +154,28 @@ EOF
     log "Disabling getty services to prevent TTY fallback during kiosk mode"
     systemctl mask getty@tty1.service getty@tty2.service || true
     
-    # --- 7. Enable Services and Set Boot Target ---
+    # --- 7. Install Boot Reliability Monitoring ---
+    log "Installing boot reliability validation and monitoring system"
+    
+    # Copy monitoring service
+    if [[ -f "$CONFIG_DIR/../configs/systemd/boot-health-monitor.service" ]]; then
+        cp "$CONFIG_DIR/../configs/systemd/boot-health-monitor.service" /etc/systemd/system/
+        systemctl enable boot-health-monitor.service
+        log "Boot health monitoring service installed and enabled"
+    else
+        log "WARNING: Boot health monitor service not found in configs"
+    fi
+    
+    # Ensure scripts are executable
+    if [[ -f "$SCRIPT_DIR/../scripts/boot-validator.sh" ]]; then
+        chmod +x "$SCRIPT_DIR/../scripts/boot-validator.sh"
+        chmod +x "$SCRIPT_DIR/../scripts/emergency-recovery.sh" 2>/dev/null || true
+        log "Boot reliability scripts configured"
+    else
+        log "WARNING: Boot validator scripts not found"
+    fi
+    
+    # --- 8. Enable Services and Set Boot Target ---
     log "Enabling services and setting default boot target"
     systemctl enable lobby-display.service
     systemctl enable lobby-kiosk.service
@@ -165,6 +186,16 @@ EOF
     rm -f /etc/systemd/system/getty@tty1.service.d/autologin.conf
     systemctl set-default graphical.target
     systemctl daemon-reload
+    
+    # --- 9. Post-Install Validation ---
+    log "Running post-install validation check"
+    if [[ -x "$SCRIPT_DIR/../scripts/boot-validator.sh" ]]; then
+        if "$SCRIPT_DIR/../scripts/boot-validator.sh" validate >/dev/null 2>&1; then
+            log "✅ Post-install validation PASSED"
+        else
+            log "⚠️  Post-install validation detected potential issues - check logs"
+        fi
+    fi
 
     log "Lobby kiosk setup with Hyprland completed"
 }
@@ -176,12 +207,15 @@ reset_kiosk() {
     # Stop and disable services
     systemctl stop lobby-kiosk.service || true
     systemctl stop lobby-display.service || true
+    systemctl stop boot-health-monitor.service || true
     systemctl disable lobby-kiosk.service || true
     systemctl disable lobby-display.service || true
+    systemctl disable boot-health-monitor.service || true
 
     # Remove service files
     rm -f /etc/systemd/system/lobby-kiosk.service
     rm -f /etc/systemd/system/lobby-display.service
+    rm -f /etc/systemd/system/boot-health-monitor.service
     
     # Re-enable getty services for normal operation
     systemctl unmask getty@tty1.service getty@tty2.service || true
@@ -213,6 +247,9 @@ validate_kiosk() {
     if [[ ! -f /etc/systemd/system/lobby-display.service ]]; then
         log "ERROR: Lobby display service not found"
         ((errors++))
+    fi
+    if [[ ! -f /etc/systemd/system/boot-health-monitor.service ]]; then
+        log "WARNING: Boot health monitor service not found"
     fi
 
     # Check if Hyprland config exists
