@@ -109,7 +109,7 @@ sudo lobby reset [module]                # Reset specific module to defaults
 
 The system uses a modular architecture with the following components:
 
-- **modules/02-kiosk.sh** - Auto-login + user services for Hyprland (Wayland compositor) + Chromium kiosk with cursor hiding
+- **modules/02-kiosk.sh** - System-level services for Hyprland (Wayland compositor) + Chromium kiosk with cursor hiding
 - **modules/03-plymouth.sh** - Route 19 boot splash screen with logo and animated loading dots
 - **modules/04-auto-updates.sh** - Automated system and project updates with error recovery
 - **modules/05-monitoring.sh** - Service health monitoring with automatic restart
@@ -171,7 +171,7 @@ sudo lobby setup kiosk
 ### System Architecture
 
 The system uses **Hyprland (Wayland compositor)** with Arch Linux best practices:
-- **No desktop environment** - Direct boot to kiosk via auto-login
+- **No desktop environment** - Direct boot to kiosk via system services
 - **User systemd services** - Clean service management without complex system dependencies  
 - **Git-based updates** - Reliable synchronization with proper repository structure
 - **Chroot-compatible setup** - Installation completes during arch-install.sh execution

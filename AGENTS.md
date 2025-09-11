@@ -71,7 +71,7 @@ chmod +x /tmp/arch-install.sh
 2. Installs AMD drivers and required packages
 3. Clones lobby-arch repository as proper git repository for reliable updates
 4. Runs chroot-compatible post-install setup during installation
-5. Creates lobby user and configures auto-login (Arch Linux way)
+5. Creates lobby user and configures system-level kiosk services
 6. Downloads and builds lobby-display Vue.js app
 7. Configures animated Plymouth theme with Route 19 logo
 8. Sets up user systemd services for display and Hyprland kiosk
