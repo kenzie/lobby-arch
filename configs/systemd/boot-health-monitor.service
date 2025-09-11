@@ -1,0 +1,16 @@
+[Unit]
+Description=Boot Health Monitor for Lobby Kiosk
+After=lobby-kiosk.service
+Wants=lobby-kiosk.service
+
+[Service]
+Type=simple
+User=root
+ExecStart=/home/lobby/lobby-arch/scripts/boot-validator.sh monitor
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical.target
