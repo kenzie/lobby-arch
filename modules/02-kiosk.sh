@@ -136,10 +136,19 @@ Group=seat
 PrivateUsers=false
 # Wait for the display server to be ready before starting
 ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 1; done'
-# Launch Hyprland with proper environment (XDG_RUNTIME_DIR set by systemd)
-ExecStart=/bin/bash -c 'export XDG_RUNTIME_DIR=/run/user/1000; export XDG_SESSION_TYPE=wayland; export XDG_CURRENT_DESKTOP=Hyprland; export WLR_RENDERER=vulkan; export WLR_DRM_DEVICE=/dev/dri/card0; export WLR_VT=2; exec /usr/bin/Hyprland 2>/dev/null'
+# Ensure we're on VT2 and disable TTY1 getty to prevent fallback
+ExecStartPre=/bin/bash -c 'chvt 2; systemctl stop getty@tty1.service 2>/dev/null || true; sleep 0.5'
+# Launch Hyprland with proper environment and immediate Chromium fallback
+ExecStart=/bin/bash -c 'export XDG_RUNTIME_DIR=/run/user/1000; export XDG_SESSION_TYPE=wayland; export XDG_CURRENT_DESKTOP=Hyprland; export WLR_RENDERER=vulkan; export WLR_DRM_DEVICE=/dev/dri/card0; export WLR_VT=2; /usr/bin/Hyprland 2>/dev/null &
+HYPR_PID=$!; sleep 3; 
+if ! pgrep chromium >/dev/null; then 
+  export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1000/bus"; 
+  /usr/bin/chromium --no-sandbox --disable-dev-shm-usage --disable-gpu --disable-software-rasterizer --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-extensions --disable-plugins --disable-sync --disable-translate --no-first-run --no-default-browser-check --kiosk http://localhost:8080 >/dev/null 2>&1 &
+fi; 
+wait $HYPR_PID'
+# Aggressive restart policy to ensure kiosk always comes back
 Restart=always
-RestartSec=2
+RestartSec=1
 # Better logging
 StandardOutput=journal
 StandardError=journal
