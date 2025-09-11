@@ -178,6 +178,7 @@ EOF
     
     # --- 8. Enable Services and Set Boot Target ---
     log "Enabling services and setting default boot target"
+    systemctl daemon-reload
     systemctl enable lobby-display.service
     systemctl enable lobby-kiosk.service
     systemctl set-default graphical.target
