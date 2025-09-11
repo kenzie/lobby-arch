@@ -410,6 +410,45 @@ check_root() {
 # GitHub repository configuration
 GITHUB_REPO="kenzie/lobby-arch"
 
+# Function to update the active lobby.sh script in /root/scripts/
+update_self_script() {
+    local source_script="$SCRIPT_DIR/lobby.sh"
+    local target_script="/root/scripts/lobby.sh"
+
+    if [[ ! -f "$source_script" ]]; then
+        error "Source lobby script not found: $source_script"
+        return 1
+    fi
+
+    # Check if the target script exists and is different
+    if [[ -f "$target_script" ]]; then
+        if sudo cmp -s "$source_script" "$target_script"; then
+            info "Active lobby script is already up to date."
+            return 0
+        else
+            info "Updating active lobby script: $target_script"
+        fi
+    else
+        info "Installing active lobby script: $target_script"
+    fi
+
+    # Copy and set permissions
+    if sudo cp "$source_script" "$target_script"; then
+        success "Successfully copied $source_script to $target_script"
+    else
+        error "Failed to copy $source_script to $target_script"
+        return 1
+    fi
+
+    if sudo chmod +x "$target_script"; then
+        success "Successfully set executable permissions for $target_script"
+    else
+        error "Failed to set executable permissions for $target_script"
+        return 1
+    fi
+    return 0
+}
+
 # Check for updates using git
 check_for_updates() {
     local force_cache_bypass="${1:-false}"
@@ -604,6 +643,10 @@ main() {
     case "$command" in
         "setup"|"reset"|"update"|"validate")
             check_root
+            # Update the active lobby.sh script if running setup
+            if [[ "$command" == "setup" ]]; then
+                update_self_script || { error "Failed to update self script"; exit 1; }
+            fi
             if [[ -n "$module" ]]; then
                 run_module "$command" "$module"
             else
