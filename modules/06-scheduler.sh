@@ -37,6 +37,14 @@ log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOGFILE"
 }
 
+# Safety check: Only run during scheduled shutdown window (11:30 PM - 12:30 AM)
+current_hour=$(date +%H)
+if [[ $current_hour -lt 23 && $current_hour -gt 0 ]]; then
+    log "ERROR: Shutdown script called outside scheduled window (${current_hour}:xx). Refusing to run."
+    log "Shutdown is only allowed between 11:30 PM - 12:30 AM to prevent interference with setup/operations."
+    exit 1
+fi
+
 log "Starting nightly shutdown sequence for TV downtime"
 
 # Disable and stop kiosk system services to save resources (prevent auto-restart)

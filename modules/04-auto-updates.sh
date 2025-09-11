@@ -280,10 +280,10 @@ UPDATETIMER
 }
 LOGROTATE
 
-    # Enable and start the update timer
+    # Enable the update timer (but don't start immediately - wait for scheduled time)
     systemctl daemon-reload
     systemctl enable lobby-auto-update.timer
-    systemctl start lobby-auto-update.timer
+    # Don't start timer during setup - it will start on next boot and run at scheduled 2 AM time
     
     log "Automatic lobby updates configured - runs daily at 2 AM with error recovery and log management"
 }
