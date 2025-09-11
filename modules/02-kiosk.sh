@@ -153,6 +153,7 @@ EOF
     # --- 6. Disable Getty Services to Prevent Fallback ---
     log "Disabling getty services to prevent TTY fallback during kiosk mode"
     systemctl mask getty@tty1.service getty@tty2.service || true
+    systemctl mask autovt@tty1.service autovt@tty2.service || true
     
     # --- 7. Install Boot Reliability Monitoring ---
     log "Installing boot reliability validation and monitoring system"
@@ -219,6 +220,7 @@ reset_kiosk() {
     
     # Re-enable getty services for normal operation
     systemctl unmask getty@tty1.service getty@tty2.service || true
+    systemctl unmask autovt@tty1.service autovt@tty2.service || true
     systemctl enable getty@tty1.service || true
 
     # Set boot target back to default
