@@ -39,9 +39,10 @@ log() {
 
 # Safety check: Only run during scheduled shutdown window (11:30 PM - 12:30 AM)
 current_hour=$(date +%H)
-if [[ $current_hour -lt 23 && $current_hour -gt 0 ]]; then
+# Allow only hour 23 (11 PM) or hour 0 (midnight)
+if [[ $current_hour -ne 23 && $current_hour -ne 0 ]]; then
     log "ERROR: Shutdown script called outside scheduled window (${current_hour}:xx). Refusing to run."
-    log "Shutdown is only allowed between 11:30 PM - 12:30 AM to prevent interference with setup/operations."
+    log "Shutdown is only allowed between 11:00 PM - 12:59 AM to prevent interference with setup/operations."
     exit 1
 fi
 
