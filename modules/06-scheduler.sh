@@ -37,22 +37,25 @@ log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOGFILE"
 }
 
-log "Starting nightly shutdown sequence"
+log "Starting nightly shutdown sequence for TV downtime"
 
-# Stop kiosk user services (Arch Linux way)
-log "Stopping lobby user services and turning off display"
-sudo -u lobby systemctl --user stop lobby-kiosk.service || true
-sudo -u lobby systemctl --user stop lobby-display.service || true
+# Disable and stop kiosk system services to save resources (prevent auto-restart)
+log "Disabling and stopping lobby system services"
+systemctl disable --now lobby-kiosk.service || true
+systemctl disable --now lobby-display.service || true
 
 # Stop monitoring during downtime
 log "Stopping monitoring during downtime"
-systemctl stop lobby-monitor.timer || true
+systemctl stop lobby-monitor.timer boot-health-monitor.service || true
 
-# Turn off display by stopping all display services
-log "Turning off display for downtime"
-# In Wayland, stopping the compositor effectively turns off display
+# Show Plymouth theme during downtime (minimal resources)
+log "Activating Plymouth theme for downtime display"
+/usr/bin/plymouth --show-splash || true
 
-log "Nightly shutdown completed"
+# Future: Add HDMI CEC TV power off when available
+# cec-client -s -d 1 <<< "standby 0" || true
+
+log "Nightly shutdown completed - Plymouth theme active for downtime"
 EOF
 
     chmod +x /usr/local/bin/lobby-shutdown.sh
@@ -71,24 +74,25 @@ log() {
 
 log "Starting morning startup sequence"
 
-# Display will turn on automatically when kiosk starts
-log "Display will turn on when kiosk starts"
+# Future: Add HDMI CEC TV power on when available  
+# cec-client -s -d 1 <<< "on 0" || true
 
-# Ensure lobby user services are running (robust restart)
-log "Starting/restarting lobby user services"
-sudo -u lobby systemctl --user stop lobby-display.service 2>/dev/null || true
-sudo -u lobby systemctl --user start lobby-display.service
-sleep 5
+# Stop Plymouth theme from downtime
+log "Stopping Plymouth theme from downtime"
+/usr/bin/plymouth quit || true
 
-sudo -u lobby systemctl --user stop lobby-kiosk.service 2>/dev/null || true
-sudo -u lobby systemctl --user start lobby-kiosk.service
+# Re-enable and start lobby system services
+log "Re-enabling and starting lobby system services"
+systemctl enable --now lobby-display.service || true
 sleep 3
+systemctl enable --now lobby-kiosk.service || true
+sleep 2
 
 # Resume monitoring
 log "Starting monitoring system"
-systemctl start lobby-monitor.timer
+systemctl start lobby-monitor.timer boot-health-monitor.service || true
 
-log "Morning startup completed"
+log "Morning startup completed - Kiosk active"
 EOF
 
     chmod +x /usr/local/bin/lobby-startup.sh
