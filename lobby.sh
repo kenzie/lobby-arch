@@ -65,7 +65,7 @@ COMMANDS:
     reset [module]          Reset configuration (full or specific module)
     update [module]         Update configuration (full or specific module)
     validate [module]       Validate installation (full or specific module)
-    sync [--force]          Update scripts from GitHub repository
+    sync [--force|--main]   Update scripts from GitHub repository (default: latest tag, --main for main branch)
     check-updates [--force] Check for available updates from GitHub
     list                    List available modules
     status                  Show system status
@@ -455,11 +455,13 @@ check_for_updates() {
     fi
 }
 
-# Sync files using git pull
+# Sync files using git
+# sync_target can be "main" or empty (for latest tag)
 sync_from_github() {
-    local force_cache_bypass="${1:-false}"
+    local sync_target="$1"
+    local force_cache_bypass="${2:-false}"
 
-    info "Syncing from GitHub repository: $GITHUB_REPO using git"
+    info "Syncing from GitHub repository: $GITHUB_REPO"
 
     # Create backup directory
     local backup_dir="/tmp/lobby-backup-$(date +%Y%m%d-%H%M%S)"
@@ -481,17 +483,6 @@ sync_from_github() {
         return 1
     }
 
-    # Ensure we're on main branch
-    local current_branch
-    current_branch=$(git branch --show-current 2>/dev/null || echo "unknown")
-    if [[ "$current_branch" != "main" ]]; then
-        warning "Not on main branch (currently on: $current_branch), switching to main"
-        git checkout main || {
-            error "Failed to checkout main branch"
-            return 1
-        }
-    fi
-
     # Save any local changes (shouldn't be any, but just in case)
     if ! git diff --quiet || ! git diff --staged --quiet; then
         warning "Local changes detected, stashing them"
@@ -501,33 +492,82 @@ sync_from_github() {
         }
     fi
 
-    # Pull latest changes
-    info "Pulling latest changes from GitHub"
-    if git pull origin main; then
-        # Get list of changed files
-        local changed_files
-        changed_files=$(git diff --name-only HEAD@{1} HEAD 2>/dev/null || echo "")
-        
-        if [[ -n "$changed_files" ]]; then
-            success "Successfully synced. Updated files:"
-            echo "$changed_files" | while read -r file; do
-                [[ -n "$file" ]] && info "  • $file"
-            done
+    if [[ "$sync_target" == "main" ]]; then
+        info "Syncing to main branch"
+        # Ensure we're on main branch
+        local current_branch
+        current_branch=$(git branch --show-current 2>/dev/null || echo "unknown")
+        if [[ "$current_branch" != "main" ]]; then
+            warning "Not on main branch (currently on: $current_branch), switching to main"
+            git checkout main || {
+                error "Failed to checkout main branch"
+                return 1
+            }
+        fi
+        # Pull latest changes
+        info "Pulling latest changes from GitHub"
+        if git pull origin main; then
+            # Get list of changed files
+            local changed_files
+            changed_files=$(git diff --name-only HEAD@{1} HEAD 2>/dev/null || echo "")
             
-            # Fix file permissions for shell scripts
-            find "$SCRIPT_DIR" -name "*.sh" -exec chmod +x {} \;
+            if [[ -n "$changed_files" ]]; then
+                success "Successfully synced to main. Updated files:"
+                echo "$changed_files" | while read -r file; do
+                    [[ -n "$file" ]] && info "  • $file"
+                done
+                
+                # Fix file permissions for shell scripts
+                find "$SCRIPT_DIR" -name "*.sh" -exec chmod +x {} \;
+                
+                info "Backup created at: $backup_dir"
+                warning "Files were updated. Consider running 'sudo lobby validate' to ensure everything works correctly."
+            else
+                success "Main branch is already up to date"
+            fi
             
-            info "Backup created at: $backup_dir"
-            warning "Files were updated. Consider running 'sudo lobby validate' to ensure everything works correctly."
+            return 0
         else
-            success "All files are already up to date"
+            error "Git pull failed"
+            warning "Backup available at: $backup_dir"
+            return 1
+        fi
+    else # Sync to latest tag
+        info "Syncing to latest release tag"
+        # Fetch all tags to ensure we have the latest
+        info "Fetching all tags from GitHub"
+        if ! git fetch --tags origin; then
+            error "Failed to fetch tags from GitHub"
+            return 1
+        fi
+
+        # Get the latest tag (highest version number)
+        local latest_tag
+        latest_tag=$(git describe --tags --abbrev=0 --match 'v[0-9]*.[0-9]*.[0-9]*' 2>/dev/null || echo "")
+
+        if [[ -z "$latest_tag" ]]; then
+            error "No release tags (e.g., v1.0.0) found in the repository. Cannot sync to latest tag."
+            warning "Backup available at: $backup_dir"
+            return 1
+        fi
+
+        info "Latest tag found: $latest_tag"
+        # Checkout the latest tag
+        local current_branch
+        current_branch=$(git branch --show-current 2>/dev/null || echo "unknown")
+        if [[ "$current_branch" != "$latest_tag" ]]; then
+            warning "Not on latest tag (currently on: $current_branch), switching to $latest_tag"
+            git checkout "$latest_tag" || {
+                error "Failed to checkout tag $latest_tag"
+                return 1
+            }
+        else
+            success "Already on latest tag: $latest_tag"
         fi
         
+        success "Successfully synced to tag $latest_tag"
+        info "Backup created at: $backup_dir"
         return 0
-    else
-        error "Git pull failed"
-        warning "Backup available at: $backup_dir"
-        return 1
     fi
 }
 
@@ -535,14 +575,27 @@ sync_from_github() {
 main() {
     local command="${1:-}"
     local arg2="${2:-}"
+    local arg3="${3:-}"
     local force_cache_bypass="false"
+    local sync_target="" # Default to empty, meaning latest tag
 
     # Check for --force flag in any position
-    if [[ "$arg2" == "--force" ]] || [[ "${3:-}" == "--force" ]]; then
+    if [[ "$arg2" == "--force" ]]; then
         force_cache_bypass="true"
-        # Remove --force from arguments, keep module name if present
-        if [[ "$arg2" == "--force" ]]; then
+        arg2=""
+    elif [[ "$arg3" == "--force" ]]; then
+        force_cache_bypass="true"
+        arg3=""
+    fi
+
+    # Check for --main flag for sync command
+    if [[ "$command" == "sync" ]]; then
+        if [[ "$arg2" == "--main" ]]; then
+            sync_target="main"
             arg2=""
+        elif [[ "$arg3" == "--main" ]]; then
+            sync_target="main"
+            arg3=""
         fi
     fi
 
@@ -559,7 +612,7 @@ main() {
             ;;
         "sync")
             check_root
-            sync_from_github "$force_cache_bypass"
+            sync_from_github "$sync_target" "$force_cache_bypass"
             ;;
         "check-updates")
             check_for_updates "$force_cache_bypass"

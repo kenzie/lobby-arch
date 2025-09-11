@@ -86,7 +86,7 @@ sudo lobby status          # Quick service overview
 sudo lobby logs            # View recent system logs
 
 # Maintenance and updates (git-based)
-sudo lobby sync            # Update scripts from GitHub using git pull
+sudo lobby sync [--main]   # Update scripts from GitHub (default: latest tag, --main for main branch)
 sudo lobby setup           # Re-run full system setup
 sudo lobby validate        # Check all components
 sudo lobby help            # Complete command reference

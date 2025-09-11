@@ -87,8 +87,7 @@ sudo lobby validate                      # Validate all modules and services
 sudo lobby list                          # List available modules
 
 # Updates and maintenance (git-based)
-sudo lobby sync                          # Update scripts from GitHub repository using git pull
-sudo lobby sync --force                  # Force update (bypass cache)
+sudo lobby sync [--main]                 # Update scripts from GitHub (default: latest tag, --main for main branch)
 sudo lobby check-updates                 # Check for available updates using git fetch
 
 # Module-specific operations  
