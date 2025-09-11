@@ -239,14 +239,14 @@ validate_scheduler() {
         log "WARNING: Startup timer is enabled but should be manually controlled"
     fi
 
-    # Check that lobby user services are enabled (they should start automatically)
-    if ! sudo -u "$USER" systemctl --user is-enabled lobby-display.service >/dev/null 2>&1; then
-        log "WARNING: lobby-display.service not enabled for user $USER"
+    # Check that lobby system services are enabled (we use system-level services now)
+    if ! systemctl is-enabled lobby-display.service >/dev/null 2>&1; then
+        log "WARNING: lobby-display.service not enabled at system level"
         ((errors++))
     fi
 
-    if ! sudo -u "$USER" systemctl --user is-enabled lobby-kiosk.service >/dev/null 2>&1; then
-        log "WARNING: lobby-kiosk.service not enabled for user $USER"
+    if ! systemctl is-enabled lobby-kiosk.service >/dev/null 2>&1; then
+        log "WARNING: lobby-kiosk.service not enabled at system level"
         ((errors++))
     fi
 

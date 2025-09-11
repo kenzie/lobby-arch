@@ -236,7 +236,7 @@ validate_plymouth() {
     fi
     
     # Check if default Plymouth quit service is masked
-    if ! systemctl is-masked plymouth-quit.service >/dev/null 2>&1; then
+    if ! systemctl list-unit-files plymouth-quit.service 2>/dev/null | grep -q "masked"; then
         log "WARNING: Default Plymouth quit service is not masked"
     fi
     
