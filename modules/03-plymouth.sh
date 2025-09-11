@@ -153,8 +153,8 @@ Wants=lobby-kiosk.service
 [Service]
 Type=oneshot
 # Wait for Hyprland to be running (optimized for speed)
-ExecStartPre=/bin/bash -c 'echo "Waiting for kiosk to be ready..."; for i in \$(seq 1 15); do if pgrep Hyprland >/dev/null; then echo "Hyprland ready after \$i seconds"; sleep 1; echo "Kiosk display ready"; break; fi; sleep 0.5; done'
-ExecStart=/bin/bash -c "/usr/bin/plymouth quit || echo \"Plymouth already quit or not running\"; chvt 2; sleep 0.2; chvt 2"
+ExecStartPre=/bin/bash -c 'echo "Waiting for kiosk to be ready..."; for i in \$(seq 1 30); do if pgrep -f "chromium.*kiosk" >/dev/null; then echo "Kiosk fully ready after \$i seconds"; break; elif pgrep Hyprland >/dev/null; then echo "Hyprland ready, waiting for Chromium..."; fi; sleep 0.5; done'
+ExecStart=/bin/bash -c "/usr/bin/plymouth quit --retain-splash || echo \"Plymouth quit complete\"; sleep 0.5"
 RemainAfterExit=yes
 # Add timeout to prevent hanging
 TimeoutStartSec=40

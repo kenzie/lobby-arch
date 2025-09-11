@@ -137,7 +137,7 @@ PrivateUsers=false
 # Wait for the display server to be ready before starting
 ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 1; done'
 # Ensure we're on VT2 and disable TTY1 getty to prevent fallback
-ExecStartPre=/bin/bash -c 'chvt 2; systemctl stop getty@tty1.service 2>/dev/null || true; sleep 0.5'
+ExecStartPre=/bin/bash -c 'systemctl stop getty@tty1.service getty@tty2.service 2>/dev/null || true; chvt 2; sleep 1'
 # Launch Hyprland with proper environment and failsafe
 ExecStart=/bin/bash -c 'export XDG_RUNTIME_DIR=/run/user/1000; export XDG_SESSION_TYPE=wayland; export XDG_CURRENT_DESKTOP=Hyprland; export WLR_RENDERER=vulkan; export WLR_DRM_DEVICE=/dev/dri/card0; export WLR_VT=2; exec /usr/bin/Hyprland 2>/dev/null'
 # Aggressive restart policy to ensure kiosk always comes back
@@ -150,7 +150,11 @@ StandardError=journal
 WantedBy=graphical.target
 EOF
 
-    # --- 6. Enable Services and Set Boot Target ---
+    # --- 6. Disable Getty Services to Prevent Fallback ---
+    log "Disabling getty services to prevent TTY fallback during kiosk mode"
+    systemctl mask getty@tty1.service getty@tty2.service || true
+    
+    # --- 7. Enable Services and Set Boot Target ---
     log "Enabling services and setting default boot target"
     systemctl enable lobby-display.service
     systemctl enable lobby-kiosk.service
@@ -178,6 +182,10 @@ reset_kiosk() {
     # Remove service files
     rm -f /etc/systemd/system/lobby-kiosk.service
     rm -f /etc/systemd/system/lobby-display.service
+    
+    # Re-enable getty services for normal operation
+    systemctl unmask getty@tty1.service getty@tty2.service || true
+    systemctl enable getty@tty1.service || true
 
     # Set boot target back to default
     systemctl set-default multi-user.target
