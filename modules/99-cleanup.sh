@@ -27,7 +27,7 @@ setup_cleanup() {
     # Create global lobby command symlink
     log "Creating global lobby command"
     ln -sf /root/scripts/lobby.sh /usr/local/bin/lobby
-    
+
     # Remove any stale module copies in /usr/local/bin to avoid confusion
     log "Cleaning up stale module copies"
     rm -rf /usr/local/bin/modules /usr/local/bin/configs
@@ -94,7 +94,7 @@ reset_cleanup() {
     systemctl disable maintenance-boot-check.service || true
     rm -f /etc/systemd/system/maintenance-boot-check.service
     rm -f /usr/local/bin/maintenance-boot-check.sh
-    
+
     # Remove global lobby command
     rm -f /usr/local/bin/lobby
 
@@ -141,22 +141,8 @@ validate_cleanup() {
         log "ERROR: Journal size limits not configured"
         ((errors++))
     fi
-    
-    # Check if maintenance boot check is configured
-    if [[ ! -f /usr/local/bin/maintenance-boot-check.sh ]]; then
-        log "ERROR: Maintenance boot check script not found"
-        ((errors++))
-    fi
-    
-    if [[ ! -f /etc/systemd/system/maintenance-boot-check.service ]]; then
-        log "ERROR: Maintenance boot check service not found"
-        ((errors++))
-    fi
-    
-    if ! systemctl is-enabled maintenance-boot-check.service >/dev/null 2>&1; then
-        log "ERROR: Maintenance boot check service not enabled"
-        ((errors++))
-    fi
+
+    # Maintenance boot check removed - simplified system just uses scheduler
 
     if [[ $errors -eq 0 ]]; then
         log "Cleanup validation passed"
