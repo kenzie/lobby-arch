@@ -22,10 +22,10 @@ Window.SetBackgroundBottomColor(0, 0, 0);
 
 # Status message configuration
 status_message_text = Plymouth.GetMode();
-if (status_message_text == "boot") status_message_text = "Booting...";
-else if (status_message_text == "shutdown") status_message_text = "Shutting Down...";
+if (status_message_text == "boot") status_message_text = "Starting up...";
+else if (status_message_text == "shutdown") status_message_text = "Shutting down...";
 else if (status_message_text == "reboot") status_message_text = "Rebooting...";
-else if (status_message_text == "suspend") status_message_text = "Maintenance Mode.";
+else if (status_message_text == "suspend") status_message_text = "Maintenance mode.";
 else if (status_message_text == "resume") status_message_text = "Resuming...";
 else status_message_text = "Loading...";
 
@@ -59,8 +59,8 @@ if (StringFind(status_message_text, "Maintenance") >= 0 ||
 
 if (show_animation) {
     # Animated dots below status message
-    dots_y = status_y + 45;
-    dots_spacing = 15;
+    dots_y = status_y + 50;
+    dots_spacing = 20;
     dot_count = 3;
     
     # Create dot images
