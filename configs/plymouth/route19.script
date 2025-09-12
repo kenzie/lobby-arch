@@ -25,7 +25,7 @@ status_message_text = Plymouth.GetMode();
 if (status_message_text == "boot") status_message_text = "Booting...";
 else if (status_message_text == "shutdown") status_message_text = "Shutting Down...";
 else if (status_message_text == "reboot") status_message_text = "Rebooting...";
-else if (status_message_text == "suspend") status_message_text = "Maintenance Mode...";
+else if (status_message_text == "suspend") status_message_text = "Maintenance Mode.";
 else if (status_message_text == "resume") status_message_text = "Resuming...";
 else status_message_text = "Loading...";
 
