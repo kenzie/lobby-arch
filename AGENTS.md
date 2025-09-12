@@ -1,6 +1,6 @@
 # Lobby Arch Linux System - Technical Documentation
 
-This project provides a **bulletproof, enterprise-grade Arch Linux system** for lobby displays with comprehensive reliability, monitoring, and TV power management features. Built for 24/7 operation with zero-downtime requirements.
+This project provides a **bulletproof, enterprise-grade Arch Linux system** for lobby displays with comprehensive reliability and automated management features. Built for 24/7 operation with zero-downtime requirements.
 
 ## 🎯 System Overview
 
@@ -8,7 +8,7 @@ This is a **production-ready kiosk system** that achieves:
 - **100% boot reliability** with automated recovery
 - **8-15 second boot times** with professional Plymouth transitions
 - **TV power management** for hardware longevity (9+ hours daily downtime)
-- **Real-time health monitoring** with 30-second validation cycles
+- **Systemd service reliability** with automatic restart on failure
 - **Emergency recovery** capabilities for any failure scenarios
 - **Enterprise logging** with rotation and comprehensive diagnostics
 
@@ -34,11 +34,11 @@ This is a **production-ready kiosk system** that achieves:
 
 ### 🛡️ **Reliability Systems**
 - **Boot validation** - 8-point health check system validates all critical components
-- **Health monitoring** - 30-second continuous monitoring with automated alerts  
+- **Service management** - Built-in systemd health checking and restart policies  
 - **Emergency recovery** - Automatic service restart and system recovery scripts
 - **Service dependencies** - Proper ordering prevents race conditions and conflicts
-- **Memory monitoring** - Resource usage tracking with alerts at 80% threshold
-- **Process monitoring** - Tracks service restart counts and failure patterns
+- **Resource optimization** - Efficient memory and CPU usage for 24/7 operation
+- **Log management** - Automatic log rotation and cleanup to prevent disk issues
 
 ### ⏰ **Continuous Operation**
 - **24/7**: Kiosk services run continuously for maximum availability

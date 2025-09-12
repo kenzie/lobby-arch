@@ -8,7 +8,7 @@ This repository provides a **bulletproof, production-ready Arch Linux system** f
 
 ### 🚀 **Bulletproof Boot Reliability**
 - **Zero TTY fallback risk** - All getty services completely masked
-- **Automated recovery** - Services restart on failure with health monitoring
+- **Automated recovery** - Services restart on failure with systemd reliability
 - **Boot validation** - Comprehensive 8-point health checks every 30 seconds
 - **Plymouth integration** - Enhanced timing waits for full application launch
 - **Emergency recovery** - Automated failsafe scripts for any boot failures
@@ -29,7 +29,7 @@ This repository provides a **bulletproof, production-ready Arch Linux system** f
 ### 🔧 **Enterprise Management**
 - **Git-based synchronization** - Version-controlled configuration and updates
 - **Automated updates** - System and application updates at 2:50 AM with error recovery
-- **Health monitoring** - Real-time service status with automated alerts
+- **Service reliability** - Built-in systemd restart policies and dependency management
 - **Professional logging** - Comprehensive logs with rotation and cleanup
 - **TV longevity** - Daily 9+ hour downtime cycle extends hardware lifespan
 
@@ -95,13 +95,12 @@ sudo /home/lobby/lobby-arch/scripts/emergency-recovery.sh         # Emergency ki
 
 # System management  
 sudo lobby setup                         # Full bulletproof system setup
-sudo lobby validate                      # Validate all modules (kiosk, plymouth, monitoring, etc.)
+sudo lobby validate                      # Validate all modules (kiosk, plymouth, auto-updates, etc.)
 sudo lobby sync && sudo lobby setup      # Update from git and refresh configuration
 
 # Module-specific operations
-sudo lobby setup kiosk                   # Configure bulletproof kiosk with monitoring
+sudo lobby setup kiosk                   # Configure bulletproof kiosk system
 sudo lobby setup plymouth                # Configure Route 19 boot theme with enhanced timing
-sudo lobby setup monitoring              # Install health monitoring and auto-recovery
 sudo lobby reset [module]                # Reset specific module to defaults
 ```
 
@@ -112,20 +111,19 @@ The system uses a modular architecture with the following components:
 - **modules/02-kiosk.sh** - System-level services for Hyprland (Wayland compositor) + Chromium kiosk with cursor hiding
 - **modules/03-plymouth.sh** - Route 19 boot splash screen with logo and animated loading dots
 - **modules/04-auto-updates.sh** - Automated system and project updates with error recovery
-- **modules/05-monitoring.sh** - Service health monitoring with automatic restart
 - **modules/99-cleanup.sh** - Global command setup, log rotation, and system optimization
 
 ### Automated Maintenance
 
 The system runs automated maintenance:
 - **2:00 AM**: System updates (Arch packages, lobby-arch, and lobby-display)
-- **Continuous**: Service health monitoring and automatic restart
+- **Continuous**: 24/7 operation with automatic service recovery
 
 ### System Features
 
 - **No cursor display** - Professional kiosk appearance
 - **Automatic crash recovery** - Services restart on failure with intelligent limits
-- **Resource monitoring** - Disk space, memory usage, and performance tracking
+- **System logs** - Centralized logging with systemd journal management
 - **Log rotation** - Automatic cleanup to prevent disk space issues
 - **AMD hardware optimization** - Includes microcode updates and graphics drivers
 - **Network resilience** - Handles connectivity issues during updates and operations

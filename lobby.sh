@@ -86,8 +86,6 @@ MODULES:
     kiosk                  Cage Wayland kiosk setup
     plymouth               Boot splash screen setup
     auto-updates           Automatic system updates
-    monitoring             Service monitoring setup
-    scheduler              Daily schedule management
     cleanup                Cleanup and finalization
 
 EXAMPLES:
