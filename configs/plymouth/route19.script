@@ -20,42 +20,106 @@ logo_sprite.SetPosition(logo_x, logo_y, 0);
 Window.SetBackgroundTopColor(0, 0, 0);
 Window.SetBackgroundBottomColor(0, 0, 0);
 
-# Simple animated dots below logo
-dots_y = logo_y + logo_height + 40;
-dots_spacing = 15;
-dot_count = 3;
+# Status message configuration
+status_message_text = Plymouth.GetMode();
+if (status_message_text == "boot") status_message_text = "Booting...";
+else if (status_message_text == "shutdown") status_message_text = "Shutting Down...";
+else if (status_message_text == "reboot") status_message_text = "Rebooting...";
+else if (status_message_text == "suspend") status_message_text = "Maintenance Mode...";
+else if (status_message_text == "resume") status_message_text = "Resuming...";
+else status_message_text = "Loading...";
 
-# Create dot images
-dot_image = Image.Text("●", 0.7, 0.7, 0.7);
-dot_dim_image = Image.Text("●", 0.3, 0.3, 0.3);
-
-# Initialize dot sprites
-dots = [];
-for (i = 0; i < dot_count; i++) {
-    dots[i] = Sprite(dot_dim_image);
-    dots[i].SetPosition(screen_width / 2 - ((dot_count - 1) * dots_spacing / 2) + (i * dots_spacing), dots_y, 1);
+# Check for custom message from kernel command line
+kernel_params = Plymouth.GetKernelCommandLine();
+custom_message_start = StringFind(kernel_params, "plymouth.message=");
+if (custom_message_start >= 0) {
+    custom_message_start = custom_message_start + StringLength("plymouth.message=");
+    custom_message_end = StringFind(kernel_params, " ", custom_message_start);
+    if (custom_message_end < 0) custom_message_end = StringLength(kernel_params);
+    status_message_text = StringSubstring(kernel_params, custom_message_start, custom_message_end - custom_message_start);
+    # Replace URL encoding
+    status_message_text = StringReplace(status_message_text, "%20", " ");
+    status_message_text = StringReplace(status_message_text, "%2E", ".");
 }
 
-# Animation variables
-animation_time = 0;
-active_dot = 0;
+# Create status message
+status_message = Image.Text(status_message_text, 0.8, 0.8, 0.8, 1.0, "Sans 24");
+status_sprite = Sprite(status_message);
+status_x = (screen_width - status_message.GetWidth()) / 2;
+status_y = logo_y + logo_height + 60;
+status_sprite.SetPosition(status_x, status_y, 1);
 
-# Simple animation refresh function
-fun refresh() {
-    animation_time++;
+# Animated dots for dynamic states (boot, reboot, etc)
+show_animation = 1;
+if (StringFind(status_message_text, "Maintenance") >= 0 || 
+    StringFind(status_message_text, "Contact") >= 0 || 
+    StringFind(status_message_text, "Sleeping") >= 0) {
+    show_animation = 0;
+}
+
+if (show_animation) {
+    # Animated dots below status message
+    dots_y = status_y + 45;
+    dots_spacing = 15;
+    dot_count = 3;
     
-    # Change active dot every 20 frames (slower animation)
-    if (animation_time % 20 == 0) {
-        # Reset previous dot
-        dots[active_dot].SetImage(dot_dim_image);
+    # Create dot images
+    dot_image = Image.Text("●", 0.7, 0.7, 0.7);
+    dot_dim_image = Image.Text("●", 0.3, 0.3, 0.3);
+    
+    # Initialize dot sprites
+    dots = [];
+    for (i = 0; i < dot_count; i++) {
+        dots[i] = Sprite(dot_dim_image);
+        dots[i].SetPosition((screen_width - (dot_count - 1) * dots_spacing) / 2 + (i * dots_spacing) - 1, dots_y, 1);
+    }
+    
+    # Animation variables
+    animation_time = 0;
+    active_dot = 0;
+    
+    # Animation refresh function
+    fun refresh() {
+        animation_time++;
         
-        # Move to next dot
-        active_dot = (active_dot + 1) % dot_count;
-        
-        # Light up current dot
-        dots[active_dot].SetImage(dot_image);
+        # Change active dot every 20 frames (slower animation)
+        if (animation_time % 20 == 0) {
+            # Reset previous dot
+            dots[active_dot].SetImage(dot_dim_image);
+            
+            # Move to next dot
+            active_dot = (active_dot + 1) % dot_count;
+            
+            # Light up current dot
+            dots[active_dot].SetImage(dot_image);
+        }
+    }
+    
+    # Register the refresh function
+    Plymouth.SetRefreshFunction(refresh);
+}
+
+# Handle boot progress updates
+fun boot_progress_callback(duration, progress) {
+    # Update status message if needed during boot
+    if (progress > 0.5 && StringFind(status_message_text, "Booting") >= 0) {
+        new_message = Image.Text("Starting System...", 0.8, 0.8, 0.8, 1.0, "Sans 24");
+        status_sprite.SetImage(new_message);
+        status_x = (screen_width - new_message.GetWidth()) / 2;
+        status_sprite.SetPosition(status_x, status_y, 1);
     }
 }
 
-# Register the refresh function
-Plymouth.SetRefreshFunction(refresh);
+Plymouth.SetBootProgressFunction(boot_progress_callback);
+
+# Handle system update messages
+fun system_update_callback(status) {
+    if (status == "updating") {
+        update_message = Image.Text("System Update...", 0.8, 0.8, 0.8, 1.0, "Sans 24");
+        status_sprite.SetImage(update_message);
+        status_x = (screen_width - update_message.GetWidth()) / 2;
+        status_sprite.SetPosition(status_x, status_y, 1);
+    }
+}
+
+Plymouth.SetUpdateStatusFunction(system_update_callback);
