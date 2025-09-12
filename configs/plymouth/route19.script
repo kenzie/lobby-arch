@@ -102,8 +102,8 @@ if (show_animation) {
 # Handle boot progress updates
 fun boot_progress_callback(duration, progress) {
     # Update status message if needed during boot
-    if (progress > 0.5 && StringFind(status_message_text, "Booting") >= 0) {
-        new_message = Image.Text("Starting System...", 0.8, 0.8, 0.8, 1.0, "Sans 24");
+    if (progress > 0.5 && StringFind(status_message_text, "Starting up") >= 0) {
+        new_message = Image.Text("Almost ready...", 0.8, 0.8, 0.8, 1.0, "Sans 24");
         status_sprite.SetImage(new_message);
         status_x = (screen_width - new_message.GetWidth()) / 2;
         status_sprite.SetPosition(status_x, status_y, 1);
