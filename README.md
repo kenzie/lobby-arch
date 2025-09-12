@@ -14,9 +14,9 @@ This repository provides a **bulletproof, production-ready Arch Linux system** f
 - **Emergency recovery** - Automated failsafe scripts for any boot failures
 
 ### 🖥️ **Modern Kiosk Architecture**
-- **System-level services** - Professional systemd service architecture
+- **System-level services** - Professional systemd service architecture with independent monitoring
 - **Hyprland (Wayland compositor)** - Hardware-accelerated, minimal resource usage
-- **Chromium kiosk mode** - Full-screen with hidden cursor and professional display
+- **Independent Chromium monitoring** - Bulletproof browser restart system survives compositor crashes
 - **lobby-display Vue.js app** - Automatically built and served locally
 - **No desktop environment** - Direct boot to kiosk for maximum performance
 
@@ -27,11 +27,11 @@ This repository provides a **bulletproof, production-ready Arch Linux system** f
 - **Hardware acceleration** - Full AMD GPU support with Vulkan renderer
 
 ### 🔧 **Enterprise Management**
-- **Git-based synchronization** - Version-controlled configuration and updates
+- **Git-based synchronization** - Version-controlled configuration with unified `/home/lobby/lobby-arch` path
 - **Automated updates** - System and application updates at 2:50 AM with error recovery
-- **Service reliability** - Built-in systemd restart policies and dependency management
-- **Professional logging** - Comprehensive logs with rotation and cleanup
-- **TV longevity** - Daily 9+ hour downtime cycle extends hardware lifespan
+- **Multi-layer restart policies** - Independent service monitoring ensures maximum uptime
+- **Professional logging** - Comprehensive logs with rotation and automated cleanup
+- **Crash resilience** - System survives compositor crashes, browser crashes, and service failures
 
 ---
 
@@ -166,14 +166,24 @@ sudo lobby setup kiosk
 
 ### System Architecture
 
-The system uses **Hyprland (Wayland compositor)** with Arch Linux best practices:
-- **No desktop environment** - Direct boot to kiosk via system services
-- **User systemd services** - Clean service management without complex system dependencies  
+The system uses **Hyprland (Wayland compositor)** with bulletproof service management:
+
+**🔧 Multi-Layer Service Architecture:**
+```
+lobby-display.service     → Vue.js app (port 8080)
+    ↓ (required by both)
+    ├─ lobby-kiosk.service    → Hyprland compositor only
+    └─ lobby-chromium.service → Independent browser monitoring
+```
+
+**🛡️ Bulletproof Design Principles:**
+- **Independent monitoring** - Chromium survives compositor crashes with unlimited restart attempts
+- **No single points of failure** - Each component can restart without affecting others  
+- **Unified path structure** - All components use `/home/lobby/lobby-arch` (no more `/root/scripts` confusion)
 - **Git-based updates** - Reliable synchronization with proper repository structure
-- **Chroot-compatible setup** - Installation completes during arch-install.sh execution
 - **VT switching** - Kiosk display on VT2, TTY1 available for admin access
 - **Fast boot optimization** - 8-15 second boot time with Plymouth animation
-- **Portable configuration** - Dynamic UID detection for cross-system compatibility
+- **Enterprise logging** - Comprehensive health checks and crash detection
 
 ### Support
 

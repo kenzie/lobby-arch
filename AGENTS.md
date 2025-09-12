@@ -25,20 +25,21 @@ This is a **production-ready kiosk system** that achieves:
 - Smooth transition from boot animation to kiosk display
 
 ### 🏗️ **Bulletproof Architecture**
-- **System-level services** - Professional systemd architecture with proper dependencies
+- **Multi-layer service design** - Independent monitoring prevents single points of failure
 - **Hyprland (Wayland compositor)** - Hardware-accelerated with Vulkan rendering
-- **Chromium browser** - Full kiosk mode with proper Wayland integration
+- **Independent Chromium monitoring** - Survives compositor crashes with unlimited restart attempts
 - **lobby-display Vue.js app** - Automatically built, served, and monitored
 - **Zero TTY fallback** - All getty and autovt services completely masked
 - **VT2 exclusive** - Kiosk runs on VT2 with no terminal access paths
 
 ### 🛡️ **Reliability Systems**
+- **Multi-layer restart policies** - Independent service monitoring with unlimited restart attempts
 - **Boot validation** - 8-point health check system validates all critical components
-- **Service management** - Built-in systemd health checking and restart policies  
+- **Crash resilience** - System survives compositor crashes, browser crashes, and service failures
 - **Emergency recovery** - Automatic service restart and system recovery scripts
-- **Service dependencies** - Proper ordering prevents race conditions and conflicts
+- **Unified path structure** - Consolidated `/home/lobby/lobby-arch` eliminates configuration confusion
 - **Resource optimization** - Efficient memory and CPU usage for 24/7 operation
-- **Log management** - Automatic log rotation and cleanup to prevent disk issues
+- **Enhanced logging** - Comprehensive health checks with improved crash detection
 
 ### ⏰ **Continuous Operation**
 - **24/7**: Kiosk services run continuously for maximum availability
