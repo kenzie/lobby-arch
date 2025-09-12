@@ -178,6 +178,14 @@ EOF
     # --- 9. Post-Install Validation ---
     log "Running post-install validation check"
     if [[ -x "$SCRIPT_DIR/../scripts/boot-validator.sh" ]]; then
+        # Ensure boot validator log file exists with proper permissions
+        local validator_log="/var/log/boot-validator.log"
+        if [[ ! -f "$validator_log" ]]; then
+            touch "$validator_log"
+            chown "$LOBBY_USER:$LOBBY_USER" "$validator_log"
+            chmod 664 "$validator_log"
+        fi
+        
         if "$SCRIPT_DIR/../scripts/boot-validator.sh" validate >/dev/null 2>&1; then
             log "✅ Post-install validation PASSED"
         else
