@@ -15,8 +15,9 @@ This repository provides a **bulletproof, production-ready Arch Linux system** f
 
 ### 🖥️ **Modern Kiosk Architecture**
 - **System-level services** - Professional systemd service architecture with independent monitoring
-- **Hyprland (Wayland compositor)** - Hardware-accelerated, minimal resource usage
+- **Hyprland (Wayland compositor)** - OpenGL rendering optimized for stability and performance
 - **Independent Chromium monitoring** - Bulletproof browser restart system survives compositor crashes
+- **ANGLE GPU acceleration** - Hardware-accelerated animations via SwiftShader WebGL backend
 - **lobby-display Vue.js app** - Automatically built and served locally
 - **No desktop environment** - Direct boot to kiosk for maximum performance
 
@@ -24,7 +25,7 @@ This repository provides a **bulletproof, production-ready Arch Linux system** f
 - **8-15 second boot time** - Optimized service dependencies and parallel loading
 - **Resource efficient** - ~1.7GB total memory usage in active mode
 - **TV power management** - Plymouth downtime mode saves 90% resources (11:59 PM - 8:00 AM)
-- **Hardware acceleration** - Full AMD GPU support with Vulkan renderer
+- **Hardware acceleration** - ANGLE GPU acceleration with OpenGL ES for smooth animations
 
 ### 🔧 **Enterprise Management**
 - **Git-based synchronization** - Version-controlled configuration with unified `/home/lobby/lobby-arch` path
