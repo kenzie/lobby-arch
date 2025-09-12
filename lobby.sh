@@ -83,15 +83,17 @@ COMMANDS:
     health                  Run comprehensive system health check
 
 MODULES:
-    kiosk                  Cage Wayland kiosk setup
     plymouth               Boot splash screen setup
+    compositor             Sway compositor for production stability
+    app                    Vue.js lobby display application
+    browser                Chromium browser with ANGLE GPU acceleration
     auto-updates           Automatic system updates
     cleanup                Cleanup and finalization
 
 EXAMPLES:
     $0 setup                # Full system setup
-    $0 setup kiosk          # Setup only kiosk
-    $0 reset kiosk          # Reset kiosk config
+    $0 setup compositor     # Setup only Sway compositor
+    $0 reset browser        # Reset browser config
     $0 update auto-updates  # Update automatic updates config
     $0 validate             # Validate full installation
     $0 sync                 # Update scripts from GitHub
@@ -308,7 +310,7 @@ system_health_check() {
     echo "=== SERVICE STATUS ==="
 
     # Check critical services
-    local services=("lobby-display.service" "lobby-kiosk.service" "seatd.service")
+    local services=("lobby-app.service" "lobby-compositor.service" "lobby-browser.service" "seatd.service")
     for service in "${services[@]}"; do
         if systemctl is-active --quiet "$service"; then
             if systemctl is-enabled --quiet "$service"; then

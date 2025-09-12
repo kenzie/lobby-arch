@@ -1,6 +1,6 @@
 # Lobby Screen Arch Linux System
 
-This repository provides a **bulletproof, production-ready Arch Linux system** for lobby screens, designed to display information for a sports team. It installs a base Arch system with **Hyprland (Wayland compositor)** running Chromium in kiosk mode, featuring **automated Plymouth boot themes** with Route 19 logo and comprehensive reliability systems.
+This repository provides a **bulletproof, production-ready Arch Linux system** for lobby screens, designed to display information for a sports team. It installs a base Arch system with **Sway (Wayland compositor)** running Chromium in kiosk mode, featuring **automated Plymouth boot themes** with Route 19 logo and comprehensive reliability systems.
 
 ---
 
@@ -13,12 +13,12 @@ This repository provides a **bulletproof, production-ready Arch Linux system** f
 - **Plymouth integration** - Enhanced timing waits for full application launch
 - **Emergency recovery** - Automated failsafe scripts for any boot failures
 
-### 🖥️ **Modern Kiosk Architecture**
-- **System-level services** - Professional systemd service architecture with independent monitoring
-- **Hyprland (Wayland compositor)** - OpenGL rendering optimized for stability and performance
-- **Independent Chromium monitoring** - Bulletproof browser restart system survives compositor crashes
+### 🖥️ **Modern Modular Kiosk Architecture**
+- **Independent systemd services** - Compositor, app, and browser run as separate services for maximum reliability
+- **Sway (Wayland compositor)** - Production-stable Wayland compositor optimized for long-term operation
+- **Independent service lifecycle** - Components can restart independently without system-wide failures
 - **ANGLE GPU acceleration** - Hardware-accelerated animations via SwiftShader WebGL backend
-- **lobby-display Vue.js app** - Automatically built and served locally
+- **Vue.js lobby-display app** - Automatically built and served locally with resource limits
 - **No desktop environment** - Direct boot to kiosk for maximum performance
 
 ### ⚡ **Performance Optimized**
@@ -100,7 +100,9 @@ sudo lobby validate                      # Validate all modules (kiosk, plymouth
 sudo lobby sync && sudo lobby setup      # Update from git and refresh configuration
 
 # Module-specific operations
-sudo lobby setup kiosk                   # Configure bulletproof kiosk system
+sudo lobby setup compositor              # Configure Sway compositor for production stability
+sudo lobby setup app                     # Configure Vue.js lobby display service
+sudo lobby setup browser                 # Configure Chromium browser with ANGLE acceleration
 sudo lobby setup plymouth                # Configure Route 19 boot theme with enhanced timing
 sudo lobby reset [module]                # Reset specific module to defaults
 ```
@@ -109,10 +111,12 @@ sudo lobby reset [module]                # Reset specific module to defaults
 
 The system uses a modular architecture with the following components:
 
-- **modules/02-kiosk.sh** - System-level services for Hyprland (Wayland compositor) + Chromium kiosk with cursor hiding
-- **modules/03-plymouth.sh** - Route 19 boot splash screen with logo and animated loading dots
-- **modules/04-auto-updates.sh** - Automated system and project updates with error recovery
-- **modules/99-cleanup.sh** - Global command setup, log rotation, and system optimization
+- **modules/10-plymouth.sh** - Route 19 boot splash screen with logo and animated loading dots
+- **modules/20-compositor.sh** - Sway compositor service for production stability
+- **modules/30-app.sh** - Vue.js lobby display application with resource limits
+- **modules/40-browser.sh** - Chromium browser service with ANGLE GPU acceleration
+- **modules/50-auto-updates.sh** - Automated system and project updates with error recovery
+- **modules/90-cleanup.sh** - Global command setup, log rotation, and system optimization
 
 ### Automated Maintenance
 
@@ -159,28 +163,32 @@ sudo lobby sync --force
 **Service failures:**
 ```bash
 # Check specific service status
-sudo systemctl status lobby-kiosk.service
+sudo systemctl status lobby-compositor.service lobby-app.service lobby-browser.service
 
 # Restart services if needed
-sudo lobby setup kiosk
+sudo lobby setup compositor
+sudo lobby setup app
+sudo lobby setup browser
 ```
 
 ### System Architecture
 
-The system uses **Hyprland (Wayland compositor)** with bulletproof service management:
+The system uses **Sway (Wayland compositor)** with modular service management:
 
-**🔧 Multi-Layer Service Architecture:**
+**🔧 Independent Service Architecture:**
 ```
-lobby-display.service     → Vue.js app (port 8080)
-    ↓ (required by both)
-    ├─ lobby-kiosk.service    → Hyprland compositor only
-    └─ lobby-chromium.service → Independent browser monitoring
+lobby-compositor.service  → Sway Wayland compositor
+lobby-app.service        → Vue.js app (port 8080, memory limited)
+lobby-browser.service    → Chromium browser (waits for compositor + app)
 ```
 
-**🛡️ Bulletproof Design Principles:**
-- **Independent monitoring** - Chromium survives compositor crashes with unlimited restart attempts
-- **No single points of failure** - Each component can restart without affecting others  
-- **Unified path structure** - All components use `/home/lobby/lobby-arch` (no more `/root/scripts` confusion)
+**🛡️ Production-Ready Design Principles:**
+- **Modular architecture** - Each service (compositor, app, browser) runs independently
+- **No cascade failures** - Compositor crashes don't affect browser or app services
+- **Resource constraints** - App service has memory limits and security restrictions
+- **Dependency management** - Browser waits for compositor and app to be healthy before starting
+- **Sway stability** - Production-proven Wayland compositor replaces problematic Hyprland
+- **Unified path structure** - All components use `/home/lobby/lobby-arch`
 - **Git-based updates** - Reliable synchronization with proper repository structure
 - **VT switching** - Kiosk display on VT2, TTY1 available for admin access
 - **Fast boot optimization** - 8-15 second boot time with Plymouth animation
