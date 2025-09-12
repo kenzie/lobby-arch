@@ -62,7 +62,7 @@ setup_kiosk() {
     local hypr_config_dir="$HOME_DIR/.config/hypr"
     mkdir -p "$hypr_config_dir"
     cat > "$hypr_config_dir/hyprland.conf" <<EOF
-# --- Hyprland Kiosk Config (Fixed Syntax) ---
+# --- Minimal Hyprland Kiosk Config for Maximum Stability ---
 monitor=,preferred,auto,1
 # Chromium is managed by lobby-chromium.service instead of exec-once
 # This provides better crash recovery and restart reliability
@@ -70,11 +70,18 @@ monitor=,preferred,auto,1
 general {
     border_size = 0
     layout = dwindle
+    gaps_in = 0
+    gaps_out = 0
 }
 
 decoration {
     rounding = 0
-    # drop_shadow removed - deprecated in newer Hyprland versions
+    blur {
+        enabled = false
+    }
+    shadow {
+        enabled = false
+    }
 }
 
 input {
@@ -88,11 +95,26 @@ misc {
     disable_hyprland_logo = true
     disable_splash_rendering = true
     force_default_wallpaper = 0
+    animate_manual_resizes = false
+    animate_mouse_windowdragging = false
+    enable_swallow = false
+    no_direct_scanout = true
+    # Disable VRR and other advanced features for stability
+    vrr = 0
+}
+
+animations {
+    enabled = false
 }
 
 cursor {
     no_hardware_cursors = true
     inactive_timeout = 1
+}
+
+# Disable XWayland for kiosk mode (not needed for Chromium on Wayland)
+xwayland {
+    enabled = false
 }
 
 # Input devices managed through input section above for kiosk mode
@@ -137,8 +159,8 @@ PrivateUsers=false
 ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 1; done'
 # Ensure we're on VT2 and disable TTY1 getty to prevent fallback
 ExecStartPre=/bin/bash -c 'systemctl stop getty@tty1.service getty@tty2.service 2>/dev/null || true; chvt 2; sleep 1'
-# Launch Hyprland with proper environment (Chromium managed by separate service)
-ExecStart=/bin/bash -c 'export XDG_RUNTIME_DIR=/run/user/1000; export XDG_SESSION_TYPE=wayland; export XDG_CURRENT_DESKTOP=Hyprland; export WLR_RENDERER=vulkan; export WLR_DRM_DEVICE=/dev/dri/card0; export WLR_VT=2; exec /usr/bin/Hyprland'
+# Launch Hyprland with software rendering for better stability
+ExecStart=/bin/bash -c 'export XDG_RUNTIME_DIR=/run/user/1000; export XDG_SESSION_TYPE=wayland; export XDG_CURRENT_DESKTOP=Hyprland; export WLR_RENDERER=pixman; export WLR_NO_HARDWARE_CURSORS=1; export WLR_DRM_DEVICE=/dev/dri/card0; export WLR_VT=2; exec /usr/bin/Hyprland'
 # Restart only on failure, not on normal exit
 Restart=on-failure
 RestartSec=3
