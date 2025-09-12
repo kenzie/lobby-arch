@@ -106,8 +106,12 @@ TimeoutStartSec=30
 WantedBy=poweroff.target reboot.target halt.target
 EOF
 
-    # Enable the shutdown service
-    systemctl enable plymouth-poweroff.service
+    # Enable built-in Plymouth services for shutdown/reboot by creating symlinks
+    mkdir -p /etc/systemd/system/reboot.target.wants
+    mkdir -p /etc/systemd/system/poweroff.target.wants
+    ln -sf /usr/lib/systemd/system/plymouth-reboot.service /etc/systemd/system/reboot.target.wants/
+    ln -sf /usr/lib/systemd/system/plymouth-poweroff.service /etc/systemd/system/poweroff.target.wants/
+    systemctl daemon-reload
     
     # Ensure Plymouth shows during shutdown/reboot by configuring kernel params
     if [[ -f /etc/default/grub ]]; then
