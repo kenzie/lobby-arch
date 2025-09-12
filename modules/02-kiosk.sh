@@ -158,8 +158,8 @@ PrivateUsers=false
 ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 1; done'
 # Ensure we're on VT2 and disable TTY1 getty to prevent fallback
 ExecStartPre=/bin/bash -c 'systemctl stop getty@tty1.service getty@tty2.service 2>/dev/null || true; chvt 2; sleep 1'
-# Launch Hyprland with software rendering for better stability
-ExecStart=/bin/bash -c 'export XDG_RUNTIME_DIR=/run/user/1000; export XDG_SESSION_TYPE=wayland; export XDG_CURRENT_DESKTOP=Hyprland; export WLR_RENDERER=pixman; export WLR_NO_HARDWARE_CURSORS=1; export WLR_DRM_DEVICE=/dev/dri/card0; export WLR_VT=2; exec /usr/bin/Hyprland'
+# Launch Hyprland with OpenGL rendering for video/animation performance
+ExecStart=/bin/bash -c 'export XDG_RUNTIME_DIR=/run/user/1000; export XDG_SESSION_TYPE=wayland; export XDG_CURRENT_DESKTOP=Hyprland; export WLR_RENDERER=gles2; export WLR_NO_HARDWARE_CURSORS=1; export WLR_DRM_DEVICE=/dev/dri/card0; export WLR_VT=2; exec /usr/bin/Hyprland'
 # Restart only on failure, not on normal exit
 Restart=on-failure
 RestartSec=3
