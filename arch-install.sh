@@ -142,24 +142,24 @@ if ! command -v git >/dev/null 2>&1;
     arch-chroot /mnt pacman -S --noconfirm git
 fi
 
-# Clone the repository directly to /root/scripts
-if ! arch-chroot /mnt git clone https://github.com/kenzie/lobby-arch.git /root/scripts; then
+# Clone the repository directly to /home/lobby/lobby-arch
+if ! arch-chroot /mnt sudo -u lobby git clone https://github.com/kenzie/lobby-arch.git /home/lobby/lobby-arch; then
     echo "ERROR: Failed to clone repository"
     exit 1
 fi
 
 # Make scripts executable
 echo "==> Making scripts executable..."
-arch-chroot /mnt find /root/scripts -name "*.sh" -type f -exec chmod +x {} \;
+arch-chroot /mnt find /home/lobby/lobby-arch -name "*.sh" -type f -exec chmod +x {} \;
 
 # Verify git repository is properly set up
 echo "==> Verifying git repository setup..."
-if arch-chroot /mnt test -d /root/scripts/.git; then
+if arch-chroot /mnt test -d /home/lobby/lobby-arch/.git; then
     echo "✓ Git repository initialized"
     # Set git config for lobby system
-    arch-chroot /mnt git -C /root/scripts config --local user.name "Lobby System"
-    arch-chroot /mnt git -C /root/scripts config --local user.email "lobby@lobby-system"
-    arch-chroot /mnt git -C /root/scripts config --local pull.rebase false
+    arch-chroot /mnt sudo -u lobby git -C /home/lobby/lobby-arch config --local user.name "Lobby System"
+    arch-chroot /mnt sudo -u lobby git -C /home/lobby/lobby-arch config --local user.email "lobby@lobby-system"
+    arch-chroot /mnt sudo -u lobby git -C /home/lobby/lobby-arch config --local pull.rebase false
 else
     echo "✗ ERROR: Git repository not properly initialized"
     exit 1
@@ -168,10 +168,10 @@ fi
 # Verify critical files exist
 echo "==> Verifying installation files..."
 critical_files=(
-    "/mnt/root/scripts/post-install.sh"
-    "/mnt/root/scripts/lobby.sh"
-    "/mnt/root/scripts/modules/02-kiosk.sh"
-    "/mnt/root/scripts/assets/route19-logo.png"
+    "/mnt/home/lobby/lobby-arch/post-install.sh"
+    "/mnt/home/lobby/lobby-arch/lobby.sh"
+    "/mnt/home/lobby/lobby-arch/modules/02-kiosk.sh"
+    "/mnt/home/lobby/lobby-arch/assets/route19-logo.png"
 )
 
 for file in "${critical_files[@]}"; do
@@ -191,7 +191,7 @@ echo "==> Running post-install setup directly..."
 # Instead of relying on systemd service that keeps failing,
 # just run the post-install script directly in chroot
 # Set CHROOT_INSTALL flag to skip network checks and systemd operations
-if ! arch-chroot /mnt env CHROOT_INSTALL=1 /root/scripts/post-install.sh; then
+if ! arch-chroot /mnt env CHROOT_INSTALL=1 /home/lobby/lobby-arch/post-install.sh; then
     echo "ERROR: Post-install setup failed"
     exit 1
 fi

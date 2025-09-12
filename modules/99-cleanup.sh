@@ -26,7 +26,7 @@ setup_cleanup() {
 
     # Create global lobby command symlink
     log "Creating global lobby command"
-    ln -sf /root/scripts/lobby.sh /usr/local/bin/lobby
+    ln -sf /home/lobby/lobby-arch/lobby.sh /usr/local/bin/lobby
 
     # Remove any stale module copies in /usr/local/bin to avoid confusion
     log "Cleaning up stale module copies"
@@ -124,8 +124,8 @@ validate_cleanup() {
     if [[ -L /usr/local/bin/lobby ]]; then
         local target
         target=$(readlink /usr/local/bin/lobby)
-        if [[ "$target" != "/root/scripts/lobby.sh" ]]; then
-            log "ERROR: Global lobby command points to wrong target (expected: /root/scripts/lobby.sh, found: $target)"
+        if [[ "$target" != "/home/lobby/lobby-arch/lobby.sh" ]]; then
+            log "ERROR: Global lobby command points to wrong target (expected: /home/lobby/lobby-arch/lobby.sh, found: $target)"
             ((errors++))
         fi
     fi

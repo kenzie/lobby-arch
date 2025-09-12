@@ -371,7 +371,9 @@ system_health_check() {
 
     # Check Chromium processes
     local chromium_procs
-    chromium_procs=$(pgrep -c chromium || echo "0")
+    chromium_procs=$(pgrep -c chromium 2>/dev/null || echo "0")
+    # Clean any whitespace/newlines
+    chromium_procs=$(echo "$chromium_procs" | tr -d '\n\r' | head -1)
     if [[ $chromium_procs -eq 0 ]]; then
         error "No Chromium processes found"
         ((errors++))
