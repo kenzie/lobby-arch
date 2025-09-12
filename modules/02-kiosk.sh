@@ -98,7 +98,6 @@ misc {
     animate_manual_resizes = false
     animate_mouse_windowdragging = false
     enable_swallow = false
-    no_direct_scanout = true
     # Disable VRR and other advanced features for stability
     vrr = 0
 }
