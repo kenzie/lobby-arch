@@ -73,7 +73,13 @@ pre_update_checks() {
     
     # Check if network is available
     if ! ping -c 1 archlinux.org >/dev/null 2>&1; then
-        log_message "ERROR: No network connectivity"
+        # Check if this is during boot/early startup (network not ready yet)
+        local uptime_minutes=$(awk '{print int($1/60)}' /proc/uptime)
+        if [[ $uptime_minutes -lt 5 ]]; then
+            log_message "WARNING: No network connectivity (system may still be starting up)"
+        else
+            log_message "ERROR: No network connectivity"
+        fi
         return 1
     fi
     

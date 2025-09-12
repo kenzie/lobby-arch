@@ -332,7 +332,7 @@ system_health_check() {
     echo "=== LOG HEALTH ==="
 
     # Check log file sizes
-    for logfile in "/var/log/lobby-setup.log" "/var/log/lobby-monitor.log" "/var/log/lobby-auto-update.log"; do
+    for logfile in "/var/log/lobby-setup.log" "/var/log/lobby-auto-update.log"; do
         if [[ -f "$logfile" ]]; then
             local log_size
             log_size=$(stat -c%s "$logfile" 2>/dev/null || echo "0")
