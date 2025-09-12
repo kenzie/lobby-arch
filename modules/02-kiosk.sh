@@ -64,9 +64,8 @@ setup_kiosk() {
     cat > "$hypr_config_dir/hyprland.conf" <<EOF
 # --- Hyprland Kiosk Config (Fixed Syntax) ---
 monitor=,preferred,auto,1
-# Wait for Vue.js app to be ready, then launch Chromium in kiosk mode
-exec-once = bash -c 'while ! curl -s http://localhost:8080 >/dev/null 2>&1; do sleep 1; done; sleep 2; export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/\$(id -u)/bus"; chromium --no-sandbox --disable-dev-shm-usage --disable-gpu --disable-software-rasterizer --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-extensions --disable-plugins --disable-sync --disable-translate --no-first-run --no-default-browser-check --kiosk http://localhost:8080 2>/dev/null'
-# Removed fullscreen window rule - kiosk mode handles fullscreen natively
+# Chromium is managed by lobby-chromium.service instead of exec-once
+# This provides better crash recovery and restart reliability
 
 general {
     border_size = 0
@@ -138,7 +137,7 @@ PrivateUsers=false
 ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 1; done'
 # Ensure we're on VT2 and disable TTY1 getty to prevent fallback
 ExecStartPre=/bin/bash -c 'systemctl stop getty@tty1.service getty@tty2.service 2>/dev/null || true; chvt 2; sleep 1'
-# Launch Hyprland with proper environment (Chromium launched via Hyprland exec-once)
+# Launch Hyprland with proper environment (Chromium managed by separate service)
 ExecStart=/bin/bash -c 'export XDG_RUNTIME_DIR=/run/user/1000; export XDG_SESSION_TYPE=wayland; export XDG_CURRENT_DESKTOP=Hyprland; export WLR_RENDERER=vulkan; export WLR_DRM_DEVICE=/dev/dri/card0; export WLR_VT=2; exec /usr/bin/Hyprland'
 # Restart only on failure, not on normal exit
 Restart=on-failure
@@ -146,6 +145,44 @@ RestartSec=3
 # Better logging
 StandardOutput=journal
 StandardError=journal
+[Install]
+WantedBy=graphical.target
+EOF
+
+    log "Creating Chromium monitoring systemd service"
+    cat > /etc/systemd/system/lobby-chromium.service <<'EOF'
+[Unit]
+Description=Lobby Chromium Browser
+After=lobby-display.service lobby-kiosk.service seatd.service
+Requires=lobby-display.service
+Wants=lobby-kiosk.service seatd.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=lobby
+Group=seat
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=XDG_SESSION_TYPE=wayland
+Environment=XDG_CURRENT_DESKTOP=Hyprland
+Environment=WAYLAND_DISPLAY=wayland-1
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
+
+# Wait for Hyprland and display to be ready
+ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 1; done'
+ExecStartPre=/bin/bash -c 'while ! pgrep -f "Hyprland" >/dev/null; do sleep 1; done; sleep 3'
+
+# Launch Chromium in kiosk mode
+ExecStart=/usr/bin/chromium --no-sandbox --disable-dev-shm-usage --disable-gpu --disable-software-rasterizer --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-extensions --disable-plugins --disable-sync --disable-translate --no-first-run --no-default-browser-check --kiosk http://localhost:8080
+
+# Aggressive restart policy for maximum uptime
+Restart=always
+RestartSec=5
+
+# Better logging
+StandardOutput=journal
+StandardError=journal
+
 [Install]
 WantedBy=graphical.target
 EOF
@@ -167,6 +204,7 @@ EOF
     systemctl daemon-reload
     systemctl enable lobby-display.service
     systemctl enable lobby-kiosk.service
+    systemctl enable lobby-chromium.service
     systemctl set-default graphical.target
 
     # --- 7. Remove Old Auto-Login Config ---
@@ -203,14 +241,17 @@ reset_kiosk() {
     # Stop and disable services
     systemctl stop lobby-kiosk.service || true
     systemctl stop lobby-display.service || true
+    systemctl stop lobby-chromium.service || true
     systemctl stop lobby-monitor.service lobby-monitor.timer boot-health-monitor.service || true
     systemctl disable lobby-kiosk.service || true
     systemctl disable lobby-display.service || true
+    systemctl disable lobby-chromium.service || true
     systemctl disable lobby-monitor.service lobby-monitor.timer boot-health-monitor.service || true
 
     # Remove service files
     rm -f /etc/systemd/system/lobby-kiosk.service
     rm -f /etc/systemd/system/lobby-display.service
+    rm -f /etc/systemd/system/lobby-chromium.service
     rm -f /etc/systemd/system/lobby-monitor.service
     rm -f /etc/systemd/system/lobby-monitor.timer
     rm -f /etc/systemd/system/boot-health-monitor.service
@@ -246,6 +287,10 @@ validate_kiosk() {
     fi
     if [[ ! -f /etc/systemd/system/lobby-display.service ]]; then
         log "ERROR: Lobby display service not found"
+        ((errors++))
+    fi
+    if [[ ! -f /etc/systemd/system/lobby-chromium.service ]]; then
+        log "ERROR: Lobby chromium service not found"
         ((errors++))
     fi
 
