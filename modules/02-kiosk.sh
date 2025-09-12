@@ -193,8 +193,8 @@ Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
 ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 1; done'
 ExecStartPre=/bin/bash -c 'while ! pgrep -f "Hyprland" >/dev/null; do sleep 1; done; sleep 3'
 
-# Launch Chromium in kiosk mode with optimized Wayland and GPU acceleration
-ExecStart=/usr/bin/chromium --no-sandbox --disable-dev-shm-usage --enable-gpu --use-gl=egl --ozone-platform=wayland --enable-features=UseOzonePlatform --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-extensions --disable-plugins --disable-sync --disable-translate --no-first-run --no-default-browser-check --remote-debugging-port=9222 --kiosk http://localhost:8080
+# Launch Chromium in kiosk mode with ANGLE GPU acceleration for smooth animations
+ExecStart=/usr/bin/chromium --no-sandbox --disable-dev-shm-usage --enable-gpu --use-gl=angle --use-angle=opengles --ozone-platform=wayland --enable-features=UseOzonePlatform --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-extensions --disable-plugins --disable-sync --disable-translate --no-first-run --no-default-browser-check --remote-debugging-port=9222 --kiosk http://localhost:8080
 
 # Aggressive restart policy for maximum uptime
 Restart=always
