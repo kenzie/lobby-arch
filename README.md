@@ -1,6 +1,6 @@
 # Lobby Screen Arch Linux System
 
-This repository provides a **bulletproof, production-ready Arch Linux system** for lobby screens, designed to display information for a sports team. It installs a base Arch system with **Sway (Wayland compositor)** running Chromium in kiosk mode, featuring **automated Plymouth boot themes** with Route 19 logo and comprehensive reliability systems.
+This repository provides a **bulletproof, production-ready Arch Linux system** for lobby screens, designed to display information for a sports team. It installs a base Arch system with **Hyprland (Wayland compositor)** running Chromium in kiosk mode, featuring **automated Plymouth boot themes** with Route 19 logo and comprehensive reliability systems.
 
 ---
 
@@ -15,9 +15,9 @@ This repository provides a **bulletproof, production-ready Arch Linux system** f
 
 ### 🖥️ **Modern Modular Kiosk Architecture**
 - **Independent systemd services** - Compositor, app, and browser run as separate services for maximum reliability
-- **Sway (Wayland compositor)** - Production-stable Wayland compositor optimized for long-term operation
+- **Hyprland (Wayland compositor)** - Optimized for GPU acceleration with ANGLE support
 - **Independent service lifecycle** - Components can restart independently without system-wide failures
-- **ANGLE GPU acceleration** - Hardware-accelerated animations via SwiftShader WebGL backend
+- **ANGLE GPU acceleration** - Hardware-accelerated animations via OpenGL ES with native Wayland
 - **Vue.js lobby-display app** - Automatically built and served locally with resource limits
 - **No desktop environment** - Direct boot to kiosk for maximum performance
 
@@ -100,7 +100,7 @@ sudo lobby validate                      # Validate all modules (kiosk, plymouth
 sudo lobby sync && sudo lobby setup      # Update from git and refresh configuration
 
 # Module-specific operations
-sudo lobby setup compositor              # Configure Sway compositor for production stability
+sudo lobby setup compositor              # Configure Hyprland compositor with ANGLE GPU acceleration
 sudo lobby setup app                     # Configure Vue.js lobby display service
 sudo lobby setup browser                 # Configure Chromium browser with ANGLE acceleration
 sudo lobby setup plymouth                # Configure Route 19 boot theme with enhanced timing
@@ -112,7 +112,7 @@ sudo lobby reset [module]                # Reset specific module to defaults
 The system uses a modular architecture with the following components:
 
 - **modules/10-plymouth.sh** - Route 19 boot splash screen with logo and animated loading dots
-- **modules/20-compositor.sh** - Sway compositor service for production stability
+- **modules/20-compositor.sh** - Hyprland compositor service with ANGLE GPU acceleration
 - **modules/30-app.sh** - Vue.js lobby display application with resource limits
 - **modules/40-browser.sh** - Chromium browser service with ANGLE GPU acceleration
 - **modules/50-auto-updates.sh** - Automated system and project updates with error recovery
@@ -173,11 +173,11 @@ sudo lobby setup browser
 
 ### System Architecture
 
-The system uses **Sway (Wayland compositor)** with modular service management:
+The system uses **Hyprland (Wayland compositor)** with modular service management:
 
 **🔧 Independent Service Architecture:**
 ```
-lobby-compositor.service  → Sway Wayland compositor
+lobby-compositor.service  → Hyprland Wayland compositor
 lobby-app.service        → Vue.js app (port 8080, memory limited)
 lobby-browser.service    → Chromium browser (waits for compositor + app)
 ```
@@ -187,7 +187,7 @@ lobby-browser.service    → Chromium browser (waits for compositor + app)
 - **No cascade failures** - Compositor crashes don't affect browser or app services
 - **Resource constraints** - App service has memory limits and security restrictions
 - **Dependency management** - Browser waits for compositor and app to be healthy before starting
-- **Sway stability** - Production-proven Wayland compositor replaces problematic Hyprland
+- **Hyprland with ANGLE** - Wayland compositor optimized for GPU acceleration and smooth animations
 - **Unified path structure** - All components use `/home/lobby/lobby-arch`
 - **Git-based updates** - Reliable synchronization with proper repository structure
 - **VT switching** - Kiosk display on VT2, TTY1 available for admin access
