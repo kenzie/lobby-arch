@@ -44,13 +44,13 @@ User=lobby
 Group=seat
 Environment=XDG_RUNTIME_DIR=/run/user/1000
 Environment=XDG_SESSION_TYPE=wayland
-Environment=XDG_CURRENT_DESKTOP=sway
+Environment=XDG_CURRENT_DESKTOP=Hyprland
 Environment=WAYLAND_DISPLAY=wayland-1
 Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
 
 # Wait for dependencies to be ready
 ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 1; done'
-ExecStartPre=/bin/bash -c 'while ! pgrep -f "sway" >/dev/null; do sleep 1; done; sleep 3'
+ExecStartPre=/bin/bash -c 'while ! pgrep -f "Hyprland" >/dev/null; do sleep 1; done; sleep 3'
 ExecStartPre=/bin/bash -c 'while [[ ! -S /run/user/1000/wayland-1 ]]; do sleep 1; done'
 
 # Launch Chromium with ANGLE GPU acceleration and Wayland native support
@@ -77,7 +77,6 @@ ExecStart=/usr/bin/chromium \
 # Aggressive restart policy for maximum uptime
 Restart=always
 RestartSec=5
-StartLimitIntervalSec=0
 
 # Kill entire process tree on stop
 KillMode=mixed

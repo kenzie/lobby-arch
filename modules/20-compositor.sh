@@ -130,7 +130,6 @@ ExecStart=/usr/bin/Hyprland
 # Restart on failure only
 Restart=on-failure
 RestartSec=3
-StartLimitIntervalSec=30
 StartLimitBurst=3
 
 # Logging
