@@ -64,68 +64,15 @@ export LOBBY_USER="$USER"
 export LOBBY_HOME="$HOME_DIR"
 export LOBBY_LOG="$LOGFILE"
 
-# Check if modules exist and sync if missing
-MODULES_DIR="$SCRIPT_DIR/modules"
-if [[ ! -d "$MODULES_DIR" ]] || [[ -z "$(ls -A "$MODULES_DIR" 2>/dev/null)" ]]; then
-    log "Modules directory missing or empty, attempting to sync from GitHub..."
-    if "$LOBBY_SYMLINK" sync --main; then
-        log "Successfully synced modules from GitHub"
-    else
-        log "ERROR: Failed to sync modules from GitHub"
-        log "This may be due to network issues during installation."
-        log "Try running 'sudo lobby sync' manually after boot."
-        exit 1
-    fi
+# Sync modules if needed and run full lobby setup
+log "Running lobby setup (sync and configure all modules)"
+if "$LOBBY_SYMLINK" sync --main && "$LOBBY_SYMLINK" setup; then
+    log "SUCCESS: Lobby setup completed successfully"
 else
-    log "Modules directory exists with $(ls -1 "$MODULES_DIR"/*.sh 2>/dev/null | wc -l) module files"
-fi
-
-# Run modular setup using lobby.sh with better error handling
-log "Running modular setup using lobby.sh"
-
-# Define critical vs optional modules (matching current module structure)
-CRITICAL_MODULES=("20-compositor" "30-app" "40-browser")
-OPTIONAL_MODULES=("10-plymouth" "50-auto-updates" "90-cleanup")
-
-critical_failures=0
-optional_failures=0
-
-# Run critical modules first
-for module in "${CRITICAL_MODULES[@]}"; do
-    log "Running critical module: $module"
-    if "$LOBBY_SYMLINK" setup "$module"; then
-        log "SUCCESS: Critical module $module completed"
-    else
-        exit_code=$?
-        log "ERROR: Critical module $module failed with exit code $exit_code"
-        log "Check '$LOBBY_LOG' and run 'sudo lobby validate $module' for details"
-        ((critical_failures++))
-    fi
-done
-
-# Run optional modules (failures are logged but don't stop installation)
-for module in "${OPTIONAL_MODULES[@]}"; do
-    log "Running optional module: $module"
-    if "$LOBBY_SYMLINK" setup "$module"; then
-        log "SUCCESS: Optional module $module completed"
-    else
-        exit_code=$?
-        log "WARNING: Optional module $module failed with exit code $exit_code (non-critical)"
-        log "Check '$LOBBY_LOG' and run 'sudo lobby validate $module' for details"
-        ((optional_failures++))
-    fi
-done
-
-# Evaluate results
-if [[ $critical_failures -gt 0 ]]; then
-    log "ERROR: $critical_failures critical module(s) failed - installation incomplete"
-    log "Kiosk may not function properly. Check logs and run 'sudo lobby setup' to retry."
+    exit_code=$?
+    log "ERROR: Lobby setup failed with exit code $exit_code"
+    log "Check '$LOBBY_LOG' and run 'sudo lobby setup' to retry."
     exit 1
-elif [[ $optional_failures -gt 0 ]]; then
-    log "WARNING: $optional_failures optional module(s) failed but core kiosk should work"
-    log "Run 'sudo lobby setup' to retry failed modules or 'sudo lobby health' to check status"
-else
-    log "SUCCESS: All modules completed successfully"
 fi
 
 # Disable this service since it's completed (skip in chroot)
