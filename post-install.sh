@@ -68,7 +68,7 @@ export LOBBY_LOG="$LOGFILE"
 MODULES_DIR="$SCRIPT_DIR/modules"
 if [[ ! -d "$MODULES_DIR" ]] || [[ -z "$(ls -A "$MODULES_DIR" 2>/dev/null)" ]]; then
     log "Modules directory missing or empty, attempting to sync from GitHub..."
-    if "$LOBBY_SCRIPT" sync --main; then
+    if sudo -u "$USER" "$LOBBY_SYMLINK" sync --main; then
         log "Successfully synced modules from GitHub"
     else
         log "ERROR: Failed to sync modules from GitHub"
@@ -93,7 +93,7 @@ optional_failures=0
 # Run critical modules first
 for module in "${CRITICAL_MODULES[@]}"; do
     log "Running critical module: $module"
-    if "$LOBBY_SCRIPT" setup "$module"; then
+    if sudo -u "$USER" "$LOBBY_SYMLINK" setup "$module"; then
         log "SUCCESS: Critical module $module completed"
     else
         exit_code=$?
@@ -106,7 +106,7 @@ done
 # Run optional modules (failures are logged but don't stop installation)
 for module in "${OPTIONAL_MODULES[@]}"; do
     log "Running optional module: $module"
-    if "$LOBBY_SCRIPT" setup "$module"; then
+    if sudo -u "$USER" "$LOBBY_SYMLINK" setup "$module"; then
         log "SUCCESS: Optional module $module completed"
     else
         exit_code=$?
