@@ -106,8 +106,8 @@ ExecStartPre=/bin/bash -c 'systemctl stop getty@tty1.service getty@tty2.service 
 
 # Launch Sway compositor
 ExecStart=/usr/bin/sway
-# Ensure display output is enabled after startup with retries - auto-detects output name
-ExecStartPost=/bin/bash -c 'sleep 5; export SWAYSOCK=/run/user/1000/sway-ipc.1000.$MAINPID.sock; for i in {1..5}; do OUTPUT=$(/usr/bin/swaymsg -t get_outputs | grep -o "\"name\":\"[^\"]*" | head -1 | cut -d: -f2 | tr -d "\""); [ -n "$OUTPUT" ] && /usr/bin/swaymsg "output $OUTPUT enable" && break; sleep 2; done'
+# Ensure display output is enabled after startup with retries
+ExecStartPost=/bin/bash -c 'sleep 5; export SWAYSOCK=/run/user/1000/sway-ipc.1000.$MAINPID.sock; swaymsg output HDMI-A-1 enable || true'
 
 # Restart on failure only
 Restart=on-failure
