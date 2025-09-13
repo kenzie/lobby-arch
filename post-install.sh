@@ -40,6 +40,25 @@ else
     log "Skipping network check (chroot environment)"
 fi
 
+# Create local bin directory for lobby user
+LOBBY_BIN_DIR="$HOME_DIR/.local/bin"
+sudo -u "$USER" mkdir -p "$LOBBY_BIN_DIR"
+
+# Create symlink to lobby.sh in user's local bin (remove existing if present)
+LOBBY_SYMLINK="$LOBBY_BIN_DIR/lobby"
+if [[ -L "$LOBBY_SYMLINK" ]] || [[ -f "$LOBBY_SYMLINK" ]]; then
+    rm -f "$LOBBY_SYMLINK"
+fi
+sudo -u "$USER" ln -s "$LOBBY_SCRIPT" "$LOBBY_SYMLINK"
+log "Created symlink: $LOBBY_SYMLINK -> $LOBBY_SCRIPT"
+
+# Add lobby user's local bin to PATH in .bashrc if not already present
+BASHRC="$HOME_DIR/.bashrc"
+if [[ -f "$BASHRC" ]] && ! grep -q "\$HOME/.local/bin" "$BASHRC"; then
+    echo 'export PATH="$HOME/.local/bin:$PATH"' | sudo -u "$USER" tee -a "$BASHRC" >/dev/null
+    log "Added ~/.local/bin to PATH in .bashrc"
+fi
+
 # Set environment variables for lobby.sh
 export LOBBY_USER="$USER"
 export LOBBY_HOME="$HOME_DIR"
@@ -49,7 +68,7 @@ export LOBBY_LOG="$LOGFILE"
 MODULES_DIR="$SCRIPT_DIR/modules"
 if [[ ! -d "$MODULES_DIR" ]] || [[ -z "$(ls -A "$MODULES_DIR" 2>/dev/null)" ]]; then
     log "Modules directory missing or empty, attempting to sync from GitHub..."
-    if "$LOBBY_SCRIPT" sync; then
+    if "$LOBBY_SCRIPT" sync --main; then
         log "Successfully synced modules from GitHub"
     else
         log "ERROR: Failed to sync modules from GitHub"
@@ -64,9 +83,9 @@ fi
 # Run modular setup using lobby.sh with better error handling
 log "Running modular setup using lobby.sh"
 
-# Define critical vs optional modules
-CRITICAL_MODULES=("kiosk")
-OPTIONAL_MODULES=("plymouth" "auto-updates" "monitoring" "scheduler" "cleanup")
+# Define critical vs optional modules (matching current module structure)
+CRITICAL_MODULES=("20-compositor" "30-app" "40-browser")
+OPTIONAL_MODULES=("10-plymouth" "50-auto-updates" "90-cleanup")
 
 critical_failures=0
 optional_failures=0
