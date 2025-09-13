@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Lobby Compositor Module (Sway - Production Stable)
+# Lobby Compositor Module (Hyprland with ANGLE GPU Acceleration)
 
 set -euo pipefail
 
 # Module info
-MODULE_NAME="Lobby Compositor Setup (Sway)"
-MODULE_VERSION="1.0"
+MODULE_NAME="Lobby Compositor Setup (Hyprland)"
+MODULE_VERSION="2.0"
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -21,57 +21,76 @@ log() {
 
 # Main setup function
 setup_compositor() {
-    log "Setting up Sway compositor for production kiosk stability"
+    log "Setting up Hyprland compositor with ANGLE GPU acceleration"
 
-    # --- 1. Install Sway Package ---
-    log "Installing Sway compositor"
-    pacman -S --noconfirm --needed sway || {
-        log "ERROR: Failed to install Sway"
+    # --- 1. Install Hyprland Package ---
+    log "Installing Hyprland compositor"
+    pacman -S --noconfirm --needed hyprland || {
+        log "ERROR: Failed to install Hyprland"
         return 1
     }
 
     # --- 2. User Permissions ---
-    log "Configuring user permissions for Sway"
+    log "Configuring user permissions for Hyprland"
     usermod -a -G seat,video "$USER"
 
-    # --- 3. Create Sway Configuration ---
-    log "Creating minimal Sway kiosk configuration"
-    local sway_config_dir="$HOME_DIR/.config/sway"
-    mkdir -p "$sway_config_dir"
+    # --- 3. Create Hyprland Configuration ---
+    log "Creating minimal Hyprland kiosk configuration"
+    local hypr_config_dir="$HOME_DIR/.config/hypr"
+    mkdir -p "$hypr_config_dir"
     
-    cat > "$sway_config_dir/config" <<'EOF'
-# Sway Kiosk Configuration - Production Stable
-# Optimized for single-application fullscreen display
+    cat > "$hypr_config_dir/hyprland.conf" <<'EOF'
+# Hyprland Kiosk Configuration - Optimized for GPU Acceleration
+# Designed for stable kiosk operation with ANGLE support
 
-# Output configuration
-output * enable
-output * {
-    bg #0f172a solid_color
-    scale 1
+monitor=,preferred,auto,1
+
+general {
+    border_size = 0
+    layout = dwindle
+    gaps_in = 0
+    gaps_out = 0
 }
 
-# Input configuration - minimal for kiosk
-input * {
-    xkb_layout us
-    # Hide cursor after 8 seconds of inactivity
+decoration {
+    rounding = 0
+    blur {
+        enabled = false
+    }
+    shadow {
+        enabled = false
+    }
 }
 
-seat * hide_cursor 8000
+input {
+    kb_layout = us
+    follow_mouse = 0
+    sensitivity = 0
+}
 
-# Disable all window decorations
-default_border none
-default_floating_border none
-font pango:monospace 8
-titlebar_border_thickness 0
-titlebar_padding 0
+misc {
+    disable_hyprland_logo = true
+    disable_splash_rendering = true
+    force_default_wallpaper = 0
+    animate_manual_resizes = false
+    animate_mouse_windowdragging = false
+    enable_swallow = false
+    vrr = 0
+}
 
-# Disable gaps
-gaps inner 0
-gaps outer 0
+animations {
+    enabled = false
+}
 
-# Window rules for kiosk mode
-for_window [app_id="chromium-browser"] fullscreen enable
-for_window [class="chromium"] fullscreen enable
+cursor {
+    no_hardware_cursors = true
+    inactive_timeout = 8
+}
+
+# XWayland disabled - using native Wayland with ozone-platform
+xwayland {
+    enabled = false
+}
 
 # No key bindings defined for kiosk mode - prevents accidental interactions
 
@@ -80,13 +99,13 @@ for_window [class="chromium"] fullscreen enable
 EOF
     
     chown -R "$USER:$USER" "$HOME_DIR/.config"
-    log "Sway configuration created at $sway_config_dir/config"
+    log "Hyprland configuration created at $hypr_config_dir/hyprland.conf"
 
-    # --- 4. Create Sway Systemd Service ---
-    log "Creating Sway compositor systemd service"
+    # --- 4. Create Hyprland Systemd Service ---
+    log "Creating Hyprland compositor systemd service"
     cat > /etc/systemd/system/lobby-compositor.service <<'EOF'
 [Unit]
-Description=Lobby Sway Compositor
+Description=Lobby Hyprland Compositor
 After=systemd-user-sessions.service seatd.service
 Wants=seatd.service
 
@@ -96,22 +115,21 @@ User=lobby
 Group=seat
 Environment=XDG_RUNTIME_DIR=/run/user/1000
 Environment=XDG_SESSION_TYPE=wayland
-Environment=XDG_CURRENT_DESKTOP=sway
+Environment=XDG_CURRENT_DESKTOP=Hyprland
 Environment=WLR_RENDERER=gles2
 Environment=WLR_DRM_DEVICE=/dev/dri/card1
 Environment=WLR_VT=2
+Environment=WLR_NO_HARDWARE_CURSORS=1
 
 # Ensure we're on VT2 and disable TTY1 getty
 ExecStartPre=/bin/bash -c 'systemctl stop getty@tty1.service getty@tty2.service 2>/dev/null || true; chvt 2; sleep 1'
 
-# Launch Sway compositor
-ExecStart=/usr/bin/sway
-# Ensure display output is enabled after startup with retries
-ExecStartPost=/bin/bash -c 'sleep 5; export SWAYSOCK=/run/user/1000/sway-ipc.1000.$MAINPID.sock; swaymsg output HDMI-A-1 enable || true'
+# Launch Hyprland compositor
+ExecStart=/usr/bin/Hyprland
 
 # Restart on failure only
 Restart=on-failure
-RestartSec=2
+RestartSec=3
 StartLimitIntervalSec=30
 StartLimitBurst=3
 
@@ -129,16 +147,16 @@ EOF
     systemctl mask autovt@tty1.service autovt@tty2.service || true
 
     # --- 6. Enable Service ---
-    log "Enabling Sway compositor service"
+    log "Enabling Hyprland compositor service"
     systemctl daemon-reload
     systemctl enable lobby-compositor.service
 
-    log "Sway compositor setup completed successfully"
+    log "Hyprland compositor setup completed successfully"
 }
 
 # Reset function
 reset_compositor() {
-    log "Resetting Sway compositor configuration"
+    log "Resetting Hyprland compositor configuration"
 
     # Stop and disable service
     systemctl stop lobby-compositor.service || true
@@ -151,11 +169,11 @@ reset_compositor() {
     systemctl unmask getty@tty1.service getty@tty2.service || true
     systemctl enable getty@tty1.service || true
 
-    # Clean up Sway config
-    rm -rf "$HOME_DIR/.config/sway"
+    # Clean up Hyprland config
+    rm -rf "$HOME_DIR/.config/hypr"
 
     systemctl daemon-reload
-    log "Sway compositor reset completed"
+    log "Hyprland compositor reset completed"
 }
 
 # Validation function
@@ -168,9 +186,9 @@ validate_compositor() {
         ((errors++))
     fi
 
-    # Check if Sway config exists
-    if [[ ! -f "$HOME_DIR/.config/sway/config" ]]; then
-        log "ERROR: Sway config not found"
+    # Check if Hyprland config exists
+    if [[ ! -f "$HOME_DIR/.config/hypr/hyprland.conf" ]]; then
+        log "ERROR: Hyprland config not found"
         ((errors++))
     fi
 
