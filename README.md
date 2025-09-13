@@ -90,8 +90,6 @@ sudo lobby status                        # Real-time status of all modules (✓ 
 sudo lobby logs                          # View recent system logs with filtering
 
 # Reliability and validation
-sudo /home/lobby/lobby-arch/scripts/boot-validator.sh validate    # 8-point boot health check
-sudo /home/lobby/lobby-arch/scripts/boot-validator.sh stress 10   # Reliability stress test
 sudo /home/lobby/lobby-arch/scripts/emergency-recovery.sh         # Emergency kiosk recovery
 
 # System management  
