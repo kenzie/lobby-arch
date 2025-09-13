@@ -24,10 +24,10 @@ Window.SetBackgroundBottomColor(0, 0, 0);
 status_message_text = Plymouth.GetMode();
 if (status_message_text == "boot") status_message_text = "Starting up...";
 else if (status_message_text == "shutdown") status_message_text = "Shutting down...";
-else if (status_message_text == "reboot") status_message_text = "Rebooting...";
+else if (status_message_text == "reboot") status_message_text = "Restarting...";
 else if (status_message_text == "suspend") status_message_text = "Maintenance mode.";
 else if (status_message_text == "resume") status_message_text = "Resuming...";
-else status_message_text = "Loading...";
+else status_message_text = "Please wait...";
 
 # Check for custom message from kernel command line
 kernel_params = Plymouth.GetKernelCommandLine();
@@ -115,7 +115,7 @@ Plymouth.SetBootProgressFunction(boot_progress_callback);
 # Handle system update messages
 fun system_update_callback(status) {
     if (status == "updating") {
-        update_message = Image.Text("System Update...", 0.8, 0.8, 0.8, 1.0, "Sans 24");
+        update_message = Image.Text("System update...", 0.8, 0.8, 0.8, 1.0, "Sans 24");
         status_sprite.SetImage(update_message);
         status_x = (screen_width - update_message.GetWidth()) / 2;
         status_sprite.SetPosition(status_x, status_y, 1);
