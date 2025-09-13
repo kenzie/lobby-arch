@@ -53,13 +53,11 @@ ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do 
 ExecStartPre=/bin/bash -c 'while ! pgrep -f "Hyprland" >/dev/null; do sleep 1; done; sleep 3'
 ExecStartPre=/bin/bash -c 'while [[ ! -S /run/user/1000/wayland-1 ]]; do sleep 1; done'
 
-# Launch Chromium with ANGLE GPU acceleration and Wayland native support
+# Launch Chromium with Wayland native support (GPU disabled temporarily)
 ExecStart=/usr/bin/chromium \
     --no-sandbox \
     --disable-dev-shm-usage \
-    --enable-gpu \
-    --use-gl=angle \
-    --use-angle=opengles \
+    --disable-gpu \
     --ozone-platform=wayland \
     --enable-features=UseOzonePlatform \
     --disable-background-timer-throttling \
