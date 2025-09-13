@@ -106,6 +106,8 @@ ExecStartPre=/bin/bash -c 'systemctl stop getty@tty1.service getty@tty2.service 
 
 # Launch Sway compositor
 ExecStart=/usr/bin/sway
+# Ensure display output is enabled after startup
+ExecStartPost=/bin/bash -c 'sleep 3; export SWAYSOCK=/run/user/1000/sway-ipc.1000.$MAINPID.sock; /usr/bin/swaymsg output HDMI-A-1 enable || true'
 
 # Restart on failure only
 Restart=on-failure
