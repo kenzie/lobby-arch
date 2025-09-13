@@ -44,6 +44,7 @@ setup_compositor() {
 # Optimized for single-application fullscreen display
 
 # Output configuration
+output * enable
 output * {
     bg #0f172a solid_color
     scale 1
@@ -60,7 +61,7 @@ seat * hide_cursor 8000
 # Disable all window decorations
 default_border none
 default_floating_border none
-font pango:monospace 0
+font pango:monospace 8
 titlebar_border_thickness 0
 titlebar_padding 0
 
@@ -72,12 +73,7 @@ gaps outer 0
 for_window [app_id="chromium-browser"] fullscreen enable
 for_window [class="chromium"] fullscreen enable
 
-# Disable Sway shortcuts that could interfere with kiosk
-unbindsym Mod4+Return
-unbindsym Mod4+Shift+q
-unbindsym Mod4+d
-unbindsym Mod4+Shift+c
-unbindsym Mod4+Shift+r
+# No key bindings defined for kiosk mode - prevents accidental interactions
 
 # No auto-exec - browser launched by separate systemd service
 # This ensures compositor and browser can restart independently
