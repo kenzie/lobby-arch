@@ -271,7 +271,8 @@ RandomizedDelaySec=3600
 WantedBy=timers.target
 UPDATETIMER
 
-    # Create logrotate configuration
+    # Create logrotate configuration (ensure directory exists)
+    mkdir -p /etc/logrotate.d
     cat > /etc/logrotate.d/lobby-auto-update <<'LOGROTATE'
 /var/log/lobby-auto-update.log {
     weekly

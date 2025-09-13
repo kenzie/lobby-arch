@@ -34,8 +34,9 @@ setup_cleanup() {
 
     log "Global lobby command created at /usr/local/bin/lobby"
 
-    # Configure log rotation
+    # Configure log rotation (ensure directory exists)
     log "Setting up log rotation"
+    mkdir -p /etc/logrotate.d
     cat > /etc/logrotate.d/lobby <<'EOF'
 /var/log/lobby-*.log {
     daily
