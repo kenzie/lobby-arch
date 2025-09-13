@@ -116,10 +116,7 @@ Group=seat
 Environment=XDG_RUNTIME_DIR=/run/user/1000
 Environment=XDG_SESSION_TYPE=wayland
 Environment=XDG_CURRENT_DESKTOP=Hyprland
-Environment=WLR_RENDERER=gles2
-Environment=WLR_DRM_DEVICE=/dev/dri/card1
-Environment=WLR_VT=2
-Environment=WLR_NO_HARDWARE_CURSORS=1
+Environment=AQ_DRM_DEVICES=/dev/dri/card1
 
 # Ensure we're on VT2 and disable TTY1 getty
 ExecStartPre=/bin/bash -c 'systemctl stop getty@tty1.service getty@tty2.service 2>/dev/null || true; chvt 2; sleep 1'
