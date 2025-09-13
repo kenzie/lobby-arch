@@ -106,7 +106,7 @@ EOF
     cat > /etc/systemd/system/lobby-compositor.service <<'EOF'
 [Unit]
 Description=Lobby Hyprland Compositor
-After=systemd-user-sessions.service seatd.service
+After=systemd-user-sessions.service seatd.service graphical-session-pre.target multi-user.target
 Wants=seatd.service
 
 [Service]
@@ -118,16 +118,22 @@ Environment=XDG_SESSION_TYPE=wayland
 Environment=XDG_CURRENT_DESKTOP=Hyprland
 Environment=AQ_DRM_DEVICES=/dev/dri/card1
 
-# Ensure we're on VT2 and disable TTY1 getty
-ExecStartPre=/bin/bash -c 'systemctl stop getty@tty1.service getty@tty2.service 2>/dev/null || true; chvt 2; sleep 1'
+# Wait for system to be fully ready and ensure VT is available
+ExecStartPre=/bin/bash -c 'systemctl stop getty@tty1.service getty@tty2.service 2>/dev/null || true'
+ExecStartPre=/bin/bash -c 'while ! chvt 2 2>/dev/null; do sleep 0.5; done; sleep 2'
+ExecStartPre=/bin/bash -c 'while [ ! -c /dev/dri/card1 ] || fuser /dev/dri/card1 2>/dev/null; do sleep 0.5; done'
 
 # Launch Hyprland compositor
 ExecStart=/usr/bin/Hyprland
 
-# Restart on failure only
+# Health check: restart if Hyprland starts but doesn't create wayland socket
+ExecStartPost=/bin/bash -c 'for i in {1..30}; do [ -S /run/user/1000/wayland-1 ] && exit 0; sleep 1; done; exit 1'
+
+# Restart on failure with exponential backoff
 Restart=on-failure
-RestartSec=3
-StartLimitBurst=3
+RestartSec=5
+StartLimitBurst=5
+StartLimitIntervalSec=60
 
 # Logging
 StandardOutput=journal
@@ -142,10 +148,120 @@ EOF
     systemctl mask getty@tty1.service getty@tty2.service || true
     systemctl mask autovt@tty1.service autovt@tty2.service || true
 
-    # --- 6. Enable Service ---
-    log "Enabling Hyprland compositor service"
+    # --- 6. Create Health Monitor ---
+    log "Creating kiosk health monitoring system"
+    cat > /usr/local/bin/lobby-health-monitor.sh <<'EOF'
+#!/bin/bash
+# Lobby Health Monitor - Detects and recovers from kiosk failures
+
+HEALTH_LOG="/var/log/lobby-health.log"
+MAX_FAILURES=3
+FAILURE_COUNT=0
+
+log_health() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') [HEALTH] $1" | tee -a "$HEALTH_LOG"
+}
+
+check_kiosk_health() {
+    # Check if all critical services are running
+    if ! systemctl is-active lobby-compositor.service >/dev/null; then
+        log_health "CRITICAL: Compositor service is not running"
+        return 1
+    fi
+
+    if ! systemctl is-active lobby-app.service >/dev/null; then
+        log_health "CRITICAL: App service is not running"
+        return 1
+    fi
+
+    if ! systemctl is-active lobby-browser.service >/dev/null; then
+        log_health "CRITICAL: Browser service is not running"
+        return 1
+    fi
+
+    # Check if Wayland display is available
+    if [ ! -S /run/user/1000/wayland-1 ]; then
+        log_health "CRITICAL: Wayland display socket missing"
+        return 1
+    fi
+
+    # Check if browser can connect to app
+    if ! curl -s --max-time 5 http://localhost:8080 >/dev/null; then
+        log_health "CRITICAL: App not responding on localhost:8080"
+        return 1
+    fi
+
+    # Check if browser has GUI processes running
+    if ! pgrep -f "chromium.*kiosk" >/dev/null; then
+        log_health "CRITICAL: Browser kiosk process not found"
+        return 1
+    fi
+
+    log_health "OK: All kiosk components healthy"
+    return 0
+}
+
+recover_kiosk() {
+    log_health "RECOVERY: Attempting kiosk recovery (failure $FAILURE_COUNT/$MAX_FAILURES)"
+
+    # Restart services in order
+    systemctl restart lobby-compositor.service
+    sleep 5
+    systemctl restart lobby-app.service
+    sleep 3
+    systemctl restart lobby-browser.service
+
+    log_health "RECOVERY: Services restarted, waiting for stabilization"
+    sleep 15
+}
+
+# Main health check loop
+while true; do
+    if check_kiosk_health; then
+        FAILURE_COUNT=0
+        sleep 30
+    else
+        ((FAILURE_COUNT++))
+
+        if [ $FAILURE_COUNT -le $MAX_FAILURES ]; then
+            recover_kiosk
+            sleep 30
+        else
+            log_health "FATAL: Max failures reached ($MAX_FAILURES), stopping recovery attempts"
+            systemctl reboot
+            exit 1
+        fi
+    fi
+done
+EOF
+
+    chmod +x /usr/local/bin/lobby-health-monitor.sh
+
+    # Create health monitor service
+    cat > /etc/systemd/system/lobby-health-monitor.service <<'EOF'
+[Unit]
+Description=Lobby Kiosk Health Monitor
+After=lobby-compositor.service lobby-app.service lobby-browser.service
+Wants=lobby-compositor.service lobby-app.service lobby-browser.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/lobby-health-monitor.sh
+Restart=always
+RestartSec=10
+User=root
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical.target
+EOF
+
+    # --- 7. Enable Services ---
+    log "Enabling Hyprland compositor and health monitor services"
     systemctl daemon-reload
     systemctl enable lobby-compositor.service
+    systemctl enable lobby-health-monitor.service
 
     log "Hyprland compositor setup completed successfully"
 }
