@@ -422,40 +422,41 @@ check_root() {
 # GitHub repository configuration
 GITHUB_REPO="kenzie/lobby-arch"
 
-# Function to update the active lobby.sh script in /root/scripts/
+# Function to ensure lobby symlink is properly set up
 update_self_script() {
     local source_script="$SCRIPT_DIR/lobby.sh"
-    local target_script="/root/scripts/lobby.sh"
+    local lobby_user="${LOBBY_USER:-lobby}"
+    local lobby_home="/home/$lobby_user"
+    local lobby_bin_dir="$lobby_home/.local/bin"
+    local lobby_symlink="$lobby_bin_dir/lobby"
 
     if [[ ! -f "$source_script" ]]; then
         error "Source lobby script not found: $source_script"
         return 1
     fi
 
-    # Check if the target script exists and is different
-    if [[ -f "$target_script" ]]; then
-        if sudo cmp -s "$source_script" "$target_script"; then
-            info "Active lobby script is already up to date."
-            return 0
-        else
-            info "Updating active lobby script: $target_script"
-        fi
-    else
-        info "Installing active lobby script: $target_script"
+    # Ensure the lobby user's bin directory exists
+    if [[ ! -d "$lobby_bin_dir" ]]; then
+        sudo -u "$lobby_user" mkdir -p "$lobby_bin_dir"
     fi
 
-    # Copy and set permissions
-    if sudo cp "$source_script" "$target_script"; then
-        success "Successfully copied $source_script to $target_script"
-    else
-        error "Failed to copy $source_script to $target_script"
-        return 1
+    # Check if symlink exists and points to correct location
+    if [[ -L "$lobby_symlink" ]] && [[ "$(readlink -f "$lobby_symlink")" == "$source_script" ]]; then
+        info "Lobby symlink is already up to date."
+        return 0
     fi
 
-    if sudo chmod +x "$target_script"; then
-        success "Successfully set executable permissions for $target_script"
+    # Remove existing file/symlink if present
+    if [[ -e "$lobby_symlink" ]] || [[ -L "$lobby_symlink" ]]; then
+        rm -f "$lobby_symlink"
+        info "Removed existing lobby symlink"
+    fi
+
+    # Create new symlink
+    if sudo -u "$lobby_user" ln -s "$source_script" "$lobby_symlink"; then
+        success "Successfully created symlink: $lobby_symlink -> $source_script"
     else
-        error "Failed to set executable permissions for $target_script"
+        error "Failed to create symlink: $lobby_symlink -> $source_script"
         return 1
     fi
     return 0
