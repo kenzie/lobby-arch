@@ -24,8 +24,7 @@ if is_maintenance_window; then
     
     # Stop lobby services if they auto-started
     log "Stopping lobby services for maintenance window"
-    systemctl stop lobby-kiosk.service || true
-    systemctl stop lobby-display.service || true
+    
     
     # Switch to sleep theme
     log "Switching to sleep theme"

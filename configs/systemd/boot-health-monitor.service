@@ -1,7 +1,6 @@
 [Unit]
 Description=Boot Health Monitor for Lobby Kiosk
-After=lobby-kiosk.service
-Wants=lobby-kiosk.service
+
 
 [Service]
 Type=simple

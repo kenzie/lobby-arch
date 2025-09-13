@@ -25,9 +25,17 @@ validate_kiosk_state() {
         ((errors++))
     fi
     
-    # 2. Check kiosk service is active
-    if ! systemctl is-active lobby-kiosk.service >/dev/null; then
-        log "ERROR: lobby-kiosk.service not active"
+    # 2. Check kiosk services are active
+    if ! systemctl is-active lobby-compositor.service >/dev/null; then
+        log "ERROR: lobby-compositor.service not active"
+        ((errors++))
+    fi
+    if ! systemctl is-active lobby-app.service >/dev/null; then
+        log "ERROR: lobby-app.service not active"
+        ((errors++))
+    fi
+    if ! systemctl is-active lobby-browser.service >/dev/null; then
+        log "ERROR: lobby-browser.service not active"
         ((errors++))
     fi
     
@@ -65,10 +73,12 @@ validate_kiosk_state() {
     fi
     
     # 8. Check service restart counts
-    local kiosk_restarts=$(systemctl show lobby-kiosk.service --property=NRestarts --value)
-    if [[ $kiosk_restarts -gt 0 ]]; then
-        log "WARNING: Kiosk service has restarted $kiosk_restarts times"
-    fi
+    for service in lobby-compositor.service lobby-app.service lobby-browser.service; do
+        local restarts=$(systemctl show $service --property=NRestarts --value)
+        if [[ $restarts -gt 0 ]]; then
+            log "WARNING: $service has restarted $restarts times"
+        fi
+    done
     
     if [[ $errors -eq 0 ]]; then
         log "✅ Boot validation PASSED - Kiosk fully operational"
@@ -88,8 +98,8 @@ stress_test_boot() {
     for i in $(seq 1 $test_count); do
         log "Test iteration $i/$test_count"
         
-        # Restart kiosk service
-        systemctl restart lobby-kiosk.service
+        # Restart kiosk services
+        systemctl restart lobby-compositor.service lobby-app.service lobby-browser.service
         
         # Wait for restart
         sleep 5
@@ -129,8 +139,10 @@ monitor_boot_health() {
             log "🚨 ALERT: Kiosk health check failed - investigating..."
             
             # Get detailed status for debugging
-            systemctl status lobby-kiosk.service --no-pager -l | head -20 | while read line; do
-                log "  STATUS: $line"
+            for service in lobby-compositor.service lobby-app.service lobby-browser.service; do
+                systemctl status $service --no-pager -l | head -20 | while read line; do
+                    log "  STATUS ($service): $line"
+                done
             done
             
             # Check for common issues
@@ -140,7 +152,7 @@ monitor_boot_health() {
             
             # Attempt automatic recovery
             log "Attempting automatic recovery..."
-            systemctl restart lobby-kiosk.service
+            systemctl restart lobby-compositor.service lobby-app.service lobby-browser.service
             sleep 10
             
             if validate_kiosk_state >/dev/null 2>&1; then

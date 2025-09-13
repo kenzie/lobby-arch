@@ -156,9 +156,7 @@ update_lobby_display() {
             if sudo -u "$user" npm install && sudo -u "$user" npm run build; then
                 log_message "lobby-display rebuilt successfully"
                 # Restart services to use updated code
-                systemctl restart lobby-display.service
-                sleep 5
-                systemctl restart lobby-kiosk.service
+                systemctl restart lobby-app.service
                 return 0
             else
                 log_message "ERROR: Failed to rebuild lobby-display"

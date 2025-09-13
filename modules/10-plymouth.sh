@@ -141,8 +141,7 @@ EOF
     cat > /etc/systemd/system/plymouth-quit-wait.service <<EOF
 [Unit]
 Description=Hold until boot process finishes up (Kiosk Version)
-After=lobby-kiosk.service
-Wants=lobby-kiosk.service
+
 # Removed Requisite to prevent dependency failures - Wants is sufficient
 
 [Service]

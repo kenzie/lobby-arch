@@ -20,18 +20,18 @@ emergency_recovery() {
     log "Clearing potential conflicts..."
     pkill -f "getty" || true
     
-    # 3. Restart kiosk service with clean slate
-    log "Restarting kiosk service..."
-    systemctl stop lobby-kiosk.service || true
+    # 3. Restart kiosk services with clean slate
+    log "Restarting kiosk services..."
+    systemctl stop lobby-compositor.service lobby-app.service lobby-browser.service || true
     sleep 2
-    systemctl start lobby-kiosk.service
+    systemctl start lobby-compositor.service lobby-app.service lobby-browser.service
     
     # 4. Wait and validate
     log "Waiting for kiosk to stabilize..."
     sleep 10
     
     # 5. Final validation
-    if pgrep -f "chromium.*kiosk" >/dev/null && ! pgrep getty >/dev/null; then
+    if systemctl is-active lobby-compositor.service >/dev/null && systemctl is-active lobby-app.service >/dev/null && systemctl is-active lobby-browser.service >/dev/null && ! pgrep getty >/dev/null; then
         log "✅ Emergency recovery SUCCESSFUL"
         return 0
     else
