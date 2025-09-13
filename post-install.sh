@@ -64,9 +64,9 @@ export LOBBY_USER="$USER"
 export LOBBY_HOME="$HOME_DIR"
 export LOBBY_LOG="$LOGFILE"
 
-# Sync modules if needed and run full lobby setup
-log "Running lobby setup (sync and configure all modules)"
-if "$LOBBY_SYMLINK" sync --main && "$LOBBY_SYMLINK" setup; then
+# Run full lobby setup (modules should already be present)
+log "Running lobby setup (configure all modules)"
+if "$LOBBY_SYMLINK" setup; then
     log "SUCCESS: Lobby setup completed successfully"
 else
     exit_code=$?
