@@ -14,4 +14,3 @@ StandardError=journal
 
 [Install]
 WantedBy=graphical.target
-EOF < /dev/null

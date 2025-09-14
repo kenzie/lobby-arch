@@ -30,4 +30,3 @@ StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
-EOF < /dev/null

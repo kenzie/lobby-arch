@@ -13,4 +13,3 @@ TimeoutStartSec=30
 
 [Install]
 WantedBy=poweroff.target reboot.target halt.target
-EOF < /dev/null
