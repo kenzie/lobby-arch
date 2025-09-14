@@ -1,8 +1,7 @@
 [Unit]
 Description=Lobby Chromium Browser
 After=lobby-compositor.service lobby-app.service seatd.service
-Requires=lobby-app.service lobby-compositor.service
-Wants=seatd.service
+Wants=lobby-app.service lobby-compositor.service seatd.service
 StartLimitIntervalSec=60
 StartLimitBurst=3
 

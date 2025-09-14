@@ -73,12 +73,18 @@ setup_compositor() {
     log "Health monitor service installed from $config_dir/systemd/"
 
     # --- 7. Enable Services (let systemd start them when ready) ---
+    log "Stopping Plymouth and switching to VT2 before enabling Hyprland compositor"
+    systemctl stop plymouth-quit.service || true
+    systemctl stop plymouth.service || true
+    killall plymouthd || true
+    chvt 2 || true
+
     log "Enabling Hyprland compositor and health monitor services"
     systemctl daemon-reload
-    
+
     # Enable seatd first (dependency)
     systemctl enable seatd.service
-    
+
     # Enable compositor services
     systemctl enable lobby-compositor.service
     systemctl enable lobby-health-monitor.service

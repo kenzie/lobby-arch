@@ -1,9 +1,6 @@
 [Unit]
 Description=Lobby Hyprland Compositor
-After=systemd-user-sessions.service seatd.service user@1000.service
-Wants=seatd.service user@1000.service
-StartLimitIntervalSec=60
-StartLimitBurst=5
+After=plymouth-quit.service plymouth.service
 
 [Service]
 Type=simple
@@ -12,27 +9,13 @@ Group=seat
 Environment=XDG_RUNTIME_DIR=/run/user/1000
 Environment=XDG_SESSION_TYPE=wayland
 Environment=XDG_CURRENT_DESKTOP=Hyprland
-
-# Wait for system to be fully ready and ensure VT is available
-ExecStartPre=/bin/bash -c 'systemctl stop getty@tty1.service getty@tty2.service 2>/dev/null || true'
-# Wait for user runtime directory (created by user@1000.service)
-ExecStartPre=/bin/bash -c 'while [ ! -d /run/user/1000 ]; do sleep 0.1; done'
-
-# Launch Hyprland compositor
-ExecStart=/bin/bash -c 'export AQ_DRM_DEVICES=$(for card in /sys/class/drm/card*; do if udevadm info "$card" | grep -q "boot_vga=1"; then udevadm info "$card" | grep "DEVNAME" | cut -d'=' -f2; fi; done) && /usr/bin/Hyprland'
-
-# Health check: restart if Hyprland starts but doesn't create wayland socket
-ExecStartPost=/bin/bash -c 'for i in {1..10}; do [ -S /run/user/1000/wayland-1 ] && exit 0; sleep 0.5; done; exit 1'
-# Signal Plymouth to quit now that display is ready
-ExecStartPost=/bin/bash -c 'plymouth quit --retain-splash || true'
-
-# Restart on failure with exponential backoff
-Restart=on-failure
+ExecStartPre=/usr/bin/systemctl stop plymouth-quit.service
+ExecStartPre=/usr/bin/systemctl stop plymouth.service
+ExecStartPre=/usr/bin/killall plymouthd
+ExecStartPre=/usr/bin/chvt 2
+ExecStart=/usr/bin/Hyprland --config /home/lobby/.config/hypr/hyprland.conf
+Restart=always
 RestartSec=5
-
-# Logging
-StandardOutput=journal
-StandardError=journal
 
 [Install]
 WantedBy=graphical.target
