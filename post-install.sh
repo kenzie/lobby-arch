@@ -84,5 +84,9 @@ else
     log "Skipping service disable (chroot environment)"
 fi
 
-log "==> Post-install tasks complete. The system will boot directly to Hyprland kiosk with Plymouth splash."
-log "==> Use 'sudo lobby help' for system management and 'sudo lobby health' for diagnostics."
+log "==> Post-install tasks complete. All services have been configured and enabled."
+log "==> A reboot is required to start the Hyprland kiosk with Plymouth splash."
+log "==> After reboot, use 'sudo lobby help' for system management and 'sudo lobby health' for diagnostics."
+log ""
+log "Please reboot the system to complete the installation:"
+log "sudo reboot"

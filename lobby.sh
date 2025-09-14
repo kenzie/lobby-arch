@@ -77,6 +77,7 @@ COMMANDS:
     validate [module]       Validate installation (full or specific module)
     sync [--force|--main]   Update scripts from GitHub repository (default: latest tag, --main for main branch)
     check-updates [--force] Check for available updates from GitHub
+    start                   Start all lobby services in proper order
     list                    List available modules
     status                  Show system status
     logs                    Show recent logs
@@ -172,12 +173,7 @@ run_all_modules() {
     if [[ ${#failed_modules[@]} -eq 0 ]]; then
         success "All modules completed successfully ($success_count modules)"
         
-        # If this was a setup operation, start services (unless during post-install)
-        if [[ "$action" == "setup" && -z "${CHROOT_INSTALL:-}" && -z "${POST_INSTALL:-}" ]]; then
-            start_lobby_services
-        elif [[ "$action" == "setup" ]]; then
-            info "Skipping service start during installation - services will start on boot"
-        fi
+        # Services are enabled during setup - they'll start on boot or can be started manually
         
         return 0
     else
@@ -736,6 +732,10 @@ main() {
             ;;
         "check-updates")
             check_for_updates "$force_cache_bypass"
+            ;;
+        "start")
+            check_root
+            start_lobby_services
             ;;
         "list")
             list_modules
