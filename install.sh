@@ -132,8 +132,8 @@ echo "==> Cloning lobby-arch repository..."
 
 # Install git if not present
 if ! command -v git >/dev/null 2>&1;
-    echo "Installing git..."
-    arch-chroot /mnt pacman -S --noconfirm git
+    echo "Installing git and GitHub CLI..."
+    arch-chroot /mnt pacman -S --noconfirm git github-cli
 fi
 
 # Clone the repository directly to /home/lobby/lobby-arch
