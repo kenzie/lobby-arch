@@ -15,9 +15,9 @@ Environment=WAYLAND_DISPLAY=wayland-1
 Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
 
 # Wait for dependencies to be ready
-ExecStartPre=/bin/bash -c 'while \! curl -s http://localhost:8080 >/dev/null; do sleep 1; done'
-ExecStartPre=/bin/bash -c 'while \! pgrep -f "Hyprland" >/dev/null; do sleep 1; done; sleep 3'
-ExecStartPre=/bin/bash -c 'while [[ \! -S /run/user/1000/wayland-1 ]]; do sleep 1; done'
+ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do sleep 1; done'
+ExecStartPre=/bin/bash -c 'while ! pgrep -f "Hyprland" >/dev/null; do sleep 1; done; sleep 3'
+ExecStartPre=/bin/bash -c 'while [[ ! -S /run/user/1000/wayland-1 ]]; do sleep 1; done'
 
 # Launch Chromium with ANGLE GPU acceleration for smooth animations
 ExecStart=/usr/bin/chromium \
@@ -55,4 +55,3 @@ StandardError=journal
 
 [Install]
 WantedBy=graphical.target
-EOF < /dev/null
