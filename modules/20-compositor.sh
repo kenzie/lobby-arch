@@ -73,11 +73,15 @@ setup_compositor() {
     log "Health monitor service installed from $config_dir/systemd/"
 
     # --- 7. Enable Services (let systemd start them when ready) ---
-    log "Stopping Plymouth and switching to VT2 before enabling Hyprland compositor"
-    systemctl stop plymouth-quit.service || true
-    systemctl stop plymouth.service || true
-    killall plymouthd || true
-    chvt 2 || true
+    log "Stopping Plymouth and switching to VT2 as root before enabling Hyprland compositor"
+    if [[ $EUID -eq 0 ]]; then
+        systemctl stop plymouth-quit.service || true
+        systemctl stop plymouth.service || true
+        killall plymouthd || true
+        chvt 2 || true
+    else
+        log "WARNING: Not running as root, cannot stop Plymouth or switch VT."
+    fi
 
     log "Enabling Hyprland compositor and health monitor services"
     systemctl daemon-reload

@@ -9,10 +9,7 @@ Group=seat
 Environment=XDG_RUNTIME_DIR=/run/user/1000
 Environment=XDG_SESSION_TYPE=wayland
 Environment=XDG_CURRENT_DESKTOP=Hyprland
-ExecStartPre=/usr/bin/systemctl stop plymouth-quit.service
-ExecStartPre=/usr/bin/systemctl stop plymouth.service
-ExecStartPre=/usr/bin/killall plymouthd
-ExecStartPre=/usr/bin/chvt 2
+## Removed root-only ExecStartPre lines; ensure Plymouth is stopped by setup script before starting this service
 ExecStart=/usr/bin/Hyprland --config /home/lobby/.config/hypr/hyprland.conf
 Restart=always
 RestartSec=5
