@@ -8,4 +8,3 @@ RandomizedDelaySec=3600
 
 [Install]
 WantedBy=timers.target
-EOF < /dev/null
