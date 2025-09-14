@@ -1,0 +1,10 @@
+/var/log/lobby-auto-update.log {
+    weekly
+    rotate 4
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 root root
+}
+EOF < /dev/null

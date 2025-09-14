@@ -79,26 +79,12 @@ setup_plymouth() {
     
     
     # Configure Plymouth for shutdown/reboot
-    log "Configuring Plymouth for shutdown and reboot"
+    log "Installing Plymouth shutdown and reboot configuration"
     
-    # Create plymouth shutdown configuration
-    cat > /etc/systemd/system/plymouth-poweroff.service <<EOF
-[Unit]
-Description=Show Plymouth Boot Screen on Shutdown
-DefaultDependencies=false
-Before=poweroff.target reboot.target halt.target
-Conflicts=emergency.service emergency.target rescue.service rescue.target
-
-[Service]
-Type=forking
-ExecStart=/usr/bin/plymouth --show-splash
-ExecStartPost=/bin/bash -c 'while ! plymouth --ping; do sleep 0.1; done'
-RemainAfterExit=yes
-TimeoutStartSec=30
-
-[Install]
-WantedBy=poweroff.target reboot.target halt.target
-EOF
+    # Install plymouth shutdown configuration
+    local config_dir="$SCRIPT_DIR/../config"
+    cp "$config_dir/systemd/plymouth-poweroff.service" /etc/systemd/system/plymouth-poweroff.service
+    log "Plymouth poweroff service installed from $config_dir/systemd/"
 
     # Enable built-in Plymouth services for shutdown/reboot by creating symlinks
     mkdir -p /etc/systemd/system/reboot.target.wants
@@ -131,8 +117,8 @@ EOF
         
 
         # This service waits for the Hyprland process and Chromium to be running, then quits Plymouth.
-    log "Creating kiosk-aware plymouth-quit-wait service"
-    cat > /etc/systemd/system/plymouth-quit-wait.service <<EOF
+    log "Installing kiosk-aware plymouth-quit-wait service"
+    cp "$config_dir/systemd/plymouth-quit-wait.service" /etc/systemd/system/plymouth-quit-wait.service
 [Unit]
 Description=Hold until boot process finishes up (Kiosk Version)
 

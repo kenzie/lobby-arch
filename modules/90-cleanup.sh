@@ -41,18 +41,10 @@ setup_cleanup() {
     log "Lobby logrotate configuration installed from $CONFIG_DIR/logrotate/lobby"
 
     # Configure systemd journal limits to prevent disk space issues
-    log "Configuring systemd journal size limits"
+    log "Installing systemd journal size limits configuration"
     mkdir -p /etc/systemd/journald.conf.d
-    cat > /etc/systemd/journald.conf.d/lobby.conf <<'EOF'
-[Journal]
-SystemMaxUse=100M
-SystemMaxFileSize=10M
-SystemMaxFiles=10
-RuntimeMaxUse=50M
-RuntimeMaxFileSize=5M
-RuntimeMaxFiles=10
-MaxRetentionSec=1week
-EOF
+    cp "$CONFIG_DIR/systemd-configs/journald-lobby.conf" /etc/systemd/journald.conf.d/lobby.conf
+    log "Journal configuration installed from $CONFIG_DIR/systemd-configs/journald-lobby.conf"
 
     # Restart journald to apply new configuration
     systemctl restart systemd-journald

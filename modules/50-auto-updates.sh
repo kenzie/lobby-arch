@@ -237,53 +237,16 @@ UPDATESCRIPT
 
     chmod +x /usr/local/bin/lobby-auto-update.sh
     
-    # Create systemd service for automatic updates
-    cat > /etc/systemd/system/lobby-auto-update.service <<'UPDATESERVICE'
-[Unit]
-Description=Automatic Lobby System Updates
-# Removed network-online.target dependency to avoid boot delays
-# This service should only run via timer, not during boot
+    # Install systemd service and timer for automatic updates
+    local config_dir="$SCRIPT_DIR/../config"
+    cp "$config_dir/systemd/lobby-auto-update.service" /etc/systemd/system/lobby-auto-update.service
+    cp "$config_dir/systemd/lobby-auto-update.timer" /etc/systemd/system/lobby-auto-update.timer
+    log "Auto-update systemd files installed from $config_dir/systemd/"
 
-[Service]
-Type=oneshot
-User=root
-ExecStart=/usr/local/bin/lobby-auto-update.sh
-StandardOutput=journal
-StandardError=journal
-TimeoutStartSec=3600
-
-[Install]
-# Removed WantedBy to prevent auto-start during boot
-# Service only runs via timer scheduling
-UPDATESERVICE
-
-    # Create systemd timer for daily scheduling during maintenance window
-    cat > /etc/systemd/system/lobby-auto-update.timer <<'UPDATETIMER'
-[Unit]
-Description=Daily Automatic Lobby Updates
-Requires=lobby-auto-update.service
-
-[Timer]
-OnCalendar=*-*-* 02:00:00
-RandomizedDelaySec=3600
-
-[Install]
-WantedBy=timers.target
-UPDATETIMER
-
-    # Create logrotate configuration (ensure directory exists)
+    # Install logrotate configuration (ensure directory exists)
     mkdir -p /etc/logrotate.d
-    cat > /etc/logrotate.d/lobby-auto-update <<'LOGROTATE'
-/var/log/lobby-auto-update.log {
-    weekly
-    rotate 4
-    compress
-    delaycompress
-    missingok
-    notifempty
-    create 644 root root
-}
-LOGROTATE
+    cp "$config_dir/logrotate/lobby-auto-update" /etc/logrotate.d/lobby-auto-update
+    log "Auto-update logrotate config installed from $config_dir/logrotate/lobby-auto-update"
 
     # Enable the update timer (but don't start immediately - wait for scheduled time)
     systemctl daemon-reload
