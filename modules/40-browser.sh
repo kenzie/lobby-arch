@@ -91,10 +91,11 @@ StandardError=journal
 WantedBy=graphical.target
 EOF
 
-    # --- 3. Enable Service ---
-    log "Enabling Chromium browser service"
+    # --- 3. Enable and Start Service ---
+    log "Enabling and starting Chromium browser service"
     systemctl daemon-reload
     systemctl enable lobby-browser.service
+    systemctl start lobby-browser.service
 
     log "Chromium browser setup completed successfully"
 }

@@ -23,10 +23,10 @@ log() {
 setup_compositor() {
     log "Setting up Hyprland compositor with ANGLE GPU acceleration"
 
-    # --- 1. Install Hyprland Package ---
-    log "Installing Hyprland compositor"
-    pacman -S --noconfirm --needed hyprland || {
-        log "ERROR: Failed to install Hyprland"
+    # --- 1. Install Hyprland Package and Dependencies ---
+    log "Installing Hyprland compositor and seatd"
+    pacman -S --noconfirm --needed hyprland seatd || {
+        log "ERROR: Failed to install Hyprland or seatd"
         return 1
     }
 
@@ -257,11 +257,19 @@ StandardError=journal
 WantedBy=graphical.target
 EOF
 
-    # --- 7. Enable Services ---
-    log "Enabling Hyprland compositor and health monitor services"
+    # --- 7. Enable and Start Services ---
+    log "Enabling and starting Hyprland compositor and health monitor services"
     systemctl daemon-reload
+    
+    # Enable and start seatd first (dependency)
+    systemctl enable seatd.service
+    systemctl start seatd.service
+    
+    # Enable and start compositor services
     systemctl enable lobby-compositor.service
     systemctl enable lobby-health-monitor.service
+    systemctl start lobby-compositor.service
+    systemctl start lobby-health-monitor.service
 
     log "Hyprland compositor setup completed successfully"
 }

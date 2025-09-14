@@ -94,10 +94,11 @@ StandardError=journal
 WantedBy=multi-user.target
 EOF
 
-    # --- 4. Enable Service ---
-    log "Enabling Vue.js app service"
+    # --- 4. Enable and Start Service ---
+    log "Enabling and starting Vue.js app service"
     systemctl daemon-reload
     systemctl enable lobby-app.service
+    systemctl start lobby-app.service
 
     log "Vue.js lobby-display app setup completed successfully"
 }
