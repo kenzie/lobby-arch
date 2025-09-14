@@ -1,6 +1,6 @@
 [Unit]
 Description=Lobby Hyprland Compositor
-After=systemd-user-sessions.service seatd.service graphical-session-pre.target multi-user.target plymouth-quit.service
+After=systemd-user-sessions.service seatd.service graphical-session-pre.target multi-user.target
 Wants=seatd.service
 
 [Service]
