@@ -93,6 +93,10 @@ export LOBBY_HOME="$HOME_DIR"
 export LOBBY_LOG="$LOGFILE"
 export POST_INSTALL="true"
 
+# Ensure all module scripts are executable
+log "Setting execute permissions on all module scripts"
+chmod +x "$SCRIPT_DIR/modules"/*.sh
+
 # Run full lobby setup (modules should already be present)
 log "Running lobby setup (configure all modules)"
 if "$LOBBY_SYMLINK" setup; then

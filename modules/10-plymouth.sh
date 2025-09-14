@@ -25,7 +25,19 @@ log() {
 # Main setup function
 setup_plymouth() {
     log "Setting up Plymouth splash theme"
-    
+
+    # Install Plymouth package if not already installed
+    if ! pacman -Q plymouth &>/dev/null; then
+        log "Installing Plymouth package"
+        pacman -S --noconfirm plymouth || {
+            log "ERROR: Failed to install Plymouth package"
+            return 1
+        }
+        log "Plymouth package installed successfully"
+    else
+        log "Plymouth package already installed"
+    fi
+
     # Create theme directory
     mkdir -p "$THEME_DIR"
     
