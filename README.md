@@ -11,7 +11,6 @@ This repository provides a **bulletproof, production-ready Arch Linux system** f
 - **Automated recovery** - Services restart on failure with systemd reliability
 - **Boot validation** - Comprehensive 8-point health checks every 30 seconds
 - **Plymouth integration** - Enhanced timing waits for full application launch
-- **Emergency recovery** - Automated failsafe scripts for any boot failures
 
 ### 🖥️ **Modern Modular Kiosk Architecture**
 - **Independent systemd services** - Compositor, app, and browser run as separate services for maximum reliability
@@ -88,9 +87,6 @@ The system includes a **global `lobby` command** for easy management:
 sudo lobby health                        # Comprehensive system health check with 20+ validations
 sudo lobby status                        # Real-time status of all modules (✓ OK / ✗ FAILED)
 sudo lobby logs                          # View recent system logs with filtering
-
-# Reliability and validation
-sudo /home/lobby/lobby-arch/scripts/emergency-recovery.sh         # Emergency kiosk recovery
 
 # System management  
 sudo lobby setup                         # Full bulletproof system setup
