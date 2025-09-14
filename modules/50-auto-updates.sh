@@ -7,6 +7,9 @@ set -euo pipefail
 MODULE_NAME="Auto-updates Setup"
 MODULE_VERSION="1.0"
 
+# Get script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Logging function
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') [$MODULE_NAME] $1" | tee -a "${LOBBY_LOG:-/var/log/lobby-setup.log}"
