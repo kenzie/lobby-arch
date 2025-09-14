@@ -39,15 +39,9 @@ setup_plymouth() {
     if [ -f "$CONFIG_DIR/plymouth/logo.png" ]; then
         cp "$CONFIG_DIR/plymouth/logo.png" "$THEME_DIR/logo.png"
         log "Plymouth logo copied from config directory"
-    elif [ -f "$SCRIPT_DIR/../../assets/route19-logo.png" ]; then
-        cp "$SCRIPT_DIR/../../assets/route19-logo.png" "$THEME_DIR/logo.png"
-        log "Plymouth logo copied from assets"
-    elif [ -f /root/assets/route19-logo.png ]; then
-        cp /root/assets/route19-logo.png "$THEME_DIR/logo.png"
-        log "Plymouth logo copied from /root/assets"
     else
-        log "WARNING: Logo asset not found, creating fallback"
-        echo "Route 19" > "$THEME_DIR/logo.png"
+        log "ERROR: Logo not found at $CONFIG_DIR/plymouth/logo.png"
+        return 1
     fi
     
     # Configure mkinitcpio hooks for Plymouth (Arch best practices)
