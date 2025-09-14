@@ -108,6 +108,15 @@ update_lobby_arch() {
     if [[ -d "$lobby_arch_dir/.git" ]]; then
         log_message "Updating lobby-arch project..."
         cd "$lobby_arch_dir"
+        
+        # Check for uncommitted changes
+        if ! git diff --quiet || ! git diff --staged --quiet; then
+            log_message "WARNING: Uncommitted changes detected in lobby-arch repository"
+            log_message "Skipping lobby-arch update to avoid overwriting local changes"
+            log_message "Please commit or stash changes manually, then run: sudo lobby sync"
+            return 1
+        fi
+        
         if git pull origin main; then
             log_message "lobby-arch updated successfully"
             # Make scripts executable after update

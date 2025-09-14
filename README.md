@@ -61,11 +61,11 @@ Boot into the Arch ISO and open a terminal.
 
 ```bash
 # Download main installer
-curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/arch-install.sh -o /tmp/arch-install.sh
-chmod +x /tmp/arch-install.sh
+curl -sSL https://raw.githubusercontent.com/kenzie/lobby-arch/main/install.sh -o /tmp/install.sh
+chmod +x /tmp/install.sh
 
 # Run installer
-/tmp/arch-install.sh
+/tmp/install.sh
 ```
 
 ### 3. Automatic post-install setup

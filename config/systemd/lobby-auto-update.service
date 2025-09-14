@@ -12,6 +12,4 @@ StandardError=journal
 TimeoutStartSec=3600
 
 [Install]
-# Removed WantedBy to prevent auto-start during boot
-# Service only runs via timer scheduling
-EOF < /dev/null
+# Service only runs via timer scheduling, not during boot

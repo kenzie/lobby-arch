@@ -593,13 +593,16 @@ sync_from_github() {
         return 1
     }
 
-    # Save any local changes (shouldn't be any, but just in case)
+    # Check for uncommitted changes and warn user
     if ! git diff --quiet || ! git diff --staged --quiet; then
-        warning "Local changes detected, stashing them"
-        git stash push -m "Auto-stash before sync $(date)" || {
-            error "Failed to stash local changes"
-            return 1
-        }
+        error "Uncommitted changes detected in lobby-arch repository!"
+        echo "  Modified files:"
+        git status --porcelain | sed 's/^/    /'
+        echo ""
+        error "Please commit or stash your changes before running sync"
+        error "Use 'git add .' and 'git commit -m \"your message\"' to commit changes"
+        error "Or use 'git stash' to temporarily save changes"
+        return 1
     fi
 
     if [[ "$sync_target" == "main" ]]; then
