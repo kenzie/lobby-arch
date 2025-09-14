@@ -83,5 +83,5 @@ else
     log "Skipping service disable (chroot environment)"
 fi
 
-log "==> Post-install tasks complete. The system will boot directly to Cage kiosk with Plymouth splash."
+log "==> Post-install tasks complete. The system will boot directly to Hyprland kiosk with Plymouth splash."
 log "==> Use 'sudo lobby help' for system management and 'sudo lobby health' for diagnostics."
