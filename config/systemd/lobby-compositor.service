@@ -14,7 +14,7 @@ Environment=AQ_DRM_DEVICES=/dev/dri/card1
 
 # Wait for system to be fully ready and ensure VT is available
 ExecStartPre=/bin/bash -c 'systemctl stop getty@tty1.service getty@tty2.service 2>/dev/null || true'
-ExecStartPre=/bin/bash -c 'timeout 10 bash -c "while ! chvt 2 2>/dev/null; do sleep 0.5; done" || echo "VT switch timeout, continuing"; sleep 2'
+ExecStartPre=/bin/bash -c 'timeout 3 bash -c "while ! chvt 2 2>/dev/null; do sleep 0.5; done" || echo "VT switch timeout, continuing"; sleep 1'
 ExecStartPre=/bin/bash -c 'while [ ! -c /dev/dri/card1 ] || fuser /dev/dri/card1 2>/dev/null; do sleep 0.5; done'
 
 # Launch Hyprland compositor
