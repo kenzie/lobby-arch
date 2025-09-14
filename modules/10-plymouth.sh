@@ -119,23 +119,6 @@ setup_plymouth() {
         # This service waits for the Hyprland process and Chromium to be running, then quits Plymouth.
     log "Installing kiosk-aware plymouth-quit-wait service"
     cp "$config_dir/systemd/plymouth-quit-wait.service" /etc/systemd/system/plymouth-quit-wait.service
-[Unit]
-Description=Hold until boot process finishes up (Kiosk Version)
-
-# Removed Requisite to prevent dependency failures - Wants is sufficient
-
-[Service]
-Type=oneshot
-# Wait for Hyprland to be running (optimized for speed)
-ExecStartPre=/bin/bash -c 'echo "Waiting for kiosk to be ready..."; for i in \$(seq 1 30); do if pgrep -f "chromium.*kiosk" >/dev/null; then echo "Kiosk fully ready after \$i seconds"; break; elif pgrep Hyprland >/dev/null; then echo "Hyprland ready, waiting for Chromium..."; fi; sleep 0.5; done'
-ExecStart=/bin/bash -c "/usr/bin/plymouth quit --retain-splash || echo \"Plymouth quit complete\"; sleep 0.5"
-RemainAfterExit=yes
-# Add timeout to prevent hanging
-TimeoutStartSec=40
-[Install]
-WantedBy=graphical.target
-EOF
-
     systemctl enable plymouth-quit-wait.service
 
     log "Plymouth theme configuration completed"

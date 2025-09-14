@@ -104,7 +104,7 @@ perform_update() {
 
 # Function to update lobby-arch project
 update_lobby_arch() {
-    local lobby_arch_dir="/home/lobby/Code/lobby-arch"
+    local lobby_arch_dir="/home/lobby/lobby-arch"
     if [[ -d "$lobby_arch_dir/.git" ]]; then
         log_message "Updating lobby-arch project..."
         cd "$lobby_arch_dir"

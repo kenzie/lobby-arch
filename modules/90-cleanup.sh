@@ -24,6 +24,12 @@ log() {
 setup_cleanup() {
     log "Running cleanup and finalization tasks"
 
+    # Install useful system utilities
+    log "Installing system utilities (less, btop)"
+    pacman -S --noconfirm --needed less btop || {
+        log "WARNING: Failed to install some utilities"
+    }
+
     # Create global lobby command symlink
     log "Creating global lobby command"
     ln -sf /home/lobby/lobby-arch/lobby.sh /usr/local/bin/lobby
