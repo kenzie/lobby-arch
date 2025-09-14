@@ -257,19 +257,16 @@ StandardError=journal
 WantedBy=graphical.target
 EOF
 
-    # --- 7. Enable and Start Services ---
-    log "Enabling and starting Hyprland compositor and health monitor services"
+    # --- 7. Enable Services (let systemd start them when ready) ---
+    log "Enabling Hyprland compositor and health monitor services"
     systemctl daemon-reload
     
-    # Enable and start seatd first (dependency)
+    # Enable seatd first (dependency)
     systemctl enable seatd.service
-    systemctl start seatd.service
     
-    # Enable and start compositor services
+    # Enable compositor services
     systemctl enable lobby-compositor.service
     systemctl enable lobby-health-monitor.service
-    systemctl start lobby-compositor.service
-    systemctl start lobby-health-monitor.service
 
     log "Hyprland compositor setup completed successfully"
 }
