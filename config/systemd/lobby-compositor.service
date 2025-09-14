@@ -1,7 +1,9 @@
 [Unit]
 Description=Lobby Hyprland Compositor
-After=systemd-user-sessions.service seatd.service graphical-session-pre.target multi-user.target
-Wants=seatd.service
+After=systemd-user-sessions.service seatd.service user@1000.service
+Wants=seatd.service user@1000.service
+StartLimitIntervalSec=60
+StartLimitBurst=5
 
 [Service]
 Type=simple
@@ -14,6 +16,8 @@ Environment=AQ_DRM_DEVICES=/dev/dri/card1
 
 # Wait for system to be fully ready and ensure VT is available
 ExecStartPre=/bin/bash -c 'systemctl stop getty@tty1.service getty@tty2.service 2>/dev/null || true'
+# Wait for user runtime directory (created by user@1000.service)
+ExecStartPre=/bin/bash -c 'while [ ! -d /run/user/1000 ]; do sleep 0.1; done'
 # VT switching removed - Hyprland handles display control automatically
 ExecStartPre=/bin/bash -c 'while [ ! -c /dev/dri/card1 ] || fuser /dev/dri/card1 2>/dev/null; do sleep 0.5; done'
 
@@ -21,13 +25,13 @@ ExecStartPre=/bin/bash -c 'while [ ! -c /dev/dri/card1 ] || fuser /dev/dri/card1
 ExecStart=/usr/bin/Hyprland
 
 # Health check: restart if Hyprland starts but doesn't create wayland socket
-ExecStartPost=/bin/bash -c 'for i in {1..30}; do [ -S /run/user/1000/wayland-1 ] && exit 0; sleep 1; done; exit 1'
+ExecStartPost=/bin/bash -c 'for i in {1..10}; do [ -S /run/user/1000/wayland-1 ] && exit 0; sleep 0.5; done; exit 1'
+# Signal Plymouth to quit now that display is ready
+ExecStartPost=/bin/bash -c 'plymouth quit --retain-splash || true'
 
 # Restart on failure with exponential backoff
 Restart=on-failure
 RestartSec=5
-StartLimitBurst=5
-StartLimitIntervalSec=60
 
 # Logging
 StandardOutput=journal
