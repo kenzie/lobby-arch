@@ -41,68 +41,12 @@ setup_compositor() {
     usermod -a -G seat,video "$USER"
 
     # --- 3. Create Hyprland Configuration ---
-    log "Creating minimal Hyprland kiosk configuration"
+    log "Installing Hyprland kiosk configuration"
     local hypr_config_dir="$HOME_DIR/.config/hypr"
     mkdir -p "$hypr_config_dir"
     
-    cat > "$hypr_config_dir/hyprland.conf" <<'EOF'
-# Hyprland Kiosk Configuration - Optimized for GPU Acceleration
-# Designed for stable kiosk operation with ANGLE support
-
-monitor=,preferred,auto,1
-
-general {
-    border_size = 0
-    layout = dwindle
-    gaps_in = 0
-    gaps_out = 0
-}
-
-decoration {
-    rounding = 0
-    blur {
-        enabled = false
-    }
-    shadow {
-        enabled = false
-    }
-}
-
-input {
-    kb_layout = us
-    follow_mouse = 0
-    sensitivity = 0
-}
-
-misc {
-    disable_hyprland_logo = true
-    disable_splash_rendering = true
-    force_default_wallpaper = 0
-    animate_manual_resizes = false
-    animate_mouse_windowdragging = false
-    enable_swallow = false
-    vrr = 0
-}
-
-animations {
-    enabled = false
-}
-
-cursor {
-    no_hardware_cursors = true
-    inactive_timeout = 8
-}
-
-# XWayland disabled - using native Wayland with ozone-platform
-xwayland {
-    enabled = false
-}
-
-# No key bindings defined for kiosk mode - prevents accidental interactions
-
-# No auto-exec - browser launched by separate systemd service
-# This ensures compositor and browser can restart independently
-EOF
+    local config_dir="$SCRIPT_DIR/../config"
+    cp "$config_dir/hyprland/hyprland.conf" "$hypr_config_dir/hyprland.conf"
     
     chown -R "$USER:$USER" "$HOME_DIR/.config"
     log "Hyprland configuration created at $hypr_config_dir/hyprland.conf"
@@ -119,8 +63,10 @@ EOF
     systemctl mask autovt@tty1.service autovt@tty2.service || true
 
     # --- 6. Create Health Monitor ---
-    log "Creating kiosk health monitoring system"
-    cat > /usr/local/bin/lobby-health-monitor.sh <<'EOF'
+    log "Installing kiosk health monitoring system"
+    cp "$config_dir/scripts/lobby-health-monitor.sh" /usr/local/bin/lobby-health-monitor.sh
+    chmod +x /usr/local/bin/lobby-health-monitor.sh
+    log "Health monitor script installed from $config_dir/scripts/lobby-health-monitor.sh"
 #!/bin/bash
 # Lobby Health Monitor - Detects and recovers from kiosk failures
 

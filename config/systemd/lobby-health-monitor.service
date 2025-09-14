@@ -1,0 +1,17 @@
+[Unit]
+Description=Lobby Kiosk Health Monitor
+After=lobby-compositor.service lobby-app.service lobby-browser.service
+Wants=lobby-compositor.service lobby-app.service lobby-browser.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/lobby-health-monitor.sh
+Restart=always
+RestartSec=10
+User=root
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical.target
+EOF < /dev/null
