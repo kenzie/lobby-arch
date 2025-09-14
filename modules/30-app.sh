@@ -30,9 +30,9 @@ setup_app() {
     systemctl stop lobby-app.service 2>/dev/null || true
 
     # --- 1. Install Node.js and NPM ---
-    log "Installing Node.js and NPM"
+    log "Installing Node.js and npm"
     pacman -S --noconfirm --needed nodejs npm || {
-        log "ERROR: Failed to install Node.js/NPM"
+        log "ERROR: Failed to install nodejs/npm"
         return 1
     }
 

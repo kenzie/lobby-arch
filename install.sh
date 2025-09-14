@@ -32,13 +32,9 @@ read PASSWORD
 stty echo
 echo
 
-echo -n "Timezone (default America/Halifax): "
-read TIMEZONE
-TIMEZONE=${TIMEZONE:-America/Halifax}
-
-echo -n "Locale (default en_US.UTF-8): "
-read LOCALE
-LOCALE=${LOCALE:-en_US.UTF-8}
+# Set default timezone and locale
+TIMEZONE="America/Halifax"
+LOCALE="en_US.UTF-8"
 
 # --- Clean disk ---
 echo "==> Cleaning $DISK..."
@@ -80,14 +76,12 @@ mount "$ROOT" /mnt
 mkdir -p /mnt/boot
 mount -t vfat "$EFI" /mnt/boot
 
-# --- Install base system + Cage + Plymouth (no spinner theme) ---
+# --- Install base system + Hyprland + Plymouth (no spinner theme) ---
 echo "==> Installing base packages..."
 pacstrap /mnt base linux linux-firmware vim networkmanager sudo git \
     base-devel openssh rng-tools curl bc \
-    cage seatd chromium xorg-xwayland dbus \
+    dbus \
     ttf-cascadia-code-nerd inter-font cairo freetype2 \
-    nodejs npm \
-    hyprland \
     amd-ucode mesa vulkan-radeon libva-mesa-driver mesa-vdpau \
     wireless_tools wpa_supplicant
 
@@ -170,8 +164,8 @@ echo "==> Verifying installation files..."
 critical_files=(
     "/mnt/home/lobby/lobby-arch/post-install.sh"
     "/mnt/home/lobby/lobby-arch/lobby.sh"
-    "/mnt/home/lobby/lobby-arch/modules/02-kiosk.sh"
-    "/mnt/home/lobby/lobby-arch/assets/route19-logo.png"
+    "/mnt/home/lobby/lobby-arch/modules/10-plymouth.sh"
+    "/mnt/home/lobby/lobby-arch/config/plymouth/logo.png"
 )
 
 for file in "${critical_files[@]}"; do
@@ -200,4 +194,4 @@ echo "✓ Post-install setup completed successfully"
 
 # --- Unmount and finish ---
 umount -R /mnt
-echo "==> Installation complete. Reboot now. The system will launch Cage kiosk with Plymouth splash."
+echo "==> Installation complete. Reboot now. The system will launch Hyprland kiosk with Plymouth splash."
