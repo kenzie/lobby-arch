@@ -108,46 +108,10 @@ EOF
     log "Hyprland configuration created at $hypr_config_dir/hyprland.conf"
 
     # --- 4. Create Hyprland Systemd Service ---
-    log "Creating Hyprland compositor systemd service"
-    cat > /etc/systemd/system/lobby-compositor.service <<'EOF'
-[Unit]
-Description=Lobby Hyprland Compositor
-After=systemd-user-sessions.service seatd.service graphical-session-pre.target multi-user.target
-Wants=seatd.service
-
-[Service]
-Type=simple
-User=lobby
-Group=seat
-Environment=XDG_RUNTIME_DIR=/run/user/1000
-Environment=XDG_SESSION_TYPE=wayland
-Environment=XDG_CURRENT_DESKTOP=Hyprland
-Environment=AQ_DRM_DEVICES=/dev/dri/card1
-
-# Wait for system to be fully ready and ensure VT is available
-ExecStartPre=/bin/bash -c 'systemctl stop getty@tty1.service getty@tty2.service 2>/dev/null || true'
-ExecStartPre=/bin/bash -c 'while ! chvt 2 2>/dev/null; do sleep 0.5; done; sleep 2'
-ExecStartPre=/bin/bash -c 'while [ ! -c /dev/dri/card1 ] || fuser /dev/dri/card1 2>/dev/null; do sleep 0.5; done'
-
-# Launch Hyprland compositor
-ExecStart=/usr/bin/Hyprland
-
-# Health check: restart if Hyprland starts but doesn't create wayland socket
-ExecStartPost=/bin/bash -c 'for i in {1..30}; do [ -S /run/user/1000/wayland-1 ] && exit 0; sleep 1; done; exit 1'
-
-# Restart on failure with exponential backoff
-Restart=on-failure
-RestartSec=5
-StartLimitBurst=5
-StartLimitIntervalSec=60
-
-# Logging
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=graphical.target
-EOF
+    log "Installing Hyprland compositor systemd service"
+    local config_dir="$SCRIPT_DIR/../config"
+    cp "$config_dir/systemd/lobby-compositor.service" /etc/systemd/system/lobby-compositor.service
+    log "Lobby compositor service installed from $config_dir/systemd/lobby-compositor.service"
 
     # --- 5. Disable Getty Services ---
     log "Disabling getty services to prevent TTY fallback"

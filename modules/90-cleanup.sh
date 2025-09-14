@@ -37,27 +37,8 @@ setup_cleanup() {
     # Configure log rotation (ensure directory exists)
     log "Setting up log rotation"
     mkdir -p /etc/logrotate.d
-    cat > /etc/logrotate.d/lobby <<'EOF'
-/var/log/lobby-*.log {
-    daily
-    rotate 7
-    compress
-    delaycompress
-    missingok
-    notifempty
-    create 644 root root
-}
-
-/var/log/post-install.log {
-    weekly
-    rotate 4
-    compress
-    delaycompress
-    missingok
-    notifempty
-    create 644 root root
-}
-EOF
+    cp "$CONFIG_DIR/logrotate/lobby" /etc/logrotate.d/lobby
+    log "Lobby logrotate configuration installed from $CONFIG_DIR/logrotate/lobby"
 
     # Configure systemd journal limits to prevent disk space issues
     log "Configuring systemd journal size limits"

@@ -1,0 +1,20 @@
+/var/log/lobby-*.log {
+    daily
+    rotate 7
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 root root
+}
+
+/var/log/post-install.log {
+    weekly
+    rotate 4
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 root root
+}
+EOF < /dev/null

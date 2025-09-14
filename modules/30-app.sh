@@ -62,41 +62,10 @@ setup_app() {
     log "lobby-display build completed successfully"
 
     # --- 3. Create App Service ---
-    log "Creating Vue.js app systemd service"
-    cat > /etc/systemd/system/lobby-app.service <<'EOF'
-[Unit]
-Description=Lobby Display Vue.js App
-After=network.target
-Wants=network.target
-
-[Service]
-Type=simple
-User=lobby
-WorkingDirectory=/opt/lobby-display
-ExecStart=/usr/bin/npm run preview -- --port 8080 --host
-Restart=on-failure
-RestartSec=10
-StartLimitIntervalSec=60
-StartLimitBurst=5
-
-# Resource limits
-MemoryMax=512M
-MemoryAccounting=yes
-
-# Security
-NoNewPrivileges=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=/opt/lobby-display
-PrivateTmp=true
-
-# Logging
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
-EOF
+    log "Installing Vue.js app systemd service"
+    local config_dir="$SCRIPT_DIR/../config"
+    cp "$config_dir/systemd/lobby-app.service" /etc/systemd/system/lobby-app.service
+    log "Lobby app service installed from $config_dir/systemd/lobby-app.service"
 
     # --- 4. Enable Service ---
     log "Enabling Vue.js app service"

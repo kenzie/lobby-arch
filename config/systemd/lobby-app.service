@@ -1,0 +1,33 @@
+[Unit]
+Description=Lobby Display Vue.js App
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=lobby
+WorkingDirectory=/opt/lobby-display
+ExecStart=/usr/bin/npm run preview -- --port 8080 --host
+Restart=on-failure
+RestartSec=10
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+# Resource limits
+MemoryMax=512M
+MemoryAccounting=yes
+
+# Security
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/lobby-display
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF < /dev/null
