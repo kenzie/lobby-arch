@@ -9,7 +9,7 @@ MODULE_VERSION="1.0"
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_DIR="$SCRIPT_DIR/../configs"
+CONFIG_DIR="$SCRIPT_DIR/../config"
 
 # Default values
 USER="${LOBBY_USER:-lobby}"

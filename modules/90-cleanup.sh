@@ -9,7 +9,7 @@ MODULE_VERSION="1.0"
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_DIR="$SCRIPT_DIR/../configs"
+CONFIG_DIR="$SCRIPT_DIR/../config"
 
 # Default values
 USER="${LOBBY_USER:-lobby}"
@@ -30,7 +30,7 @@ setup_cleanup() {
 
     # Remove any stale module copies in /usr/local/bin to avoid confusion
     log "Cleaning up stale module copies"
-    rm -rf /usr/local/bin/modules /usr/local/bin/configs
+    rm -rf /usr/local/bin/modules /usr/local/bin/config
 
     log "Global lobby command created at /usr/local/bin/lobby"
 
