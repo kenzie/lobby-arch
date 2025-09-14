@@ -172,9 +172,11 @@ run_all_modules() {
     if [[ ${#failed_modules[@]} -eq 0 ]]; then
         success "All modules completed successfully ($success_count modules)"
         
-        # If this was a setup operation, start services in proper order
-        if [[ "$action" == "setup" ]]; then
+        # If this was a setup operation, start services (unless during post-install)
+        if [[ "$action" == "setup" && -z "${CHROOT_INSTALL:-}" && -z "${POST_INSTALL:-}" ]]; then
             start_lobby_services
+        elif [[ "$action" == "setup" ]]; then
+            info "Skipping service start during installation - services will start on boot"
         fi
         
         return 0

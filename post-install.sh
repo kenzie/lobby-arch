@@ -63,6 +63,7 @@ fi
 export LOBBY_USER="$USER"
 export LOBBY_HOME="$HOME_DIR"
 export LOBBY_LOG="$LOGFILE"
+export POST_INSTALL="true"
 
 # Run full lobby setup (modules should already be present)
 log "Running lobby setup (configure all modules)"
