@@ -171,10 +171,70 @@ run_all_modules() {
 
     if [[ ${#failed_modules[@]} -eq 0 ]]; then
         success "All modules completed successfully ($success_count modules)"
+        
+        # If this was a setup operation, start services in proper order
+        if [[ "$action" == "setup" ]]; then
+            start_lobby_services
+        fi
+        
         return 0
     else
         error "$action failed for modules: ${failed_modules[*]}"
         warning "Successful modules: $success_count"
+        return 1
+    fi
+}
+
+# Start lobby services in proper dependency order
+start_lobby_services() {
+    info "Starting lobby services in dependency order"
+    
+    # Stop all services first to ensure clean state
+    info "Stopping existing lobby services"
+    systemctl stop lobby-browser.service 2>/dev/null || true
+    systemctl stop lobby-app.service 2>/dev/null || true
+    systemctl stop lobby-compositor.service 2>/dev/null || true
+    systemctl stop lobby-health-monitor.service 2>/dev/null || true
+    
+    # Start services in dependency order
+    info "Starting seatd service"
+    if systemctl start seatd.service; then
+        success "seatd.service started"
+    else
+        warning "seatd.service failed to start (may not be needed)"
+    fi
+    
+    sleep 2  # Brief pause for seatd to initialize
+    
+    info "Starting compositor service"
+    if systemctl start lobby-compositor.service; then
+        success "lobby-compositor.service started"
+    else
+        error "lobby-compositor.service failed to start"
+        return 1
+    fi
+    
+    sleep 3  # Wait for compositor to be ready
+    
+    info "Starting health monitor"
+    systemctl start lobby-health-monitor.service || warning "lobby-health-monitor.service failed to start"
+    
+    info "Starting app service"
+    if systemctl start lobby-app.service; then
+        success "lobby-app.service started"
+    else
+        error "lobby-app.service failed to start"
+        return 1
+    fi
+    
+    sleep 5  # Wait for app to be responding on port 8080
+    
+    info "Starting browser service"
+    if systemctl start lobby-browser.service; then
+        success "lobby-browser.service started"
+        success "All lobby services started successfully"
+    else
+        error "lobby-browser.service failed to start"
         return 1
     fi
 }

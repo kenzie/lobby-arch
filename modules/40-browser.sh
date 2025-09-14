@@ -21,6 +21,10 @@ log() {
 # Main setup function
 setup_browser() {
     log "Setting up Chromium browser service for kiosk mode"
+    
+    # Stop browser service for clean setup
+    log "Stopping browser service"
+    systemctl stop lobby-browser.service 2>/dev/null || true
 
     # --- 1. Install Chromium ---
     log "Installing Chromium browser"

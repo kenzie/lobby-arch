@@ -22,6 +22,12 @@ log() {
 # Main setup function
 setup_compositor() {
     log "Setting up Hyprland compositor with ANGLE GPU acceleration"
+    
+    # Stop related services for clean setup
+    log "Stopping compositor-related services"
+    systemctl stop lobby-browser.service 2>/dev/null || true
+    systemctl stop lobby-compositor.service 2>/dev/null || true
+    systemctl stop lobby-health-monitor.service 2>/dev/null || true
 
     # --- 1. Install Hyprland Package and Dependencies ---
     log "Installing Hyprland compositor and seatd"

@@ -24,6 +24,10 @@ log() {
 # Main setup function
 setup_app() {
     log "Setting up Vue.js lobby-display application"
+    
+    # Stop app service for clean setup
+    log "Stopping app service"
+    systemctl stop lobby-app.service 2>/dev/null || true
 
     # --- 1. Install Node.js and NPM ---
     log "Installing Node.js and NPM"
