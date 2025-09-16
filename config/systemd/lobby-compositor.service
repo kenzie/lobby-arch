@@ -9,7 +9,8 @@ Group=seat
 Environment=XDG_RUNTIME_DIR=/run/user/1000
 Environment=XDG_SESSION_TYPE=wayland
 Environment=XDG_CURRENT_DESKTOP=Hyprland
-## Removed root-only ExecStartPre lines; ensure Plymouth is stopped by setup script before starting this service
+# Create user runtime directory manually to avoid 44s delay from user service
+ExecStartPre=+/bin/bash -c 'mkdir -p /run/user/1000 && chown 1000:1000 /run/user/1000 && chmod 700 /run/user/1000'
 ExecStart=/usr/bin/Hyprland --config /home/lobby/.config/hypr/hyprland.conf
 Restart=always
 RestartSec=5
