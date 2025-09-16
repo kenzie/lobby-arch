@@ -20,25 +20,15 @@ ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do 
 ExecStartPre=/bin/bash -c 'while ! pgrep -f "Hyprland" >/dev/null; do sleep 0.5; done; sleep 1'
 ExecStartPre=/bin/bash -c 'while [[ ! -S /run/user/1000/wayland-1 ]]; do sleep 0.5; done'
 
-# Launch Chromium with ANGLE GPU acceleration for smooth animations
+# Launch Chromium with minimal flags for fastest startup
 ExecStart=/usr/bin/chromium \
     --no-sandbox \
     --disable-dev-shm-usage \
-    --enable-gpu \
-    --use-gl=egl-angle \
-    --use-angle=opengles \
     --ozone-platform=wayland \
-    --enable-features=UseOzonePlatform,VaapiVideoDecoder \
-    --disable-background-timer-throttling \
-    --disable-backgrounding-occluded-windows \
-    --disable-renderer-backgrounding \
     --disable-extensions \
     --disable-plugins \
-    --disable-sync \
-    --disable-translate \
     --no-first-run \
     --no-default-browser-check \
-    --remote-debugging-port=9222 \
     --kiosk http://localhost:8080
 
 # Restart policy with backoff to prevent crash loops

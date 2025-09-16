@@ -1,12 +1,13 @@
 [Unit]
 Description=Hold until boot process finishes up (Kiosk Version)
-After=multi-user.target network.target
+After=lobby-compositor.service
+Wants=lobby-compositor.service
 
 [Service]
 Type=oneshot
-# Plymouth will be quit by Hyprland when display is ready - just wait passively
-ExecStart=/bin/bash -c "echo 'Plymouth quit will be handled by compositor service'"
+# Quit Plymouth immediately after compositor starts
+ExecStart=/bin/bash -c "plymouth quit"
 RemainAfterExit=yes
-TimeoutStartSec=30
+TimeoutStartSec=10
 [Install]
 WantedBy=graphical.target
