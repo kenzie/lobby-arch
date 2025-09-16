@@ -62,12 +62,11 @@ setup_plymouth() {
         # Backup original configuration
         cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.backup
         
-        # AMD graphics will load automatically - remove any explicit module loading
-        sed -i 's/^MODULES=(amdgpu)/MODULES=()/' /etc/mkinitcpio.conf
-        sed -i 's/^MODULES=()/MODULES=()/' /etc/mkinitcpio.conf
-        
-        # Configure hooks in proper order: systemd must precede plymouth
-        sed -i 's/^HOOKS=.*/HOOKS=(systemd plymouth autodetect microcode modconf kms keyboard keymap consolefont block filesystems fsck)/' /etc/mkinitcpio.conf
+        # Ensure AMD graphics is loaded early to prevent driver transition during Plymouth
+        sed -i 's/^MODULES=(.*)/MODULES=(amdgpu)/' /etc/mkinitcpio.conf
+
+        # Configure hooks in proper order: systemd must precede plymouth, kms early for stable graphics
+        sed -i 's/^HOOKS=.*/HOOKS=(systemd autodetect microcode modconf kms keymap consolefont plymouth block filesystems fsck)/' /etc/mkinitcpio.conf
         log "Configured mkinitcpio with automatic graphics detection and proper hook order"
         
         # Regenerate initramfs
@@ -118,8 +117,8 @@ setup_plymouth() {
         if [[ -f "$BOOT_ENTRY" ]]; then
             # Extract current root UUID and preserve it
             ROOT_UUID=$(grep "^options" "$BOOT_ENTRY" | grep -o "root=UUID=[^ ]*" || echo "root=LABEL=arch")
-            # Update with enhanced kernel parameters for clean kiosk boot
-            sed -i "s|^options.*|options $ROOT_UUID rw quiet splash tsc=unstable|" "$BOOT_ENTRY"
+            # Update with enhanced kernel parameters for stable Plymouth display
+            sed -i "s|^options.*|options $ROOT_UUID rw quiet splash tsc=unstable amd.display_order=false amdgpu.modeset=1 plymouth.ignore-serial-consoles|" "$BOOT_ENTRY"
             log "Updated systemd-boot configuration with clean boot parameters"
         else
             log "WARNING: systemd-boot configuration not found at $BOOT_ENTRY"

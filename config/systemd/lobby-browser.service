@@ -27,7 +27,6 @@ ExecStart=/usr/bin/chromium \
     --enable-gpu \
     --use-gl=egl-angle \
     --use-angle=opengles \
-    --enable-angle-features=EnableBackEndValidation \
     --ozone-platform=wayland \
     --enable-features=UseOzonePlatform,VaapiVideoDecoder \
     --disable-background-timer-throttling \
