@@ -192,7 +192,6 @@ start_lobby_services() {
     systemctl stop lobby-browser.service 2>/dev/null || true
     systemctl stop lobby-app.service 2>/dev/null || true
     systemctl stop lobby-compositor.service 2>/dev/null || true
-    systemctl stop lobby-health-monitor.service 2>/dev/null || true
     
     # Start services in dependency order
     info "Starting seatd service"
@@ -214,8 +213,6 @@ start_lobby_services() {
     
     sleep 3  # Wait for compositor to be ready
     
-    info "Starting health monitor"
-    systemctl start lobby-health-monitor.service || warning "lobby-health-monitor.service failed to start"
     
     info "Starting app service"
     if systemctl start lobby-app.service; then

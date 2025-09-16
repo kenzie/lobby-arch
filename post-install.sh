@@ -27,7 +27,7 @@ log "Cleaning up any existing lobby services and processes from previous attempt
 
 # Stop any running lobby services
 log "Stopping any existing lobby services"
-systemctl stop lobby-browser.service lobby-app.service lobby-compositor.service lobby-health-monitor.service 2>/dev/null || true
+systemctl stop lobby-browser.service lobby-app.service lobby-compositor.service 2>/dev/null || true
 
 # Reset any failed services
 log "Resetting failed service states"
@@ -37,7 +37,6 @@ systemctl reset-failed 2>/dev/null || true
 log "Cleaning up leftover processes"
 pkill -f "chromium.*kiosk" 2>/dev/null || true
 pkill -f "Hyprland" 2>/dev/null || true
-pkill -f "lobby-health-monitor" 2>/dev/null || true
 
 # Remove any stale lock files
 log "Removing stale lock files"
@@ -120,7 +119,7 @@ log "==> Post-install tasks complete. All services have been configured and enab
 
 # Final cleanup before reboot
 log "Performing final cleanup before reboot..."
-systemctl stop lobby-browser.service lobby-app.service lobby-compositor.service lobby-health-monitor.service 2>/dev/null || true
+systemctl stop lobby-browser.service lobby-app.service lobby-compositor.service 2>/dev/null || true
 pkill -f "chromium.*kiosk" 2>/dev/null || true
 pkill -f "Hyprland" 2>/dev/null || true
 

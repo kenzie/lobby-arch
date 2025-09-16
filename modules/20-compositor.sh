@@ -27,7 +27,6 @@ setup_compositor() {
     log "Stopping compositor-related services"
     systemctl stop lobby-browser.service 2>/dev/null || true
     systemctl stop lobby-compositor.service 2>/dev/null || true
-    systemctl stop lobby-health-monitor.service 2>/dev/null || true
 
     # --- 1. Install Hyprland Package and Dependencies ---
     log "Installing Hyprland compositor and seatd"
@@ -62,17 +61,7 @@ setup_compositor() {
     systemctl mask getty@tty1.service getty@tty2.service || true
     systemctl mask autovt@tty1.service autovt@tty2.service || true
 
-    # --- 6. Create Health Monitor ---
-    log "Installing kiosk health monitoring system"
-    cp "$config_dir/scripts/lobby-health-monitor.sh" /usr/local/bin/lobby-health-monitor.sh
-    chmod +x /usr/local/bin/lobby-health-monitor.sh
-    log "Health monitor script installed from $config_dir/scripts/lobby-health-monitor.sh"
-
-    # Install health monitor service
-    cp "$config_dir/systemd/lobby-health-monitor.service" /etc/systemd/system/lobby-health-monitor.service
-    log "Health monitor service installed from $config_dir/systemd/"
-
-    # --- 7. Enable Services (let systemd start them when ready) ---
+    # --- 6. Enable Services (let systemd start them when ready) ---
     log "Stopping Plymouth and switching to VT2 as root before enabling Hyprland compositor"
     if [[ $EUID -eq 0 ]]; then
         systemctl stop plymouth-quit.service || true
@@ -83,7 +72,7 @@ setup_compositor() {
         log "WARNING: Not running as root, cannot stop Plymouth or switch VT."
     fi
 
-    log "Enabling Hyprland compositor and health monitor services"
+    log "Enabling Hyprland compositor services"
     systemctl daemon-reload
 
     # Enable seatd first (dependency)
@@ -91,7 +80,6 @@ setup_compositor() {
 
     # Enable compositor services
     systemctl enable lobby-compositor.service
-    systemctl enable lobby-health-monitor.service
 
     log "Hyprland compositor setup completed successfully"
 }
