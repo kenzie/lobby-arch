@@ -1,0 +1,1 @@
+- run sudo lobby help to identify what commands are available

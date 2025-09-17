@@ -2,6 +2,8 @@
 Description=Lobby Display Vue.js App
 After=network.target
 Wants=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
 
 [Service]
 Type=simple
@@ -10,8 +12,6 @@ WorkingDirectory=/opt/lobby-display
 ExecStart=/usr/bin/npm run preview -- --port 8080 --host
 Restart=on-failure
 RestartSec=10
-StartLimitIntervalSec=60
-StartLimitBurst=5
 
 # Resource limits
 MemoryMax=512M
