@@ -65,7 +65,6 @@ setup_compositor() {
     log "Stopping Plymouth and switching to VT2 as root before enabling Hyprland compositor"
     if [[ $EUID -eq 0 ]]; then
         systemctl stop plymouth-quit.service || true
-        systemctl stop plymouth.service || true
         killall plymouthd || true
         chvt 2 || true
     else
