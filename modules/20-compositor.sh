@@ -50,11 +50,12 @@ setup_compositor() {
     chown -R "$USER:$USER" "$HOME_DIR/.config"
     log "Hyprland configuration created at $hypr_config_dir/hyprland.conf"
 
-    # --- 4. Create Hyprland Systemd Service ---
+    # --- 4. Create Hyprland and Mako Systemd Services ---
     log "Installing Hyprland compositor systemd service"
     local config_dir="$SCRIPT_DIR/../config"
     cp "$config_dir/systemd/lobby-compositor.service" /etc/systemd/system/lobby-compositor.service
-    log "Lobby compositor service installed from $config_dir/systemd/lobby-compositor.service"
+    cp "$config_dir/systemd/lobby-mako.service" /etc/systemd/system/lobby-mako.service
+    log "Lobby compositor and mako services installed"
 
     # --- 5. Disable Getty Services ---
     log "Disabling getty services to prevent TTY fallback"
@@ -77,8 +78,9 @@ setup_compositor() {
     # Enable seatd first (dependency)
     systemctl enable seatd.service
 
-    # Enable compositor services
+    # Enable compositor and mako services
     systemctl enable lobby-compositor.service
+    systemctl enable lobby-mako.service
 
     log "Hyprland compositor setup completed successfully"
 }
@@ -87,12 +89,15 @@ setup_compositor() {
 reset_compositor() {
     log "Resetting Hyprland compositor configuration"
 
-    # Stop and disable service
+    # Stop and disable services
     systemctl stop lobby-compositor.service || true
+    systemctl stop lobby-mako.service || true
     systemctl disable lobby-compositor.service || true
+    systemctl disable lobby-mako.service || true
 
-    # Remove service file
+    # Remove service files
     rm -f /etc/systemd/system/lobby-compositor.service
+    rm -f /etc/systemd/system/lobby-mako.service
 
     # Re-enable getty services
     systemctl unmask getty@tty1.service getty@tty2.service || true

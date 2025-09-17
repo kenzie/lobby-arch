@@ -78,6 +78,7 @@ COMMANDS:
     sync [--force|--main]   Update scripts from GitHub repository (default: latest tag, --main for main branch)
     check-updates [--force] Check for available updates from GitHub
     start                   Start all lobby services in proper order
+    notify <title> <message> Send notification to display
     list                    List available modules
     status                  Show system status
     logs                    Show recent logs
@@ -101,6 +102,7 @@ EXAMPLES:
     $0 sync --force         # Force update (bypass cache)
     $0 check-updates        # Check for script updates
     $0 check-updates --force # Force check (bypass cache)
+    $0 notify "Test" "Hello from lobby" # Send test notification
     $0 status               # Show system status
     $0 health               # Run comprehensive health check
 
@@ -466,6 +468,27 @@ show_logs() {
     fi
 }
 
+# Send notification to display
+send_notification() {
+    local title="$1"
+    local message="$2"
+
+    if [[ -z "$title" || -z "$message" ]]; then
+        error "Usage: lobby notify <title> <message>"
+        return 1
+    fi
+
+    info "Sending notification: $title - $message"
+
+    # Send notification with normal urgency (30 second timeout)
+    if sudo -u "$LOBBY_USER" XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-1 notify-send --urgency=normal "$title" "$message"; then
+        success "Notification sent successfully (30 second timeout)"
+    else
+        error "Failed to send notification - check if mako is running"
+        return 1
+    fi
+}
+
 # Ensure running as root for system operations
 check_root() {
     if [[ $EUID -ne 0 ]]; then
@@ -736,6 +759,9 @@ main() {
         "start")
             check_root
             start_lobby_services
+            ;;
+        "notify")
+            send_notification "$arg2" "$arg3"
             ;;
         "list")
             list_modules

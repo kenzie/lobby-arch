@@ -1,0 +1,34 @@
+[Unit]
+Description=Lobby Network Connectivity Monitor
+Documentation=https://github.com/lobby-arch/lobby-system
+After=network-online.target
+Wants=network-online.target
+Requires=lobby-compositor.service
+After=lobby-compositor.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/network-monitor.sh
+Restart=always
+RestartSec=5
+KillMode=mixed
+TimeoutStopSec=10
+
+# Environment
+Environment=LOBBY_USER=lobby
+Environment=DISPLAY=:0
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/var/log
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=lobby-network-monitor
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,26 @@
+[Unit]
+Description=Lobby Mako Notification Daemon
+Documentation=man:mako(1)
+PartOf=graphical-session.target
+After=lobby-compositor.service
+Requires=lobby-compositor.service
+
+[Service]
+Type=simple
+User=lobby
+Group=lobby
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=WAYLAND_DISPLAY=wayland-1
+ExecStart=/usr/bin/mako --config /home/lobby/.config/mako/config
+Restart=always
+RestartSec=5
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/lobby/.config/mako
+
+[Install]
+WantedBy=graphical.target

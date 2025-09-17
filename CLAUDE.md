@@ -1,1 +1,2 @@
 - run sudo lobby help to identify what commands are available
+- We don't edit live files. We edit the repo and run the appropriate lobby setup command to implement.

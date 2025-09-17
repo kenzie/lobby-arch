@@ -1,0 +1,55 @@
+# Mako configuration for lobby kiosk
+# General notification daemon for system-wide notifications
+
+# Default notification settings
+sort=-time
+layer=overlay
+background-color=#2f3437
+text-color=#ffffff
+width=300
+height=100
+border-size=2
+border-color=#89b4fa
+border-radius=8
+font=Inter 12
+max-history=100
+default-timeout=30000
+
+# Position in top-right corner
+anchor=top-right
+margin=20
+
+# Network status notifications (persistent offline indicator)
+[app-name="network-monitor"]
+background-color=#f38ba8
+text-color=#1e1e2e
+border-color=#f38ba8
+width=250
+height=80
+default-timeout=0
+
+# System notifications
+[app-name="system"]
+background-color=#fab387
+text-color=#1e1e2e
+border-color=#fab387
+
+# Application notifications
+[app-name="app"]
+background-color=#a6e3a1
+text-color=#1e1e2e
+border-color=#a6e3a1
+
+# Critical/urgent notifications
+[urgency=critical]
+background-color=#f38ba8
+text-color=#1e1e2e
+border-color=#f9e2af
+default-timeout=0
+
+# Normal priority notifications
+[urgency=normal]
+background-color=#313244
+text-color=#cdd6f4
+border-color=#89b4fa
+default-timeout=30000
