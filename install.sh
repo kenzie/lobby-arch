@@ -32,6 +32,10 @@ read PASSWORD
 stty echo
 echo
 
+echo -n "Tailscale auth key (optional, press Enter to skip): "
+read TAILSCALE_AUTH_KEY
+echo
+
 # Set default timezone and locale
 TIMEZONE="America/Halifax"
 LOCALE="en_US.UTF-8"
@@ -83,7 +87,7 @@ pacstrap /mnt base linux linux-firmware vim networkmanager sudo git \
     dbus \
     ttf-cascadia-code-nerd inter-font cairo freetype2 \
     amd-ucode mesa vulkan-radeon libva-mesa-driver mesa-vdpau \
-    wireless_tools wpa_supplicant
+    wireless_tools wpa_supplicant tailscale
 
 genfstab -U /mnt >> /mnt/etc/fstab
 
@@ -125,6 +129,9 @@ echo "%wheel ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/999_lobby
 systemctl enable NetworkManager
 systemctl enable sshd
 systemctl enable dbus
+
+# Configure Tailscale
+/home/lobby/lobby-arch/scripts/configure-tailscale.sh "${TAILSCALE_AUTH_KEY}"
 EOF
 
 # --- Clone lobby-arch repository ---
@@ -145,6 +152,7 @@ fi
 # Make scripts executable
 echo "==> Making scripts executable..."
 arch-chroot /mnt find /home/lobby/lobby-arch -name "*.sh" -type f -exec chmod +x {} \;
+chmod +x /mnt/home/lobby/lobby-arch/scripts/configure-tailscale.sh
 
 # Verify git repository is properly set up
 echo "==> Verifying git repository setup..."
