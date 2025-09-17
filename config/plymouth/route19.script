@@ -43,7 +43,7 @@ if (custom_message_start >= 0) {
 }
 
 # Create status message
-status_message = Image.Text(status_message_text, 0.8, 0.8, 0.8, 1.0, "Sans 24");
+status_message = Image.Text(status_message_text, 0.8, 0.8, 0.8, 1.0, "Inter 24");
 status_sprite = Sprite(status_message);
 status_x = (screen_width - status_message.GetWidth()) / 2;
 status_y = logo_y + logo_height + 60;
