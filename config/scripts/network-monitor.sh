@@ -5,7 +5,7 @@
 set -euo pipefail
 
 # Configuration
-CHECK_INTERVAL=10  # seconds
+CHECK_INTERVAL=300  # seconds (5 minutes) - sufficient for offline-first kiosk system
 USER="${LOBBY_USER:-lobby}"
 
 # Test hosts (multiple for reliability)
@@ -51,8 +51,16 @@ send_notification() {
 
 # Dismiss notification
 dismiss_notification() {
-    # Clear any existing network notifications
-    sudo -u "$USER" XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-1 makoctl dismiss --app-name="network-monitor" 2>/dev/null || true
+    # Dismiss all network-monitor notifications by finding their IDs
+    local network_ids
+    network_ids=$(sudo -u "$USER" XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-1 makoctl list 2>/dev/null | \
+        awk '/^Notification [0-9]+:/ { id = $2; gsub(/:/, "", id) } /App name: network-monitor/ { print id }' || true)
+
+    if [[ -n "$network_ids" ]]; then
+        while IFS= read -r id; do
+            [[ -n "$id" ]] && sudo -u "$USER" XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-1 makoctl dismiss -n "$id" 2>/dev/null || true
+        done <<< "$network_ids"
+    fi
 }
 
 # Main monitoring loop
