@@ -229,10 +229,18 @@ start_lobby_services() {
     info "Starting browser service"
     if systemctl start lobby-browser.service; then
         success "lobby-browser.service started"
-        success "All lobby services started successfully"
     else
         error "lobby-browser.service failed to start"
         return 1
+    fi
+
+    info "Starting network monitor service"
+    if systemctl start lobby-network-monitor.service; then
+        success "lobby-network-monitor.service started"
+        success "All lobby services started successfully"
+    else
+        warning "lobby-network-monitor.service failed to start"
+        success "Core lobby services started successfully"
     fi
 }
 

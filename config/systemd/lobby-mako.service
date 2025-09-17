@@ -2,13 +2,15 @@
 Description=Lobby Mako Notification Daemon
 Documentation=man:mako(1)
 PartOf=graphical-session.target
-After=lobby-compositor.service
+After=lobby-compositor.service lobby-app.service
 Requires=lobby-compositor.service
+# Wait for app service which indicates compositor is fully ready
+Wants=lobby-app.service
 
 [Service]
 Type=simple
 User=lobby
-Group=lobby
+Group=seat
 Environment=XDG_RUNTIME_DIR=/run/user/1000
 Environment=WAYLAND_DISPLAY=wayland-1
 ExecStart=/usr/bin/mako --config /home/lobby/.config/mako/config
