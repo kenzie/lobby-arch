@@ -85,11 +85,11 @@ COMMANDS:
     health                  Run comprehensive system health check
 
 MODULES:
-    plymouth               Boot splash screen setup
     compositor             Sway compositor for production stability
     app                    Vue.js lobby display application
     browser                Chromium browser with ANGLE GPU acceleration
     auto-updates           Automatic system updates
+    network-monitor        Network connectivity monitoring and notifications
     cleanup                Cleanup and finalization
 
 EXAMPLES:
