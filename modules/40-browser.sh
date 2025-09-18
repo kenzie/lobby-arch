@@ -33,13 +33,19 @@ setup_browser() {
         return 1
     }
 
-    # --- 2. Create Chromium Systemd Service ---
-    log "Installing Chromium browser systemd service"
+    # --- 2. Install Browser Wrapper Script ---
+    log "Installing browser wrapper script"
     local config_dir="$SCRIPT_DIR/../config"
+    cp "$config_dir/scripts/lobby-browser-wrapper.sh" /usr/local/bin/lobby-browser-wrapper.sh
+    chmod +x /usr/local/bin/lobby-browser-wrapper.sh
+    log "Browser wrapper script installed to /usr/local/bin/lobby-browser-wrapper.sh"
+
+    # --- 3. Create Chromium Systemd Service ---
+    log "Installing Chromium browser systemd service"
     cp "$config_dir/systemd/lobby-browser.service" /etc/systemd/system/lobby-browser.service
     log "Lobby browser service installed from $config_dir/systemd/lobby-browser.service"
 
-    # --- 3. Enable Service ---
+    # --- 4. Enable Service ---
     log "Enabling Chromium browser service"
     systemctl daemon-reload
     systemctl enable lobby-browser.service
@@ -55,8 +61,9 @@ reset_browser() {
     systemctl stop lobby-browser.service || true
     systemctl disable lobby-browser.service || true
 
-    # Remove service file
+    # Remove service file and wrapper script
     rm -f /etc/systemd/system/lobby-browser.service
+    rm -f /usr/local/bin/lobby-browser-wrapper.sh
 
     systemctl daemon-reload
     log "Chromium browser reset completed"
@@ -69,6 +76,12 @@ validate_browser() {
     # Check if service file exists
     if [[ ! -f /etc/systemd/system/lobby-browser.service ]]; then
         log "ERROR: Browser service not found"
+        ((errors++))
+    fi
+
+    # Check if wrapper script exists
+    if [[ ! -f /usr/local/bin/lobby-browser-wrapper.sh ]]; then
+        log "ERROR: Browser wrapper script not found"
         ((errors++))
     fi
 

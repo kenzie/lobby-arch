@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Lobby Network Monitor Module (Mako notifications for offline status)
+# Lobby Health Monitor Module (Network + Browser monitoring with Mako notifications)
 
 set -euo pipefail
 
 # Module info
-MODULE_NAME="Lobby Network Monitor Setup (Mako)"
+MODULE_NAME="Lobby Health Monitor Setup (Mako)"
 MODULE_VERSION="1.0"
 
 # Get script directory
@@ -20,12 +20,13 @@ log() {
 }
 
 # Main setup function
-setup_network_monitor() {
-    log "Setting up network monitoring with mako notifications"
+setup_health_monitor() {
+    log "Setting up health monitoring (network + browser) with mako notifications"
 
     # Stop related services for clean setup
-    log "Stopping network monitor services"
-    systemctl stop lobby-network-monitor.service 2>/dev/null || true
+    log "Stopping health monitor services"
+    systemctl stop lobby-health-monitor.service 2>/dev/null || true
+    systemctl stop lobby-network-monitor.service 2>/dev/null || true  # Legacy cleanup
 
     # --- 1. Install Required Packages ---
     log "Installing mako notification daemon and dependencies"
@@ -45,51 +46,55 @@ setup_network_monitor() {
     chown -R "$USER:$USER" "$HOME_DIR/.config"
     log "Mako configuration installed at $mako_config_dir/config"
 
-    # --- 3. Install Network Monitoring Script ---
-    log "Installing network monitoring script"
-    cp "$config_dir/scripts/network-monitor.sh" /usr/local/bin/network-monitor.sh
-    chmod +x /usr/local/bin/network-monitor.sh
-    log "Network monitoring script installed at /usr/local/bin/network-monitor.sh"
+    # --- 3. Install Health Monitoring Script ---
+    log "Installing health monitoring script"
+    cp "$config_dir/scripts/health-monitor.sh" /usr/local/bin/health-monitor.sh
+    chmod +x /usr/local/bin/health-monitor.sh
+    log "Health monitoring script installed at /usr/local/bin/health-monitor.sh"
 
     # --- 4. Create Systemd Services ---
-    log "Installing network monitor systemd services"
-    cp "$config_dir/systemd/lobby-network-monitor.service" /etc/systemd/system/lobby-network-monitor.service
-    log "Network monitor service installed"
+    log "Installing health monitor systemd services"
+    cp "$config_dir/systemd/lobby-health-monitor.service" /etc/systemd/system/lobby-health-monitor.service
+    log "Health monitor service installed"
 
     # --- 5. Enable Services ---
-    log "Enabling network monitor services"
+    log "Enabling health monitor services"
     systemctl daemon-reload
-    systemctl enable lobby-network-monitor.service
+    systemctl enable lobby-health-monitor.service
 
-    log "Network monitor setup completed successfully"
+    log "Health monitor setup completed successfully"
 }
 
 # Reset function
-reset_network_monitor() {
-    log "Resetting network monitor configuration"
+reset_health_monitor() {
+    log "Resetting health monitor configuration"
 
     # Stop and disable services
+    systemctl stop lobby-health-monitor.service || true
+    systemctl disable lobby-health-monitor.service || true
     systemctl stop lobby-network-monitor.service || true
-    systemctl disable lobby-network-monitor.service || true
+    systemctl disable lobby-network-monitor.service || true  # Legacy cleanup
 
     # Remove service files
-    rm -f /etc/systemd/system/lobby-network-monitor.service
-    rm -f /usr/local/bin/network-monitor.sh
+    rm -f /etc/systemd/system/lobby-health-monitor.service
+    rm -f /etc/systemd/system/lobby-network-monitor.service  # Legacy cleanup
+    rm -f /usr/local/bin/health-monitor.sh
+    rm -f /usr/local/bin/network-monitor.sh  # Legacy cleanup
 
     # Clean up mako config
     rm -rf "$HOME_DIR/.config/mako"
 
     systemctl daemon-reload
-    log "Network monitor reset completed"
+    log "Health monitor reset completed"
 }
 
 # Validation function
-validate_network_monitor() {
+validate_health_monitor() {
     local errors=0
 
     # Check if service file exists
-    if [[ ! -f /etc/systemd/system/lobby-network-monitor.service ]]; then
-        log "ERROR: Network monitor service not found"
+    if [[ ! -f /etc/systemd/system/lobby-health-monitor.service ]]; then
+        log "ERROR: Health monitor service not found"
         ((errors++))
     fi
 
@@ -100,8 +105,8 @@ validate_network_monitor() {
     fi
 
     # Check if script exists
-    if [[ ! -f /usr/local/bin/network-monitor.sh ]]; then
-        log "ERROR: Network monitor script not found"
+    if [[ ! -f /usr/local/bin/health-monitor.sh ]]; then
+        log "ERROR: Health monitor script not found"
         ((errors++))
     fi
 
@@ -112,10 +117,10 @@ validate_network_monitor() {
     fi
 
     if [[ $errors -eq 0 ]]; then
-        log "Network monitor validation passed"
+        log "Health monitor validation passed"
         return 0
     else
-        log "Network monitor validation failed with $errors errors"
+        log "Health monitor validation failed with $errors errors"
         return 1
     fi
 }
@@ -123,13 +128,13 @@ validate_network_monitor() {
 # Command line interface
 case "${1:-setup}" in
     "setup")
-        setup_network_monitor
+        setup_health_monitor
         ;;
     "reset")
-        reset_network_monitor
+        reset_health_monitor
         ;;
     "validate")
-        validate_network_monitor
+        validate_health_monitor
         ;;
     *)
         echo "Usage: $0 {setup|reset|validate}"

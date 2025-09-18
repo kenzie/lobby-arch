@@ -19,8 +19,8 @@ default-timeout=30000
 anchor=top-right
 margin=20
 
-# Network status notifications (persistent offline indicator)
-[app-name="network-monitor"]
+# Health monitor notifications (network/browser issues)
+[app-name="health-monitor"]
 background-color=#f38ba8
 text-color=#1e1e2e
 border-color=#f38ba8

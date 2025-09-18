@@ -1,5 +1,5 @@
 [Unit]
-Description=Lobby Network Connectivity Monitor
+Description=Lobby System Health Monitor (Network + Browser)
 Documentation=https://github.com/lobby-arch/lobby-system
 After=network-online.target
 Wants=network-online.target
@@ -8,7 +8,7 @@ After=lobby-compositor.service
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/network-monitor.sh
+ExecStart=/usr/local/bin/health-monitor.sh
 Restart=always
 RestartSec=5
 KillMode=mixed
@@ -28,7 +28,7 @@ ReadWritePaths=/var/log
 # Logging
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=lobby-network-monitor
+SyslogIdentifier=lobby-health-monitor
 
 [Install]
 WantedBy=multi-user.target

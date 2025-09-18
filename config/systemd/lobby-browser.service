@@ -2,6 +2,8 @@
 Description=Lobby Chromium Browser
 After=lobby-compositor.service lobby-app.service seatd.service
 Wants=lobby-app.service lobby-compositor.service seatd.service
+BindsTo=lobby-compositor.service
+PartOf=lobby-compositor.service
 StartLimitIntervalSec=60
 StartLimitBurst=3
 
@@ -20,16 +22,8 @@ ExecStartPre=/bin/bash -c 'while ! curl -s http://localhost:8080 >/dev/null; do 
 ExecStartPre=/bin/bash -c 'while ! pgrep -f "Hyprland" >/dev/null; do sleep 0.5; done; sleep 1'
 ExecStartPre=/bin/bash -c 'while [[ ! -S /run/user/1000/wayland-1 ]]; do sleep 0.5; done'
 
-# Launch Chromium with minimal flags for fastest startup
-ExecStart=/usr/bin/chromium \
-    --no-sandbox \
-    --disable-dev-shm-usage \
-    --ozone-platform=wayland \
-    --disable-extensions \
-    --disable-plugins \
-    --no-first-run \
-    --no-default-browser-check \
-    --kiosk http://localhost:8080
+# Launch Chromium via wrapper (treats any exit as failure)
+ExecStart=/usr/local/bin/lobby-browser-wrapper.sh
 
 # Restart policy with backoff to prevent crash loops
 Restart=on-failure
