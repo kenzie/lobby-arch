@@ -67,6 +67,28 @@ pre_update_checks() {
     return 0
 }
 
+# Function to stop kiosk services before update
+stop_kiosk_services() {
+    log_message "Stopping kiosk services before update..."
+    systemctl stop lobby-browser.service || true
+    systemctl stop lobby-app.service || true
+    systemctl stop lobby-mako.service || true
+    systemctl stop lobby-compositor.service || true
+    sleep 2
+    log_message "Kiosk services stopped"
+}
+
+# Function to start kiosk services after update
+start_kiosk_services() {
+    log_message "Starting kiosk services after update..."
+    systemctl start lobby-compositor.service
+    sleep 3
+    systemctl start lobby-mako.service
+    systemctl start lobby-app.service
+    systemctl start lobby-browser.service
+    log_message "Kiosk services restarted"
+}
+
 # Function to perform the update
 perform_update() {
     log_message "Starting automatic system update..."
@@ -197,7 +219,10 @@ main() {
     
     # Handle any existing pacman lock
     handle_pacman_lock
-    
+
+    # Stop kiosk services before update to prevent display connection issues
+    stop_kiosk_services
+
     # Attempt the update with retries
     local max_retries=3
     local retry_count=0
@@ -205,6 +230,7 @@ main() {
     while [[ $retry_count -lt $max_retries ]]; do
         if perform_update; then
             post_update_tasks
+            start_kiosk_services
             log_message "=== Update Session Completed Successfully ==="
             exit 0
         else
@@ -217,6 +243,7 @@ main() {
     done
     
     log_message "=== Update Session Failed After $max_retries Attempts ==="
+    start_kiosk_services
     exit 1
 }
 

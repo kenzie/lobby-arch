@@ -12,7 +12,7 @@ Environment=XDG_CURRENT_DESKTOP=Hyprland
 # Create user runtime directory manually to avoid 44s delay from user service
 ExecStartPre=+/bin/bash -c 'mkdir -p /run/user/1000 && chown 1000:1000 /run/user/1000 && chmod 700 /run/user/1000'
 ExecStart=/usr/bin/Hyprland --config /home/lobby/.config/hypr/hyprland.conf
-Restart=always
+Restart=on-failure
 RestartSec=5
 
 [Install]

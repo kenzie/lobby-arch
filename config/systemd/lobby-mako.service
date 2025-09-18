@@ -14,7 +14,7 @@ Group=seat
 Environment=XDG_RUNTIME_DIR=/run/user/1000
 Environment=WAYLAND_DISPLAY=wayland-1
 ExecStart=/usr/bin/mako --config /home/lobby/.config/mako/config
-Restart=always
+Restart=on-failure
 RestartSec=5
 
 # Security settings
