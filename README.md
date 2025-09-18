@@ -1,36 +1,15 @@
 # Lobby Screen Arch Linux System
 
-This repository provides a **bulletproof, production-ready Arch Linux system** for lobby screens, designed to display information for a sports team. It installs a base Arch system with **Hyprland (Wayland compositor)** running Chromium in kiosk mode, featuring comprehensive reliability systems.
+A **bulletproof, production-ready Arch Linux system** for lobby screens, designed to display information for a sports team. Features Hyprland compositor running Chromium in kiosk mode with comprehensive reliability systems.
 
 ---
 
-## ✨ Key Features
+## ✨ Key Benefits
 
-### 🚀 **Bulletproof Kiosk Reliability**
-- **Browser crash detection** - Wrapper script prevents silent exits and blank screens
-- **Health monitoring** - 5-minute checks of network, browser, and app with auto-recovery
-- **Automated service recovery** - Missing processes automatically restarted
-- **Boot validation** - Comprehensive health checks and dependency management
-
-### 🖥️ **Modern Modular Kiosk Architecture**
-- **Independent systemd services** - Compositor, app, and browser run as separate services for maximum reliability
-- **Hyprland (Wayland compositor)** - Optimized for GPU acceleration with ANGLE support
-- **Independent service lifecycle** - Components can restart independently without system-wide failures
-- **Vue.js lobby-display app** - Automatically built and served locally with resource limits
-- **No desktop environment** - Direct boot to kiosk for maximum performance
-
-### ⚡ **Performance Optimized**
-- **10 second boot time** - Optimized service dependencies and parallel loading
-- **Resource efficient** - Low memory usage in active mode
-- **Hardware acceleration** - ANGLE GPU acceleration with OpenGL ES for smooth animations
-
-### 🔧 **Enterprise Management**
-- **Git-based synchronization** - Version-controlled configuration with unified `/home/lobby/lobby-arch` path
-- **Automated updates** - System and application updates at ~2 AM with error recovery
-- **Multi-layer restart policies** - Independent service monitoring ensures maximum uptime
-- **Professional logging** - Comprehensive logs with rotation and automated cleanup
-- **Crash resilience** - System survives compositor crashes, browser crashes, and service failures
-- **Health monitoring** - Continuous monitoring with automatic restart of failed components
+- **🚀 Bulletproof Reliability** - Automated crash detection, health monitoring, and service recovery
+- **⚡ Fast Performance** - 10-second boot time with GPU acceleration and resource optimization  
+- **🔧 Enterprise Ready** - Git-based updates, professional logging, and 24/7 automated maintenance
+- **🖥️ Modern Architecture** - Wayland compositor with independent modular services
 
 ---
 
@@ -73,91 +52,67 @@ The installer automatically runs the post-install script during installation, se
 
 ---
 
+## System Architecture
+
+The system uses **Hyprland (Wayland compositor)** with independent modular services:
+
+### 🔧 Service Architecture
+```
+lobby-compositor.service     → Hyprland Wayland compositor with ANGLE GPU acceleration
+lobby-app.service           → Vue.js lobby display (port 8080, memory limited)
+lobby-browser.service       → Chromium kiosk with crash detection wrapper
+lobby-health-monitor.service → Network/browser/app monitoring (5-min checks)
+```
+
+### 🛡️ Reliability Design
+- **Independent services** - Compositor, app, browser run separately to prevent cascade failures
+- **Crash detection** - Browser wrapper prevents silent exits and 1.5+ hour blank screens  
+- **Auto-recovery** - Failed services restart automatically with intelligent limits
+- **Health monitoring** - Continuous checks with automatic component restart
+- **Resource management** - Memory limits and security restrictions on app service
+- **Fast boot** - Optimized dependencies for 8-15 second boot time
+
+---
+
 ## System Management
 
-After installation, use the lobby management script for system operations:
-
-### 🛠️ System Management Commands
-
-The system includes a **global `lobby` command** for easy management:
+### 🛠️ Management Commands
 
 ```bash
-# System diagnostics and monitoring
-sudo lobby health                        # Comprehensive system health check with 20+ validations
-sudo lobby status                        # Real-time status of all modules (✓ OK / ✗ FAILED)
+# Diagnostics
+sudo lobby health                        # Comprehensive health check (20+ validations)
+sudo lobby status                        # Real-time module status (✓ OK / ✗ FAILED)
 sudo lobby logs                          # View recent system logs with filtering
 
-# System management  
-sudo lobby setup                         # Full bulletproof system setup
-sudo lobby validate                      # Validate all modules (kiosk, plymouth, auto-updates, etc.)
+# System Operations  
+sudo lobby setup                         # Full system setup and configuration
+sudo lobby validate                      # Validate all modules
 sudo lobby sync && sudo lobby setup      # Update from git and refresh configuration
 
-# Module-specific operations
-sudo lobby setup compositor              # Configure Hyprland compositor with ANGLE GPU acceleration
+# Module-Specific Setup
+sudo lobby setup compositor              # Configure Hyprland compositor
 sudo lobby setup app                     # Configure Vue.js lobby display service
-sudo lobby setup browser                 # Configure Chromium browser with crash detection wrapper
-sudo lobby setup health-monitor          # Configure health monitoring (network + browser + app)
+sudo lobby setup browser                 # Configure Chromium with crash detection
+sudo lobby setup health-monitor          # Configure health monitoring
 sudo lobby reset [module]                # Reset specific module to defaults
 ```
 
-### Module Structure
-
-The system uses a modular architecture with the following components:
-
-- **modules/20-compositor.sh** - Hyprland compositor service with ANGLE GPU acceleration
-- **modules/30-app.sh** - Vue.js lobby display application with resource limits
-- **modules/40-browser.sh** - Chromium browser service with crash detection wrapper
-- **modules/50-auto-updates.sh** - Automated system and project updates with error recovery
-- **modules/60-health-monitor.sh** - Health monitoring for network, browser, and app components
-- **modules/90-cleanup.sh** - Global command setup, log rotation, and system optimization
-
-### Automated Maintenance
-
-The system runs automated maintenance:
-- **2:00 AM**: System updates (Arch packages, lobby-arch, and lobby-display)
-- **Continuous**: 24/7 operation with automatic service recovery
-
 ### System Features
+- **Automated maintenance** - System updates at 2:00 AM with error recovery
+- **Professional appearance** - No cursor display, direct boot to kiosk
+- **AMD optimization** - Microcode updates and graphics drivers included
+- **Network resilience** - Handles connectivity issues during operations
+- **Enterprise logging** - Centralized logs with rotation and cleanup
+- **VT switching** - Kiosk on VT2, TTY1 available for admin access
 
-- **No cursor display** - Professional kiosk appearance
-- **Automatic crash recovery** - Services restart on failure with intelligent limits
-- **System logs** - Centralized logging with systemd journal management
-- **Log rotation** - Automatic cleanup to prevent disk space issues
-- **AMD hardware optimization** - Includes microcode updates and graphics drivers
-- **Network resilience** - Handles connectivity issues during updates and operations
+---
 
-### System Architecture
+## Troubleshooting
 
-The system uses **Hyprland (Wayland compositor)** with modular service management:
-
-**🔧 Independent Service Architecture:**
-```
-lobby-compositor.service    → Hyprland Wayland compositor
-lobby-app.service          → Vue.js app (port 8080, memory limited)
-lobby-browser.service      → Chromium browser with crash detection wrapper
-lobby-health-monitor.service → Health monitoring (network + browser + app)
-```
-
-**🛡️ Production-Ready Design Principles:**
-- **Modular architecture** - Each service (compositor, app, browser, health monitor) runs independently
-- **No cascade failures** - Compositor crashes don't affect browser or app services
-- **Browser crash detection** - Wrapper script prevents silent exits and 1.5+ hour blank screens
-- **Health monitoring** - Continuous 5-minute checks with automatic service restart
-- **Resource constraints** - App service has memory limits and security restrictions
-- **Dependency management** - Browser waits for compositor and app to be healthy before starting
-- **Hyprland with ANGLE** - Wayland compositor optimized for GPU acceleration and smooth animations
-- **Unified path structure** - All components use `/home/lobby/lobby-arch`
-- **Git-based updates** - Reliable synchronization with proper repository structure
-- **VT switching** - Kiosk display on VT2, TTY1 available for admin access
-- **Fast boot optimization** - 8-15 second boot time
-- **Enterprise logging** - Comprehensive health checks and crash detection
-
-### Support
-
-For issues with the installer or system setup, check the logs:
+For system issues, use these diagnostic commands:
 ```bash
 sudo lobby status
-sudo lobby logs
 sudo lobby health
+sudo lobby logs
 sudo journalctl -b | grep lobby
 ```
