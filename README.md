@@ -1,36 +1,32 @@
 # Lobby Screen Arch Linux System
 
-This repository provides a **bulletproof, production-ready Arch Linux system** for lobby screens, designed to display information for a sports team. It installs a base Arch system with **Hyprland (Wayland compositor)** running Chromium in kiosk mode, featuring **automated Plymouth boot themes** with Route 19 logo and comprehensive reliability systems.
+This repository provides a **bulletproof, production-ready Arch Linux system** for lobby screens, designed to display information for a sports team. It installs a base Arch system with **Hyprland (Wayland compositor)** running Chromium in kiosk mode, featuring comprehensive reliability systems.
 
 ---
 
 ## ✨ Key Features
 
 ### 🚀 **Bulletproof Kiosk Reliability**
-- **Zero TTY fallback risk** - All getty services completely masked
 - **Browser crash detection** - Wrapper script prevents silent exits and blank screens
 - **Health monitoring** - 5-minute checks of network, browser, and app with auto-recovery
 - **Automated service recovery** - Missing processes automatically restarted
 - **Boot validation** - Comprehensive health checks and dependency management
-- **Plymouth integration** - Enhanced timing waits for full application launch
 
 ### 🖥️ **Modern Modular Kiosk Architecture**
 - **Independent systemd services** - Compositor, app, and browser run as separate services for maximum reliability
 - **Hyprland (Wayland compositor)** - Optimized for GPU acceleration with ANGLE support
 - **Independent service lifecycle** - Components can restart independently without system-wide failures
-- **ANGLE GPU acceleration** - Hardware-accelerated animations via OpenGL ES with native Wayland
 - **Vue.js lobby-display app** - Automatically built and served locally with resource limits
 - **No desktop environment** - Direct boot to kiosk for maximum performance
 
 ### ⚡ **Performance Optimized**
-- **8-15 second boot time** - Optimized service dependencies and parallel loading
-- **Resource efficient** - ~1.7GB total memory usage in active mode
-- **TV power management** - Plymouth downtime mode saves 90% resources (11:59 PM - 8:00 AM)
+- **10 second boot time** - Optimized service dependencies and parallel loading
+- **Resource efficient** - Low memory usage in active mode
 - **Hardware acceleration** - ANGLE GPU acceleration with OpenGL ES for smooth animations
 
 ### 🔧 **Enterprise Management**
 - **Git-based synchronization** - Version-controlled configuration with unified `/home/lobby/lobby-arch` path
-- **Automated updates** - System and application updates at 2:50 AM with error recovery
+- **Automated updates** - System and application updates at ~2 AM with error recovery
 - **Multi-layer restart policies** - Independent service monitoring ensures maximum uptime
 - **Professional logging** - Comprehensive logs with rotation and automated cleanup
 - **Crash resilience** - System survives compositor crashes, browser crashes, and service failures
@@ -73,7 +69,7 @@ chmod +x /tmp/install.sh
 
 ### 3. Automatic post-install setup
 
-The installer automatically runs the post-install script **during installation** (not first boot), setting up all lobby components. The system boots directly into a working kiosk with animated Plymouth theme.
+The installer automatically runs the post-install script during installation, setting up all lobby components. The system boots directly into a working kiosk.
 
 ---
 
@@ -100,8 +96,7 @@ sudo lobby sync && sudo lobby setup      # Update from git and refresh configura
 sudo lobby setup compositor              # Configure Hyprland compositor with ANGLE GPU acceleration
 sudo lobby setup app                     # Configure Vue.js lobby display service
 sudo lobby setup browser                 # Configure Chromium browser with crash detection wrapper
-sudo lobby setup health-monitor         # Configure health monitoring (network + browser + app)
-sudo lobby setup plymouth                # Configure Route 19 boot theme with enhanced timing
+sudo lobby setup health-monitor          # Configure health monitoring (network + browser + app)
 sudo lobby reset [module]                # Reset specific module to defaults
 ```
 
@@ -109,7 +104,6 @@ sudo lobby reset [module]                # Reset specific module to defaults
 
 The system uses a modular architecture with the following components:
 
-- **modules/10-plymouth.sh** - Route 19 boot splash screen with logo and animated loading dots
 - **modules/20-compositor.sh** - Hyprland compositor service with ANGLE GPU acceleration
 - **modules/30-app.sh** - Vue.js lobby display application with resource limits
 - **modules/40-browser.sh** - Chromium browser service with crash detection wrapper
@@ -131,44 +125,6 @@ The system runs automated maintenance:
 - **Log rotation** - Automatic cleanup to prevent disk space issues
 - **AMD hardware optimization** - Includes microcode updates and graphics drivers
 - **Network resilience** - Handles connectivity issues during updates and operations
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-**Plymouth theme stays on screen after boot:**
-```bash
-# Check if kiosk services are running
-sudo lobby health
-
-# Switch to kiosk display (VT2)
-sudo chvt 2
-
-# Switch back to TTY for admin (VT1)  
-sudo chvt 1
-```
-
-**Updates failing:**
-```bash
-# Check git repository status
-sudo lobby sync
-
-# Force update if needed
-sudo lobby sync --force
-```
-
-**Service failures:**
-```bash
-# Check specific service status
-sudo systemctl status lobby-compositor.service lobby-app.service lobby-browser.service
-
-# Restart services if needed
-sudo lobby setup compositor
-sudo lobby setup app
-sudo lobby setup browser
-```
 
 ### System Architecture
 
@@ -193,13 +149,14 @@ lobby-health-monitor.service → Health monitoring (network + browser + app)
 - **Unified path structure** - All components use `/home/lobby/lobby-arch`
 - **Git-based updates** - Reliable synchronization with proper repository structure
 - **VT switching** - Kiosk display on VT2, TTY1 available for admin access
-- **Fast boot optimization** - 8-15 second boot time with Plymouth animation
+- **Fast boot optimization** - 8-15 second boot time
 - **Enterprise logging** - Comprehensive health checks and crash detection
 
 ### Support
 
 For issues with the installer or system setup, check the logs:
 ```bash
+sudo lobby status
 sudo lobby logs
 sudo lobby health
 sudo journalctl -b | grep lobby
