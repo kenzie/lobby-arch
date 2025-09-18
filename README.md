@@ -6,10 +6,12 @@ This repository provides a **bulletproof, production-ready Arch Linux system** f
 
 ## ✨ Key Features
 
-### 🚀 **Bulletproof Boot Reliability**
+### 🚀 **Bulletproof Kiosk Reliability**
 - **Zero TTY fallback risk** - All getty services completely masked
-- **Automated recovery** - Services restart on failure with systemd reliability
-- **Boot validation** - Comprehensive 8-point health checks every 30 seconds
+- **Browser crash detection** - Wrapper script prevents silent exits and blank screens
+- **Health monitoring** - 5-minute checks of network, browser, and app with auto-recovery
+- **Automated service recovery** - Missing processes automatically restarted
+- **Boot validation** - Comprehensive health checks and dependency management
 - **Plymouth integration** - Enhanced timing waits for full application launch
 
 ### 🖥️ **Modern Modular Kiosk Architecture**
@@ -32,6 +34,7 @@ This repository provides a **bulletproof, production-ready Arch Linux system** f
 - **Multi-layer restart policies** - Independent service monitoring ensures maximum uptime
 - **Professional logging** - Comprehensive logs with rotation and automated cleanup
 - **Crash resilience** - System survives compositor crashes, browser crashes, and service failures
+- **Health monitoring** - Continuous monitoring with automatic restart of failed components
 
 ---
 
@@ -96,7 +99,8 @@ sudo lobby sync && sudo lobby setup      # Update from git and refresh configura
 # Module-specific operations
 sudo lobby setup compositor              # Configure Hyprland compositor with ANGLE GPU acceleration
 sudo lobby setup app                     # Configure Vue.js lobby display service
-sudo lobby setup browser                 # Configure Chromium browser with ANGLE acceleration
+sudo lobby setup browser                 # Configure Chromium browser with crash detection wrapper
+sudo lobby setup health-monitor         # Configure health monitoring (network + browser + app)
 sudo lobby setup plymouth                # Configure Route 19 boot theme with enhanced timing
 sudo lobby reset [module]                # Reset specific module to defaults
 ```
@@ -108,8 +112,9 @@ The system uses a modular architecture with the following components:
 - **modules/10-plymouth.sh** - Route 19 boot splash screen with logo and animated loading dots
 - **modules/20-compositor.sh** - Hyprland compositor service with ANGLE GPU acceleration
 - **modules/30-app.sh** - Vue.js lobby display application with resource limits
-- **modules/40-browser.sh** - Chromium browser service with ANGLE GPU acceleration
+- **modules/40-browser.sh** - Chromium browser service with crash detection wrapper
 - **modules/50-auto-updates.sh** - Automated system and project updates with error recovery
+- **modules/60-health-monitor.sh** - Health monitoring for network, browser, and app components
 - **modules/90-cleanup.sh** - Global command setup, log rotation, and system optimization
 
 ### Automated Maintenance
@@ -171,14 +176,17 @@ The system uses **Hyprland (Wayland compositor)** with modular service managemen
 
 **🔧 Independent Service Architecture:**
 ```
-lobby-compositor.service  → Hyprland Wayland compositor
-lobby-app.service        → Vue.js app (port 8080, memory limited)
-lobby-browser.service    → Chromium browser (waits for compositor + app)
+lobby-compositor.service    → Hyprland Wayland compositor
+lobby-app.service          → Vue.js app (port 8080, memory limited)
+lobby-browser.service      → Chromium browser with crash detection wrapper
+lobby-health-monitor.service → Health monitoring (network + browser + app)
 ```
 
 **🛡️ Production-Ready Design Principles:**
-- **Modular architecture** - Each service (compositor, app, browser) runs independently
+- **Modular architecture** - Each service (compositor, app, browser, health monitor) runs independently
 - **No cascade failures** - Compositor crashes don't affect browser or app services
+- **Browser crash detection** - Wrapper script prevents silent exits and 1.5+ hour blank screens
+- **Health monitoring** - Continuous 5-minute checks with automatic service restart
 - **Resource constraints** - App service has memory limits and security restrictions
 - **Dependency management** - Browser waits for compositor and app to be healthy before starting
 - **Hyprland with ANGLE** - Wayland compositor optimized for GPU acceleration and smooth animations
