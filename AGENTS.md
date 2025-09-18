@@ -6,8 +6,7 @@ This project provides a **bulletproof, enterprise-grade Arch Linux system** for 
 
 This is a **production-ready kiosk system** that achieves:
 - **100% boot reliability** with automated recovery
-- **8-15 second boot times** with professional Plymouth transitions
-- **TV power management** for hardware longevity (9+ hours daily downtime)
+- **8-15 second boot times** direct to the kiosk content
 - **Systemd service reliability** with automatic restart on failure
 - **Enterprise logging** with rotation and comprehensive diagnostics
 
@@ -38,7 +37,7 @@ chmod +x /tmp/install.sh
 
 **Automated installation process:**
 1. Partitions disk and installs Arch Linux base system
-2. Installs AMD drivers and required packages
+2. Installs required drivers and packages
 3. Clones lobby-arch repository for version-controlled updates
 4. Creates lobby user and configures systemd services
 5. Downloads and builds lobby-display Vue.js app
@@ -83,7 +82,7 @@ lobby-arch/
 ### Working with the System
 - **run `sudo lobby help`** to identify what commands are available
 - **We don't edit live files** - We edit the repo and run the appropriate lobby setup command to implement
-- This project is being developed on a live test system, so local configuration changes need also be made in this git repository
+- This project is being developed on a live test system, but throught the repository and update scripts
 - Make sure the git repo is kept up to date with the local system files and vice versa when making changes to the live machine
 
 ### Health Monitoring System
