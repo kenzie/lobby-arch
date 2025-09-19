@@ -83,7 +83,7 @@ check_services() {
     echo "$all_running"
 }
 
-# Send notification via mako
+# Send notification via mako (non-critical, fail gracefully)
 send_notification() {
     local title="$1"
     local body="$2"
@@ -91,26 +91,32 @@ send_notification() {
     local app_name="${4:-health-monitor}"
 
     # Use sudo -u to run as the lobby user since mako runs in user session
-    sudo -u "$USER" XDG_RUNTIME_DIR="$RUNTIME_DIR" WAYLAND_DISPLAY=wayland-1 notify-send \
+    # Notifications are non-critical, so don't let failures crash the health monitor
+    if ! sudo -u "$USER" XDG_RUNTIME_DIR="$RUNTIME_DIR" WAYLAND_DISPLAY=wayland-1 notify-send \
         --app-name="$app_name" \
         --urgency="$urgency" \
-        "$title" "$body"
+        "$title" "$body" 2>/dev/null; then
+        log "WARNING: Failed to send notification: $title"
+    fi
 }
 
-# Dismiss notifications by app name
+# Dismiss notifications by app name (non-critical, fail gracefully)
 dismiss_notification() {
     local app_name="${1:-health-monitor}"
 
     # Dismiss all notifications from specific app by finding their IDs
+    # This is non-critical, so ignore all errors
     local notification_ids
-    notification_ids=$(sudo -u "$USER" XDG_RUNTIME_DIR="$RUNTIME_DIR" WAYLAND_DISPLAY=wayland-1 makoctl list 2>/dev/null | \
-        awk -v app="$app_name" '/^Notification [0-9]+:/ { id = $2; gsub(/:/, "", id) } /App name: / && $3 == app { print id }' || true)
+    if notification_ids=$(sudo -u "$USER" XDG_RUNTIME_DIR="$RUNTIME_DIR" WAYLAND_DISPLAY=wayland-1 makoctl list 2>/dev/null | \
+        awk -v app="$app_name" '/^Notification [0-9]+:/ { id = $2; gsub(/:/, "", id) } /App name: / && $3 == app { print id }' 2>/dev/null); then
 
-    if [[ -n "$notification_ids" ]]; then
-        while IFS= read -r id; do
-            [[ -n "$id" ]] && sudo -u "$USER" XDG_RUNTIME_DIR="$RUNTIME_DIR" WAYLAND_DISPLAY=wayland-1 makoctl dismiss -n "$id" 2>/dev/null || true
-        done <<< "$notification_ids"
+        if [[ -n "$notification_ids" ]]; then
+            while IFS= read -r id; do
+                [[ -n "$id" ]] && sudo -u "$USER" XDG_RUNTIME_DIR="$RUNTIME_DIR" WAYLAND_DISPLAY=wayland-1 makoctl dismiss -n "$id" 2>/dev/null || true
+            done <<< "$notification_ids"
+        fi
     fi
+    # Silently ignore all notification dismissal failures
 }
 
 # Restart browser service
