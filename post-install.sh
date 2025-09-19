@@ -111,6 +111,12 @@ else
     exit 1
 fi
 
+# Optimize boot time by disabling NetworkManager-wait-online
+log "Disabling NetworkManager-wait-online to optimize boot time"
+systemctl disable NetworkManager-wait-online.service 2>/dev/null || true
+systemctl mask NetworkManager-wait-online.service 2>/dev/null || true
+log "NetworkManager-wait-online service disabled and masked"
+
 # Disable this service since it's completed (skip in chroot)
 if [[ -z "${CHROOT_INSTALL:-}" ]]; then
     log "Disabling post-install service"

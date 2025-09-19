@@ -14,6 +14,10 @@ export LOBBY_USER="${LOBBY_USER:-lobby}"
 export LOBBY_HOME="${LOBBY_HOME:-/home/$LOBBY_USER}"
 export LOBBY_LOG="$LOGFILE"
 
+# Get runtime directory dynamically
+LOBBY_UID=$(id -u "$LOBBY_USER" 2>/dev/null || echo "1000")
+LOBBY_RUNTIME_DIR="/run/user/$LOBBY_UID"
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -489,7 +493,7 @@ send_notification() {
     info "Sending notification: $title - $message"
 
     # Send notification with normal urgency (30 second timeout)
-    if sudo -u "$LOBBY_USER" XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-1 notify-send --urgency=normal "$title" "$message"; then
+    if sudo -u "$LOBBY_USER" XDG_RUNTIME_DIR="$LOBBY_RUNTIME_DIR" WAYLAND_DISPLAY=wayland-1 notify-send --urgency=normal "$title" "$message"; then
         success "Notification sent successfully (30 second timeout)"
     else
         error "Failed to send notification - check if mako is running"

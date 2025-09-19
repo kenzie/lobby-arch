@@ -1,6 +1,7 @@
 [Unit]
 Description=Lobby Hyprland Compositor
-After=plymouth-quit.service plymouth.service
+After=plymouth-quit.service plymouth.service user-runtime-dir@1000.service user@1000.service
+Requires=user-runtime-dir@1000.service user@1000.service
 
 [Service]
 Type=simple
@@ -10,9 +11,9 @@ Environment=XDG_RUNTIME_DIR=/run/user/1000
 Environment=XDG_SESSION_TYPE=wayland
 Environment=XDG_CURRENT_DESKTOP=Hyprland
 Environment=WAYLAND_DISPLAY=wayland-1
-# Create user runtime directory manually to avoid 44s delay from user service
-ExecStartPre=+/bin/bash -c 'mkdir -p /run/user/1000 && chown 1000:1000 /run/user/1000 && chmod 700 /run/user/1000'
+ExecStartPre=/bin/bash -c 'while [[ ! -d /run/user/1000 ]]; do sleep 0.1; done'
 ExecStart=/usr/bin/Hyprland --config /home/lobby/.config/hypr/hyprland.conf
+ExecStartPost=/bin/bash -c 'systemctl --user --machine=lobby@.host set-environment WAYLAND_DISPLAY=wayland-1 || true'
 Restart=on-failure
 RestartSec=5
 

@@ -8,6 +8,10 @@ set -euo pipefail
 CHECK_INTERVAL=300  # seconds (5 minutes) - sufficient for offline-first kiosk system
 USER="${LOBBY_USER:-lobby}"
 
+# Get runtime directory dynamically
+LOBBY_UID=$(id -u "$USER" 2>/dev/null || echo "1000")
+RUNTIME_DIR="/run/user/$LOBBY_UID"
+
 # Test hosts (multiple for reliability)
 TEST_HOSTS=(
     "8.8.8.8"
@@ -54,6 +58,16 @@ check_app() {
     fi
 }
 
+# Check compositor health (Wayland socket existence)
+check_compositor() {
+    # Check if Wayland socket exists and compositor service is active
+    if [[ -S "$RUNTIME_DIR/wayland-1" ]] && systemctl is-active lobby-compositor.service >/dev/null 2>&1; then
+        echo "true"
+    else
+        echo "false"
+    fi
+}
+
 # Check critical services
 check_services() {
     local services=("lobby-browser.service" "lobby-compositor.service" "lobby-app.service")
@@ -77,7 +91,7 @@ send_notification() {
     local app_name="${4:-health-monitor}"
 
     # Use sudo -u to run as the lobby user since mako runs in user session
-    sudo -u "$USER" XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-1 notify-send \
+    sudo -u "$USER" XDG_RUNTIME_DIR="$RUNTIME_DIR" WAYLAND_DISPLAY=wayland-1 notify-send \
         --app-name="$app_name" \
         --urgency="$urgency" \
         "$title" "$body"
@@ -89,12 +103,12 @@ dismiss_notification() {
 
     # Dismiss all notifications from specific app by finding their IDs
     local notification_ids
-    notification_ids=$(sudo -u "$USER" XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-1 makoctl list 2>/dev/null | \
+    notification_ids=$(sudo -u "$USER" XDG_RUNTIME_DIR="$RUNTIME_DIR" WAYLAND_DISPLAY=wayland-1 makoctl list 2>/dev/null | \
         awk -v app="$app_name" '/^Notification [0-9]+:/ { id = $2; gsub(/:/, "", id) } /App name: / && $3 == app { print id }' || true)
 
     if [[ -n "$notification_ids" ]]; then
         while IFS= read -r id; do
-            [[ -n "$id" ]] && sudo -u "$USER" XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY=wayland-1 makoctl dismiss -n "$id" 2>/dev/null || true
+            [[ -n "$id" ]] && sudo -u "$USER" XDG_RUNTIME_DIR="$RUNTIME_DIR" WAYLAND_DISPLAY=wayland-1 makoctl dismiss -n "$id" 2>/dev/null || true
         done <<< "$notification_ids"
     fi
 }
@@ -111,13 +125,20 @@ restart_app() {
     systemctl restart lobby-app.service
 }
 
+# Restart compositor service
+restart_compositor() {
+    log "Compositor health check failed - restarting compositor service"
+    systemctl restart lobby-compositor.service
+}
+
 # Main monitoring loop
 main() {
-    log "Starting health monitor (network + browser + app)"
+    log "Starting health monitor (network + browser + app + compositor)"
 
     local last_network_status=""
     local last_browser_status=""
     local last_app_status=""
+    local last_compositor_status=""
 
     while true; do
         # Check network connectivity
@@ -143,9 +164,33 @@ main() {
             last_network_status="$network_status"
         fi
 
-        # Check browser health regardless of network status
+        # Check compositor health first (browser depends on it)
+        local compositor_status
+        if [[ "$(check_compositor)" == "true" ]]; then
+            compositor_status="running"
+        else
+            compositor_status="stopped"
+        fi
+
+        # Handle compositor status changes
+        if [[ "$compositor_status" != "$last_compositor_status" ]]; then
+            case "$compositor_status" in
+                "running")
+                    log "Compositor and Wayland socket detected"
+                    dismiss_notification "health-monitor"
+                    ;;
+                "stopped")
+                    log "Compositor or Wayland socket missing - attempting restart"
+                    restart_compositor
+                    send_notification "Display Critical" "Restarting compositor" "critical" "health-monitor"
+                    ;;
+            esac
+            last_compositor_status="$compositor_status"
+        fi
+
+        # Check browser health (only if compositor is running)
         local browser_status
-        if [[ "$(check_browser)" == "true" ]]; then
+        if [[ "$compositor_status" == "running" && "$(check_browser)" == "true" ]]; then
             browser_status="running"
         else
             browser_status="stopped"
@@ -159,9 +204,13 @@ main() {
                     dismiss_notification "health-monitor"
                     ;;
                 "stopped")
-                    log "Browser process missing - attempting restart"
-                    restart_browser
-                    send_notification "Display Issue" "Restarting browser" "normal" "health-monitor"
+                    if [[ "$compositor_status" == "running" ]]; then
+                        log "Browser process missing - attempting restart"
+                        restart_browser
+                        send_notification "Display Issue" "Restarting browser" "normal" "health-monitor"
+                    else
+                        log "Browser process missing but compositor not ready - skipping browser restart"
+                    fi
                     ;;
             esac
             last_browser_status="$browser_status"
