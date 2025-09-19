@@ -3,7 +3,7 @@ Description=Lobby System Health Monitor (Network + Browser)
 Documentation=https://github.com/lobby-arch/lobby-system
 After=network-online.target
 Wants=network-online.target
-Requires=lobby-compositor.service
+Wants=lobby-compositor.service
 After=lobby-compositor.service
 
 [Service]
