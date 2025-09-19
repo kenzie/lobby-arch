@@ -14,6 +14,7 @@ Group=seat
 Environment=XDG_RUNTIME_DIR=/run/user/1000
 Environment=WAYLAND_DISPLAY=wayland-1
 Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus
+ExecStartPre=/bin/sleep 3
 ExecStart=/usr/bin/mako --config /home/lobby/.config/mako/config
 Restart=on-failure
 RestartSec=5
