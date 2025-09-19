@@ -18,7 +18,11 @@ log() {
 # Main setup function
 setup_auto_updates() {
     log "Setting up automatic pacman updates"
-    
+
+    # Install required packages for auto-updates
+    pacman -S --needed --noconfirm pacman-contrib
+    log "Installed pacman-contrib for paccache functionality"
+
     # Copy the update script from config
     local config_dir="$SCRIPT_DIR/../config"
     cp "$config_dir/scripts/lobby-auto-update.sh" /usr/local/bin/lobby-auto-update.sh

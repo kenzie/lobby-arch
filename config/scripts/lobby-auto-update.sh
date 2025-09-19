@@ -57,6 +57,8 @@ pre_update_checks() {
         local uptime_minutes=$(awk '{print int($1/60)}' /proc/uptime)
         if [[ $uptime_minutes -lt 5 ]]; then
             log_message "WARNING: No network connectivity (system may still be starting up)"
+            log_message "Pre-update checks failed, aborting update"
+            exit 0  # Exit gracefully during boot - this is expected
         else
             log_message "ERROR: No network connectivity"
         fi
@@ -129,20 +131,19 @@ update_lobby_arch() {
     local lobby_arch_dir="/home/lobby/lobby-arch"
     if [[ -d "$lobby_arch_dir/.git" ]]; then
         log_message "Updating lobby-arch project..."
-        cd "$lobby_arch_dir"
-        
+
         # Check for uncommitted changes
-        if ! git diff --quiet || ! git diff --staged --quiet; then
+        if ! git -C "$lobby_arch_dir" diff --quiet || ! git -C "$lobby_arch_dir" diff --staged --quiet; then
             log_message "WARNING: Uncommitted changes detected in lobby-arch repository"
             log_message "Skipping lobby-arch update to avoid overwriting local changes"
             log_message "Please commit or stash changes manually, then run: sudo lobby sync"
             return 1
         fi
         
-        if git pull origin main; then
+        if git -C "$lobby_arch_dir" pull origin main; then
             log_message "lobby-arch updated successfully"
             # Make scripts executable after update
-            chmod +x scripts/modules/*.sh 2>/dev/null || true
+            chmod +x "$lobby_arch_dir"/modules/*.sh 2>/dev/null || true
             return 0
         else
             log_message "ERROR: Failed to update lobby-arch"

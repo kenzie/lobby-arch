@@ -47,6 +47,10 @@ log "Cleaning up temporary files"
 rm -f /tmp/.X*-lock 2>/dev/null || true
 rm -f /run/user/*/wayland-* 2>/dev/null || true
 
+# Fix boot security warning for world-readable random seed
+log "Fixing boot loader random seed permissions"
+chmod 600 /boot/loader/random-seed 2>/dev/null || true
+
 log "Cleanup completed - ready for fresh installation"
 
 # Wait for network connectivity (skip in chroot)
