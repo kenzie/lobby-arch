@@ -63,13 +63,11 @@ setup_compositor() {
     systemctl mask autovt@tty1.service autovt@tty2.service || true
 
     # --- 6. Enable Services (let systemd start them when ready) ---
-    log "Stopping Plymouth and switching to VT2 as root before enabling Hyprland compositor"
+    log "Switching to VT2 as root before enabling Hyprland compositor"
     if [[ $EUID -eq 0 ]]; then
-        systemctl stop plymouth-quit.service || true
-        killall plymouthd || true
         chvt 2 || true
     else
-        log "WARNING: Not running as root, cannot stop Plymouth or switch VT."
+        log "WARNING: Not running as root, cannot switch VT."
     fi
 
     log "Enabling Hyprland compositor services"

@@ -133,7 +133,7 @@ systemctl stop lobby-browser.service lobby-app.service lobby-compositor.service 
 pkill -f "chromium.*kiosk" 2>/dev/null || true
 pkill -f "Hyprland" 2>/dev/null || true
 
-log "==> A reboot is required to start the Hyprland kiosk with Plymouth splash."
+log "==> A reboot is required to start the Hyprland kiosk."
 log "==> After reboot, use 'sudo lobby help' for system management and 'sudo lobby health' for diagnostics."
 log ""
 log "Please reboot the system to complete the installation:"

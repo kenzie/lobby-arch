@@ -1,6 +1,6 @@
 [Unit]
 Description=Lobby Hyprland Compositor
-After=plymouth-quit.service plymouth.service user-runtime-dir@1000.service user@1000.service
+After=user-runtime-dir@1000.service user@1000.service
 Requires=user-runtime-dir@1000.service user@1000.service
 
 [Service]

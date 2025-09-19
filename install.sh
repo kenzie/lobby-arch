@@ -80,7 +80,7 @@ mount "$ROOT" /mnt
 mkdir -p /mnt/boot
 mount -t vfat "$EFI" /mnt/boot
 
-# --- Install base system + Hyprland + Plymouth (no spinner theme) ---
+# --- Install base system ---
 echo "==> Installing base packages..."
 pacstrap /mnt base linux linux-firmware vim networkmanager sudo git \
     base-devel openssh rng-tools curl bc \
@@ -172,7 +172,6 @@ echo "==> Verifying installation files..."
 critical_files=(
     "/mnt/home/lobby/lobby-arch/post-install.sh"
     "/mnt/home/lobby/lobby-arch/lobby.sh"
-    "/mnt/home/lobby/lobby-arch/modules/10-plymouth.sh"
     "/mnt/home/lobby/lobby-arch/config/plymouth/logo.png"
 )
 
@@ -202,4 +201,4 @@ echo "✓ Post-install setup completed successfully"
 
 # --- Unmount and finish ---
 umount -R /mnt
-echo "==> Installation complete. Reboot now. The system will launch Hyprland kiosk with Plymouth splash."
+echo "==> Installation complete. Reboot now. The system will launch Hyprland kiosk."
