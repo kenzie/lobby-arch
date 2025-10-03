@@ -1,5 +1,7 @@
 # Lobby Screen Arch Linux System
 
+PROOF OF CONCEPT, SUPERCEDED BY KIOSKBOOK [https://github.com/kenzie/kioskbook]
+
 A **bulletproof, production-ready Arch Linux system** for lobby screens, designed to display information for a sports team. Features Hyprland compositor running Chromium in kiosk mode with comprehensive reliability systems.
 
 ---
